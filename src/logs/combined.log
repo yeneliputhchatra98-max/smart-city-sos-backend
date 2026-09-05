@@ -13591,3 +13591,12 @@ Please make sure your database server is running at `localhost:3306`.
 2026-09-05 20:14:06 [INFO] HTTP server closed
 2026-09-05 21:58:52 [INFO] 📚 Swagger docs available at /api-docs
 2026-09-05 21:59:06 [INFO] 📚 Swagger docs available at /api-docs
+2026-09-05 23:58:03 [INFO] 📚 Swagger docs available at /api-docs
+2026-09-05 23:58:03 [INFO] Initializing database connection...
+2026-09-05 23:58:04 [INFO] Database connected successfully
+2026-09-05 23:58:07 [INFO] 🚀 Server running on http://0.0.0.0:5000
+2026-09-05 23:58:07 [INFO] 📦 Environment: development
+2026-09-05 23:58:07 [INFO] 🕐 Started at: 2026-09-05T16:58:07.922Z
+2026-09-05 23:58:42 [INFO] Received SIGINT, starting graceful shutdown...
+2026-09-05 23:58:42 [INFO] HTTP server closed
+2026-09-05 23:58:42 [INFO] Database connections closed
