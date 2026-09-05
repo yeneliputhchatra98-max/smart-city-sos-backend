@@ -13521,3 +13521,37 @@ Please make sure your database server is running at `localhost:3306`.
 2026-09-05 16:31:13 [INFO] 🚀 Server running on http://0.0.0.0:5000
 2026-09-05 16:31:13 [INFO] 📦 Environment: development
 2026-09-05 16:31:13 [INFO] 🕐 Started at: 2026-09-05T09:31:13.315Z
+2026-09-05 19:13:03 [INFO] 📚 Swagger docs available at /api-docs
+2026-09-05 19:13:03 [INFO] Initializing database connection...
+2026-09-05 19:13:05 [INFO] Database connected successfully
+2026-09-05 19:13:05 [INFO] 🚀 Server running on http://0.0.0.0:5000
+2026-09-05 19:13:05 [INFO] 📦 Environment: development
+2026-09-05 19:13:05 [INFO] 🕐 Started at: 2026-09-05T12:13:05.571Z
+2026-09-05 19:13:12 [INFO] Received SIGINT, starting graceful shutdown...
+2026-09-05 19:13:12 [INFO] HTTP server closed
+2026-09-05 19:13:12 [INFO] Database connections closed
+2026-09-05 19:14:25 [INFO] 📚 Swagger docs available at /api-docs
+2026-09-05 19:14:25 [INFO] Initializing database connection...
+2026-09-05 19:14:26 [INFO] Database connected successfully
+2026-09-05 19:14:26 [INFO] 🚀 Server running on http://0.0.0.0:5000
+2026-09-05 19:14:26 [INFO] 📦 Environment: development
+2026-09-05 19:14:26 [INFO] 🕐 Started at: 2026-09-05T12:14:26.689Z
+2026-09-05 19:18:33 [INFO] 📚 Swagger docs available at /api-docs
+2026-09-05 19:18:33 [INFO] Initializing database connection...
+2026-09-05 19:18:34 [INFO] Database connected successfully
+2026-09-05 19:18:34 [INFO] 🚀 Server running on http://0.0.0.0:5000
+2026-09-05 19:18:34 [INFO] 📦 Environment: development
+2026-09-05 19:18:34 [INFO] 🕐 Started at: 2026-09-05T12:18:34.735Z
+2026-09-05 19:52:09 [INFO] 📚 Swagger docs available at /api-docs
+2026-09-05 19:52:09 [INFO] Initializing database connection...
+2026-09-05 19:52:11 [INFO] Database connected successfully
+2026-09-05 19:52:11 [INFO] 🚀 Server running on http://0.0.0.0:5000
+2026-09-05 19:52:11 [INFO] 📦 Environment: development
+2026-09-05 19:52:11 [INFO] 🕐 Started at: 2026-09-05T12:52:11.571Z
+2026-09-05 19:52:45 [INFO] 📚 Swagger docs available at /api-docs
+2026-09-05 19:52:45 [INFO] Initializing database connection...
+2026-09-05 19:52:47 [INFO] Database connected successfully
+2026-09-05 19:52:47 [INFO] 🚀 Server running on http://0.0.0.0:5000
+2026-09-05 19:52:47 [INFO] 📦 Environment: development
+2026-09-05 19:52:47 [INFO] 🕐 Started at: 2026-09-05T12:52:47.099Z
+2026-09-05 19:59:08 [INFO] Received SIGINT, starting graceful shutdown...

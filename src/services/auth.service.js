@@ -30,7 +30,7 @@ const {
 const ROLE_MAP = {
     1: "ADMIN",
     2: "OPERATOR",
-    4: "RESCUE_AGENT",
+    4: "AGENT",
     5: "CITIZEN"
 };
 
