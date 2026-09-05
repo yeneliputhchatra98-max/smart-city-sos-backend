@@ -44,24 +44,23 @@ app.use(helmet({
 
 // --- CORS Configuration ---
 const corsOptions = {
-    origin: (origin, callback) => {
-        if (!origin) return callback(null, true);
-        const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",") : [];
-        if (
-            allowedOrigins.includes(origin) ||
-            allowedOrigins.includes("*") ||
-            process.env.NODE_ENV === "development"
-        ) {
-            return callback(null, true);
-        }
-        return callback(new Error("Not allowed by CORS"));
-    },
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
-    exposedHeaders: ["X-Total-Count", "X-RateLimit-Limit", "X-RateLimit-Remaining"],
-    credentials: true,
-    maxAge: 86400 // 24 hours
+  origin: [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "https://smart-city-sos-backend-production.up.railway.app",
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
+    "Origin",
+  ],
+  credentials: true,
+  maxAge: 86400,
 };
+
 app.use(cors(corsOptions));
 
 // --- Compression ---
