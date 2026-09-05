@@ -31,85 +31,91 @@ const app = express();
 const logDir = path.join(__dirname, "logs");
 
 if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true });
+    fs.mkdirSync(logDir, { recursive: true });
 }
 
 // =====================================================
 // Security Middleware - Helmet
 // =====================================================
 app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:", "https:"],
-      },
-    },
+    helmet({
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: ["'self'", "'unsafe-inline'"],
+                styleSrc: ["'self'", "'unsafe-inline'"],
+                imgSrc: ["'self'", "data:", "https:"],
+            },
+        },
 
-    hsts: {
-      maxAge: 31536000,
-      includeSubDomains: true,
-      preload: true,
-    },
-  })
+        hsts: {
+            maxAge: 31536000,
+            includeSubDomains: true,
+            preload: true,
+        },
+    })
 );
 
 // =====================================================
 // CORS
 // =====================================================
 
-// Frontend URLs that are allowed to access this backend
+// Frontend URLs that are allowed to access this backend.
+// Set CORS_ORIGINS in Railway as a comma-separated list.
 const allowedOrigins = [
-  "http://localhost:3000",
-  "http://localhost:5173",
+    "http://localhost:3000",
+    "http://localhost:5173",
+    ...(process.env.CORS_ORIGINS || process.env.CORS_ORIGIN || "")
+        .split(",")
+        .map((origin) => origin.trim())
+        .filter(Boolean),
 ];
 
 const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow requests without Origin
-    // Example: Postman, server-to-server requests
-    if (!origin) {
-      return callback(null, true);
-    }
+    origin: (origin, callback) => {
+        // Allow requests without Origin
+        // Example: Postman, server-to-server requests
+        if (!origin) {
+            return callback(null, true);
+        }
 
-    // Check allowed frontend origin
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
+        // Check allowed frontend origin
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
 
-    console.log("❌ CORS blocked:", origin);
+        console.log("❌ CORS blocked:", origin);
 
-    return callback(
-      new Error(`CORS blocked: ${origin}`)
-    );
-  },
+        return callback(
+            new Error(`CORS blocked: ${origin}`)
+        );
+    },
 
-  methods: [
-    "GET",
-    "POST",
-    "PUT",
-    "PATCH",
-    "DELETE",
-    "OPTIONS",
-  ],
+    methods: [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+        "OPTIONS",
+    ],
 
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-    "X-Requested-With",
-    "Accept",
-    "Origin",
-  ],
+    allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Accept",
+        "Origin",
+    ],
 
-  credentials: true,
+    credentials: true,
 
-  maxAge: 86400,
+    maxAge: 86400,
 };
 
 // Apply CORS before API routes
 app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 
 // =====================================================
 // Compression
@@ -120,89 +126,89 @@ app.use(compression());
 // Body Parsers
 // =====================================================
 app.use(
-  express.json({
-    limit: "10mb",
-  })
+    express.json({
+        limit: "10mb",
+    })
 );
 
 app.use(
-  express.urlencoded({
-    extended: true,
-    limit: "10mb",
-  })
+    express.urlencoded({
+        extended: true,
+        limit: "10mb",
+    })
 );
 
 // =====================================================
 // Cookie Parser
 // =====================================================
 app.use(
-  cookieParser(
-    process.env.COOKIE_SECRET || "cookie-secret"
-  )
+    cookieParser(
+        process.env.COOKIE_SECRET || "cookie-secret"
+    )
 );
 
 // =====================================================
 // Static Files
 // =====================================================
 app.use(
-  "/uploads",
-  express.static(
-    path.join(__dirname, "uploads")
-  )
+    "/uploads",
+    express.static(
+        path.join(__dirname, "uploads")
+    )
 );
 
 app.use(
-  "/public",
-  express.static(
-    path.join(__dirname, "public")
-  )
+    "/public",
+    express.static(
+        path.join(__dirname, "public")
+    )
 );
 
 // =====================================================
 // Request Logging
 // =====================================================
 if (process.env.NODE_ENV === "development") {
-  app.use(morgan("dev"));
+    app.use(morgan("dev"));
 } else {
-  const accessLogStream = fs.createWriteStream(
-    path.join(logDir, "access.log"),
-    {
-      flags: "a",
-    }
-  );
+    const accessLogStream = fs.createWriteStream(
+        path.join(logDir, "access.log"),
+        {
+            flags: "a",
+        }
+    );
 
-  app.use(
-    morgan("combined", {
-      stream: accessLogStream,
-    })
-  );
+    app.use(
+        morgan("combined", {
+            stream: accessLogStream,
+        })
+    );
 }
 
 // =====================================================
 // Global Rate Limiting
 // =====================================================
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+    windowMs: 15 * 60 * 1000,
 
-  max: 1000,
+    max: 1000,
 
-  standardHeaders: true,
+    standardHeaders: true,
 
-  legacyHeaders: false,
+    legacyHeaders: false,
 
-  message: {
-    success: false,
-    message:
-      "Too many requests, please try again later",
-    code: "RATE_LIMITED",
-  },
+    message: {
+        success: false,
+        message:
+            "Too many requests, please try again later",
+        code: "RATE_LIMITED",
+    },
 
-  skip: (req) => {
-    return (
-      req.path === "/health" ||
-      req.path === "/ping"
-    );
-  },
+    skip: (req) => {
+        return (
+            req.path === "/health" ||
+            req.path === "/ping"
+        );
+    },
 });
 
 app.use("/api", globalLimiter);
@@ -216,30 +222,30 @@ app.use(requestLogger);
 // Health Check
 // =====================================================
 app.get("/health", (req, res) => {
-  res.status(200).json({
-    status: "healthy",
+    res.status(200).json({
+        status: "healthy",
 
-    uptime: process.uptime(),
+        uptime: process.uptime(),
 
-    timestamp: new Date().toISOString(),
+        timestamp: new Date().toISOString(),
 
-    environment:
-      process.env.NODE_ENV || "development",
+        environment:
+            process.env.NODE_ENV || "development",
 
-    memory: process.memoryUsage(),
+        memory: process.memoryUsage(),
 
-    version:
-      process.env.npm_package_version || "1.0.0",
-  });
+        version:
+            process.env.npm_package_version || "1.0.0",
+    });
 });
 
 // =====================================================
 // Ping
 // =====================================================
 app.get("/ping", (req, res) => {
-  res.status(200).json({
-    message: "pong",
-  });
+    res.status(200).json({
+        message: "pong",
+    });
 });
 
 // =====================================================
@@ -248,120 +254,120 @@ app.get("/ping", (req, res) => {
 
 // Authentication
 app.use(
-  "/api/auth",
-  require("./routes/auth.routes")
+    "/api/auth",
+    require("./routes/auth.routes")
 );
 
 // Users
 app.use(
-  "/api/users",
-  require("./routes/user.routes")
+    "/api/users",
+    require("./routes/user.routes")
 );
 
 // Items
 app.use(
-  "/api/items",
-  require("./routes/item.routes")
+    "/api/items",
+    require("./routes/item.routes")
 );
 
 // SOS
 app.use(
-  "/api/sos",
-  require("./routes/sos.routes")
+    "/api/sos",
+    require("./routes/sos.routes")
 );
 
 // Organizations
 app.use(
-  "/api/orgs",
-  require("./routes/org.routes")
+    "/api/orgs",
+    require("./routes/org.routes")
 );
 
 // Stations
 app.use(
-  "/api/stations",
-  require("./routes/station.routes")
+    "/api/stations",
+    require("./routes/station.routes")
 );
 
 // Rescue Agents
 app.use(
-  "/api/agents",
-  require("./routes/agent.routes")
+    "/api/agents",
+    require("./routes/agent.routes")
 );
 
 // Officers
 app.use(
-  "/api/officers",
-  require("./routes/officer.routes")
+    "/api/officers",
+    require("./routes/officer.routes")
 );
 
 // Emergency Broadcasts
 app.use(
-  "/api/broadcasts",
-  require("./routes/broadcast.routes")
+    "/api/broadcasts",
+    require("./routes/broadcast.routes")
 );
 
 // Audit Logs
 app.use(
-  "/api/audit-logs",
-  require("./routes/audit.routes")
+    "/api/audit-logs",
+    require("./routes/audit.routes")
 );
 
 // News
 app.use(
-  "/api/news",
-  require("./routes/news.routes")
+    "/api/news",
+    require("./routes/news.routes")
 );
 
 // Settings
 app.use(
-  "/api/settings",
-  require("./routes/setting.routes")
+    "/api/settings",
+    require("./routes/setting.routes")
 );
 
 // Roles & Permissions
 app.use(
-  "/api/roles-permissions",
-  require("./routes/permission.routes")
+    "/api/roles-permissions",
+    require("./routes/permission.routes")
 );
 
 // Reports
 app.use(
-  "/api/reports",
-  require("./routes/report.routes")
+    "/api/reports",
+    require("./routes/report.routes")
 );
 
 // =====================================================
 // Swagger API Documentation
 // =====================================================
 if (process.env.NODE_ENV !== "production") {
-  const swaggerUi = require("swagger-ui-express");
+    const swaggerUi = require("swagger-ui-express");
 
-  const swaggerDocument = require("./swagger.json");
+    const swaggerDocument = require("./swagger.json");
 
-  app.use(
-    "/api-docs",
-    swaggerUi.serve,
-    swaggerUi.setup(swaggerDocument)
-  );
+    app.use(
+        "/api-docs",
+        swaggerUi.serve,
+        swaggerUi.setup(swaggerDocument)
+    );
 
-  logger.info(
-    "📚 Swagger docs available at /api-docs"
-  );
+    logger.info(
+        "📚 Swagger docs available at /api-docs"
+    );
 }
 
 // =====================================================
 // 404 Handler
 // =====================================================
 app.use((req, res, next) => {
-  res.status(404).json({
-    success: false,
+    res.status(404).json({
+        success: false,
 
-    message: `Route ${req.method} ${req.path} not found`,
+        message: `Route ${req.method} ${req.path} not found`,
 
-    code: "ROUTE_NOT_FOUND",
+        code: "ROUTE_NOT_FOUND",
 
-    timestamp: new Date().toISOString(),
-  });
+        timestamp: new Date().toISOString(),
+    });
 });
 
 // =====================================================
