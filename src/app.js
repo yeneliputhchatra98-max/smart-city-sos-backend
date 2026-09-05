@@ -8,43 +8,59 @@ const cookieParser = require("cookie-parser");
 const path = require("path");
 const fs = require("fs");
 
-// --- Load Environment ---
+// =====================================================
+// Load Environment Variables
+// =====================================================
 require("dotenv").config();
 
-// --- Utils ---
+// =====================================================
+// Utils
+// =====================================================
 const logger = require("./utils/logger");
 const { errorHandler } = require("./middleware/errorHandler");
 const { requestLogger } = require("./middleware/logger");
 
-// --- Initialize App ---
+// =====================================================
+// Initialize Express App
+// =====================================================
 const app = express();
 
-// --- Ensure Log Directory Exists ---
+// =====================================================
+// Ensure Log Directory Exists
+// =====================================================
 const logDir = path.join(__dirname, "logs");
+
 if (!fs.existsSync(logDir)) {
-    fs.mkdirSync(logDir, { recursive: true });
+  fs.mkdirSync(logDir, { recursive: true });
 }
 
-// --- Security Middleware ---
-app.use(helmet({
+// =====================================================
+// Security Middleware - Helmet
+// =====================================================
+app.use(
+  helmet({
     contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'"],
-            styleSrc: ["'self'", "'unsafe-inline'"],
-            imgSrc: ["'self'", "data:", "https:"],
-        },
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:"],
+      },
     },
+
     hsts: {
-        maxAge: 31536000,
-        includeSubDomains: true,
-        preload: true
-    }
-}));
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
+  })
+);
 
-// --- CORS Configuration ---
-// --- CORS Configuration ---
+// =====================================================
+// CORS
+// =====================================================
 
+// Frontend URLs that are allowed to access this backend
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
@@ -53,19 +69,31 @@ const allowedOrigins = [
 const corsOptions = {
   origin: (origin, callback) => {
     // Allow requests without Origin
-    // e.g. Postman, server-to-server
+    // Example: Postman, server-to-server requests
     if (!origin) {
       return callback(null, true);
     }
 
+    // Check allowed frontend origin
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
-    return callback(new Error(`CORS blocked: ${origin}`));
+    console.log("❌ CORS blocked:", origin);
+
+    return callback(
+      new Error(`CORS blocked: ${origin}`)
+    );
   },
 
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  methods: [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+  ],
 
   allowedHeaders: [
     "Content-Type",
@@ -80,105 +108,268 @@ const corsOptions = {
   maxAge: 86400,
 };
 
+// Apply CORS before API routes
 app.use(cors(corsOptions));
 
-// --- Compression ---
+// =====================================================
+// Compression
+// =====================================================
 app.use(compression());
 
-// --- Body Parsers ---
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-app.use(cookieParser(process.env.COOKIE_SECRET || "cookie-secret"));
+// =====================================================
+// Body Parsers
+// =====================================================
+app.use(
+  express.json({
+    limit: "10mb",
+  })
+);
 
-// --- Static Files ---
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use("/public", express.static(path.join(__dirname, "public")));
+app.use(
+  express.urlencoded({
+    extended: true,
+    limit: "10mb",
+  })
+);
 
-// --- Request Logging ---
+// =====================================================
+// Cookie Parser
+// =====================================================
+app.use(
+  cookieParser(
+    process.env.COOKIE_SECRET || "cookie-secret"
+  )
+);
+
+// =====================================================
+// Static Files
+// =====================================================
+app.use(
+  "/uploads",
+  express.static(
+    path.join(__dirname, "uploads")
+  )
+);
+
+app.use(
+  "/public",
+  express.static(
+    path.join(__dirname, "public")
+  )
+);
+
+// =====================================================
+// Request Logging
+// =====================================================
 if (process.env.NODE_ENV === "development") {
-    app.use(morgan("dev"));
+  app.use(morgan("dev"));
 } else {
-    // Create write stream for access logs
-    const accessLogStream = fs.createWriteStream(
-        path.join(logDir, "access.log"),
-        { flags: "a" }
-    );
-    app.use(morgan("combined", { stream: accessLogStream }));
+  const accessLogStream = fs.createWriteStream(
+    path.join(logDir, "access.log"),
+    {
+      flags: "a",
+    }
+  );
+
+  app.use(
+    morgan("combined", {
+      stream: accessLogStream,
+    })
+  );
 }
 
-// --- Global Rate Limiting ---
+// =====================================================
+// Global Rate Limiting
+// =====================================================
 const globalLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 1000, // 1000 requests per window
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: {
-        success: false,
-        message: "Too many requests, please try again later",
-        code: "RATE_LIMITED"
-    },
-    skip: (req) => {
-        // Skip rate limiting for health checks
-        return req.path === "/health" || req.path === "/ping";
-    }
+  windowMs: 15 * 60 * 1000,
+
+  max: 1000,
+
+  standardHeaders: true,
+
+  legacyHeaders: false,
+
+  message: {
+    success: false,
+    message:
+      "Too many requests, please try again later",
+    code: "RATE_LIMITED",
+  },
+
+  skip: (req) => {
+    return (
+      req.path === "/health" ||
+      req.path === "/ping"
+    );
+  },
 });
+
 app.use("/api", globalLimiter);
 
-// --- Custom Request Logger ---
+// =====================================================
+// Custom Request Logger
+// =====================================================
 app.use(requestLogger);
 
-// --- Health Check Endpoints ---
+// =====================================================
+// Health Check
+// =====================================================
 app.get("/health", (req, res) => {
-    res.status(200).json({
-        status: "healthy",
-        uptime: process.uptime(),
-        timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || "development",
-        memory: process.memoryUsage(),
-        version: process.env.npm_package_version || "1.0.0"
-    });
+  res.status(200).json({
+    status: "healthy",
+
+    uptime: process.uptime(),
+
+    timestamp: new Date().toISOString(),
+
+    environment:
+      process.env.NODE_ENV || "development",
+
+    memory: process.memoryUsage(),
+
+    version:
+      process.env.npm_package_version || "1.0.0",
+  });
 });
 
+// =====================================================
+// Ping
+// =====================================================
 app.get("/ping", (req, res) => {
-    res.status(200).json({ message: "pong" });
+  res.status(200).json({
+    message: "pong",
+  });
 });
 
-// --- API Routes ---
-app.use("/api/auth", require("./routes/auth.routes"));
-app.use("/api/users", require("./routes/user.routes"));
-app.use("/api/items", require("./routes/item.routes"));
-app.use("/api/sos", require("./routes/sos.routes"));
-app.use("/api/orgs", require("./routes/org.routes"));
-app.use("/api/stations", require("./routes/station.routes"));
-app.use("/api/agents", require("./routes/agent.routes"));
-app.use("/api/officers", require("./routes/officer.routes"));
-app.use("/api/broadcasts", require("./routes/broadcast.routes"));
-app.use("/api/audit-logs", require("./routes/audit.routes"));
-app.use("/api/news", require("./routes/news.routes"));
-app.use("/api/settings", require("./routes/setting.routes"));
-app.use("/api/roles-permissions", require("./routes/permission.routes"));
-app.use("/api/reports", require("./routes/report.routes"));
+// =====================================================
+// API Routes
+// =====================================================
 
-// --- API Documentation (Swagger) ---
+// Authentication
+app.use(
+  "/api/auth",
+  require("./routes/auth.routes")
+);
+
+// Users
+app.use(
+  "/api/users",
+  require("./routes/user.routes")
+);
+
+// Items
+app.use(
+  "/api/items",
+  require("./routes/item.routes")
+);
+
+// SOS
+app.use(
+  "/api/sos",
+  require("./routes/sos.routes")
+);
+
+// Organizations
+app.use(
+  "/api/orgs",
+  require("./routes/org.routes")
+);
+
+// Stations
+app.use(
+  "/api/stations",
+  require("./routes/station.routes")
+);
+
+// Rescue Agents
+app.use(
+  "/api/agents",
+  require("./routes/agent.routes")
+);
+
+// Officers
+app.use(
+  "/api/officers",
+  require("./routes/officer.routes")
+);
+
+// Emergency Broadcasts
+app.use(
+  "/api/broadcasts",
+  require("./routes/broadcast.routes")
+);
+
+// Audit Logs
+app.use(
+  "/api/audit-logs",
+  require("./routes/audit.routes")
+);
+
+// News
+app.use(
+  "/api/news",
+  require("./routes/news.routes")
+);
+
+// Settings
+app.use(
+  "/api/settings",
+  require("./routes/setting.routes")
+);
+
+// Roles & Permissions
+app.use(
+  "/api/roles-permissions",
+  require("./routes/permission.routes")
+);
+
+// Reports
+app.use(
+  "/api/reports",
+  require("./routes/report.routes")
+);
+
+// =====================================================
+// Swagger API Documentation
+// =====================================================
 if (process.env.NODE_ENV !== "production") {
-    const swaggerUi = require("swagger-ui-express");
-    const swaggerDocument = require("./swagger.json");
-    app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-    logger.info("📚 Swagger docs available at /api-docs");
+  const swaggerUi = require("swagger-ui-express");
+
+  const swaggerDocument = require("./swagger.json");
+
+  app.use(
+    "/api-docs",
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerDocument)
+  );
+
+  logger.info(
+    "📚 Swagger docs available at /api-docs"
+  );
 }
 
-// --- 404 Handler ---
+// =====================================================
+// 404 Handler
+// =====================================================
 app.use((req, res, next) => {
-    res.status(404).json({
-        success: false,
-        message: `Route ${req.method} ${req.path} not found`,
-        code: "ROUTE_NOT_FOUND",
-        timestamp: new Date().toISOString()
-    });
+  res.status(404).json({
+    success: false,
+
+    message: `Route ${req.method} ${req.path} not found`,
+
+    code: "ROUTE_NOT_FOUND",
+
+    timestamp: new Date().toISOString(),
+  });
 });
 
-// --- Global Error Handler ---
+// =====================================================
+// Global Error Handler
+// =====================================================
 app.use(errorHandler);
 
-// --- Export App ---
+// =====================================================
+// Export App
+// =====================================================
 module.exports = app;
