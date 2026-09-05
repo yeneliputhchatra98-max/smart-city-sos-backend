@@ -72,24 +72,7 @@ const allowedOrigins = [
 ];
 
 const corsOptions = {
-    origin: (origin, callback) => {
-        // Allow requests without Origin
-        // Example: Postman, server-to-server requests
-        if (!origin) {
-            return callback(null, true);
-        }
-
-        // Check allowed frontend origin
-        if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-        }
-
-        console.log("❌ CORS blocked:", origin);
-
-        return callback(
-            new Error(`CORS blocked: ${origin}`)
-        );
-    },
+    origin: "http://localhost:3000",
 
     methods: [
         "GET",
@@ -110,12 +93,12 @@ const corsOptions = {
 
     credentials: true,
 
+    optionsSuccessStatus: 204,
+
     maxAge: 86400,
 };
 
-// Apply CORS before API routes
 app.use(cors(corsOptions));
-app.options(/.*/, cors(corsOptions));
 
 // =====================================================
 // Compression
