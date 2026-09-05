@@ -1,0 +1,9 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Smart City SOS Cambodia API",
+    "version": "1.0.0",
+    "description": "API Documentation"
+  },
+  "paths": {}
+}

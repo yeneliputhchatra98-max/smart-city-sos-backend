@@ -1,0 +1,434 @@
+// ─── Prisma Schema for Smart City SOS Dashboard (MySQL) ──────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+model Role {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
+  description String?
+  users       User[]
+  permissions RolePermission[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@map("roles")
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+  PENDING_VERIFICATION
+}
+
+// ─── Organization Type ─────────────────────────────
+
+enum OrganizationType {
+  POLICE
+  FIRE
+  MEDICAL
+}
+
+// ─── Emergency Incident Type ───────────────────────
+
+enum EmergencyType {
+  FIRE
+  MEDICAL
+  POLICE
+  ACCIDENT
+  CRIME
+  FLOOD
+  DISASTER
+}
+
+enum SOSStatus {
+  PENDING
+  EN_ROUTE
+  RESOLVED
+  SPAM
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWING
+  RESOLVED
+  REJECTED
+}
+
+enum AgentStatus {
+  AVAILABLE
+  ON_DUTY
+  OFFLINE
+}
+
+enum OrgStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum AccessLevel {
+  HIGH
+  MEDIUM
+  STANDARD
+}
+
+enum BroadcastLevel {
+  CRITICAL
+  WARNING
+  INFO
+}
+
+enum BroadcastType {
+  FLOOD
+  STORM
+  FIRE
+  TRAFFIC
+  SECURITY
+  MEDICAL_CRISIS
+  GENERAL_ANNOUNCEMENT
+}
+
+enum BroadcastStatus {
+  ACTIVE
+  EXPIRED
+}
+
+enum AudienceType {
+  ALL_CITIZENS
+  RESCUE_AGENTS
+}
+
+enum OfficerStatus {
+  ON_DUTY
+  OFF_DUTY
+  RESPONDING
+}
+
+enum ShiftType {
+  DAY
+  NIGHT
+}
+
+enum PermissionAction {
+  VIEW_MAP
+  DISPATCH
+  BROADCAST
+  MANAGE_USERS
+  MANAGE_ORGS
+  PUBLISH_NEWS
+  EXPORT_REPORTS
+  SYSTEM_SETTINGS
+}
+
+enum NewsStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ReportType {
+  SUMMARY
+  DETAIL
+  EXCEPTION
+}
+
+enum ReportFormat {
+  PDF
+  EXCEL
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model EmailVerificationToken {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model User {
+  id       String  @id @default(uuid())
+  fullName String
+  badgeId  String  @default("N/A")
+  username String? @unique
+  email    String  @unique
+  password String?
+  phone    String?
+  avatar   String  @default("account-avatar-profile-user.svg")
+  roleId   Int?
+
+  googleId String? @unique
+  appleId  String? @unique
+
+  role                    Role?                    @relation(fields: [roleId], references: [id])
+  status                  UserStatus               @default(ACTIVE)
+  mfaEnabled              Boolean                  @default(false)
+  failedLoginAttempts     Int                      @default(0)
+  lastPasswordChange      DateTime                 @default(now())
+  organizationId          String?
+  organization            Organization?            @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  refreshTokens           RefreshToken[]
+  auditLogs               AuditLog[]
+  newsArticles            News[]                   @relation("NewsAuthor")
+  settingsUpdated         SystemSetting[]          @relation("SettingUpdater")
+  reportsCreated          ReportExport[]           @relation("ReportCreator")
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  passwordResetTokens     PasswordResetToken[]
+  emailVerified           Boolean                  @default(false)
+  emailVerificationTokens EmailVerificationToken[]
+
+  @@map("users")
+}
+
+model Organization {
+  id                  String           @id @default(uuid())
+  name                String
+  type                OrganizationType
+  hotline             String
+  head                String
+  address             String
+  status              OrgStatus        @default(ACTIVE)
+  accessLevel         AccessLevel      @default(STANDARD)
+  gpsLat              Float?
+  gpsLng              Float?
+  activeVehiclesCount Int              @default(0)
+  users               User[]
+  agents              Agent[]
+  officers            Officer[]
+  stations            Station[]
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  @@map("organizations")
+}
+
+model Agent {
+  id             String           @id @default(uuid())
+  name           String
+  role           String
+  type           OrganizationType
+  phone          String
+  status         AgentStatus      @default(AVAILABLE)
+  vehicleNo      String?
+  vehicleType    String?
+  organizationId String?
+  organization   Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  lat            Float?
+  lng            Float?
+  sosAlerts      SOSAlert[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@map("agents")
+}
+
+model Officer {
+  id            String        @id @default(uuid())
+  agencyId      String?
+  agency        Organization? @relation(fields: [agencyId], references: [id], onDelete: SetNull)
+  nameKh        String
+  nameEn        String
+  title         String
+  workPhone     String // Public
+  personalPhone String? // Internal Only
+  photoUrl      String?
+  languages     Json?
+  status        OfficerStatus @default(ON_DUTY)
+  shift         ShiftType     @default(DAY)
+  assignedSos   String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@map("officers")
+}
+
+model Station {
+  id             String           @id @default(uuid())
+  name           String
+  type           OrganizationType
+  province       String
+  district       String
+  address        String
+  hotline        String
+  lat            Float?
+  lng            Float?
+  capacity       Int              @default(0)
+  organizationId String?
+  organization   Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  status         OrgStatus        @default(ACTIVE)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@map("stations")
+}
+
+model SOSAlert {
+  id                String        @id @default(uuid())
+  citizenName       String
+  phone             String
+  type              EmergencyType
+  district          String
+  province          String        @default("Phnom Penh")
+  lat               Float
+  lng               Float
+  reportText        String
+  hasMedia          Boolean       @default(false)
+  mediaUrls         Json?
+  status            SOSStatus     @default(PENDING)
+  assignedAgentId   String?
+  assignedAgent     Agent?        @relation(fields: [assignedAgentId], references: [id], onDelete: SetNull)
+  assignedAgentName String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  resolvedAt        DateTime?
+
+  @@map("sos_alerts")
+}
+
+model CitizenReport {
+  id          String        @id @default(uuid())
+  citizenName String
+  phone       String?
+  type        EmergencyType
+  title       String
+  description String
+  province    String
+  district    String
+  lat         Float?
+  lng         Float?
+  mediaUrls   Json?
+  status      ReportStatus  @default(PENDING)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("citizen_reports")
+}
+
+model Broadcast {
+  id              String          @id @default(uuid())
+  title           String
+  message         String
+  level           BroadcastLevel  @default(WARNING)
+  type            BroadcastType   @default(SECURITY)
+  targetAudience  AudienceType    @default(ALL_CITIZENS)
+  status          BroadcastStatus @default(ACTIVE)
+  targetProvinces Json?
+  reachCount      Int             @default(0)
+  expiresAt       DateTime?
+  sentByUserId    String?
+  sentByName      String?
+  createdAt       DateTime        @default(now())
+
+  @@map("broadcasts")
+}
+
+model News {
+  id          String     @id @default(uuid())
+  title       String
+  slug        String     @unique
+  summary     String?
+  content     String
+  coverUrl    String?
+  category    String     @default("General")
+  status      NewsStatus @default(PUBLISHED)
+  authorId    String?
+  author      User?      @relation("NewsAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  publishedAt DateTime   @default(now())
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@map("news")
+}
+
+model SystemSetting {
+  id              String   @id @default(uuid())
+  key             String   @unique
+  value           String
+  description     String?
+  isEncrypted     Boolean  @default(false)
+  updatedByUserId String?
+  updatedByUser   User?    @relation("SettingUpdater", fields: [updatedByUserId], references: [id], onDelete: SetNull)
+  updatedAt       DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+model RolePermission {
+  id String @id @default(uuid())
+
+  roleId Int?
+
+  role Role? @relation(fields: [roleId], references: [id])
+
+  action    PermissionAction
+  isGranted Boolean          @default(true)
+
+  @@unique([roleId, action])
+  @@map("role_permissions")
+}
+
+model ReportExport {
+  id            String       @id @default(uuid())
+  title         String
+  reportType    ReportType   @default(SUMMARY)
+  format        ReportFormat @default(PDF)
+  fileUrl       String?
+  fileSize      String?
+  recordCount   Int          @default(0)
+  resolvedCount Int          @default(0)
+  delayedCount  Int          @default(0)
+  createdById   String?
+  createdBy     User?        @relation("ReportCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt     DateTime     @default(now())
+
+  @@map("report_exports")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  time      String
+  event     String
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userName  String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  token     String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
+
+  @@map("refresh_tokens")
+}
