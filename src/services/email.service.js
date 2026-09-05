@@ -4,9 +4,9 @@ const nodemailer = require("nodemailer");
 dns.setDefaultResultOrder("ipv4first");
 
 const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: 465,
-    secure: true,
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: Number(process.env.SMTP_PORT || 465),
+    secure: Number(process.env.SMTP_PORT || 465) === 465,
 
     auth: {
         user: process.env.SMTP_USER,
@@ -17,6 +17,10 @@ const transporter = nodemailer.createTransport({
     greetingTimeout: 30000,
     socketTimeout: 30000,
 });
+
+transporter.verify()
+    .then(() => console.log("Gmail SMTP is ready"))
+    .catch((error) => console.error("Gmail SMTP configuration error:", error.message));
 const sendPasswordResetEmail = async (email, resetUrl) => {
     await transporter.sendMail({
         from: `"Smart City SOS Cambodia" <${process.env.SMTP_USER}>`,

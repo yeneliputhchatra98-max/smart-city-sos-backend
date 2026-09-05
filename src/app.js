@@ -73,7 +73,18 @@ const allowedOrigins = [
 ];
 
 const corsOptions = {
-    origin: "http://localhost:3000",
+    origin: (origin, callback) => {
+        // Allow non-browser requests such as Postman and server-to-server calls.
+        if (!origin) {
+            return callback(null, true);
+        }
+
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+
+        return callback(new Error(`CORS blocked: ${origin}`));
+    },
 
     methods: [
         "GET",

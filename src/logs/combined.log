@@ -13600,3 +13600,4 @@ Please make sure your database server is running at `localhost:3306`.
 2026-09-05 23:58:42 [INFO] Received SIGINT, starting graceful shutdown...
 2026-09-05 23:58:42 [INFO] HTTP server closed
 2026-09-05 23:58:42 [INFO] Database connections closed
+2026-09-06 01:17:13 [INFO] 📚 Swagger docs available at /api-docs
