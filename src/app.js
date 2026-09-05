@@ -24,7 +24,8 @@ const { requestLogger } = require("./middleware/logger");
 // Initialize Express App
 // =====================================================
 const app = express();
-
+// Railway reverse proxy
+app.set("trust proxy", 1);
 // =====================================================
 // Ensure Log Directory Exists
 // =====================================================
