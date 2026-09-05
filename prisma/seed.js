@@ -13,34 +13,51 @@ async function main() {
     // Roles
     // ==========================
 
-    const adminRole = await prisma.role.findUnique({
-    where: {
-        name: "ADMIN"
-    }
+    // ==========================
+// Roles
+// ==========================
+
+const adminRole = await prisma.role.upsert({
+  where: {
+    name: "ADMIN"
+  },
+  update: {},
+  create: {
+    name: "ADMIN"
+  }
 });
 
-const operatorRole = await prisma.role.findUnique({
-    where: {
-        name: "OPERATOR"
-    }
+const operatorRole = await prisma.role.upsert({
+  where: {
+    name: "OPERATOR"
+  },
+  update: {},
+  create: {
+    name: "OPERATOR"
+  }
 });
 
-const agentRole = await prisma.role.findUnique({
-    where: {
-        name: "AGENT"
-    }
+const agentRole = await prisma.role.upsert({
+  where: {
+    name: "AGENT"
+  },
+  update: {},
+  create: {
+    name: "AGENT"
+  }
 });
 
-const citizenRole = await prisma.role.findUnique({
-    where: {
-        name: "CITIZEN"
-    }
+const citizenRole = await prisma.role.upsert({
+  where: {
+    name: "CITIZEN"
+  },
+  update: {},
+  create: {
+    name: "CITIZEN"
+  }
 });
 
-
-if (!adminRole || !operatorRole || !agentRole || !citizenRole) {
-    throw new Error("Roles missing");
-}
+console.log("✅ Roles created");
 
 
     // ==========================
