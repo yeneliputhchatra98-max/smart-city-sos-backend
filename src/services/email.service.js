@@ -3,7 +3,9 @@ const nodemailer = require("nodemailer");
 
 dns.setDefaultResultOrder("ipv4first");
 
-const smtpPort = Number(process.env.SMTP_PORT || 587);
+// Gmail submission uses STARTTLS on port 587. Do not allow an old Railway
+// SMTP_PORT=465 variable to route this service through the blocked SMTPS port.
+const smtpPort = 587;
 
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || "smtp.gmail.com",
