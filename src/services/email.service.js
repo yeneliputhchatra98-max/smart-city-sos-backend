@@ -6,6 +6,7 @@ dns.setDefaultResultOrder("ipv4first");
 const smtpPort = Number.parseInt(process.env.SMTP_PORT || "587", 10);
 const smtpSecure = process.env.SMTP_SECURE === "true" || smtpPort === 465;
 const emailFrom = process.env.EMAIL_FROM || process.env.SMTP_USER;
+const emailProvider = (process.env.EMAIL_PROVIDER || "resend").toLowerCase();
 
 const smtpTransporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || "smtp.gmail.com",
@@ -25,7 +26,15 @@ const smtpTransporter = nodemailer.createTransport({
 });
 
 const sendEmail = async ({ to, subject, html }) => {
-    if (process.env.RESEND_API_KEY) {
+    if (emailProvider === "resend") {
+        if (!process.env.RESEND_API_KEY) {
+            throw new Error("RESEND_API_KEY is not configured");
+        }
+
+        if (!process.env.EMAIL_FROM) {
+            throw new Error("EMAIL_FROM is not configured");
+        }
+
         const response = await fetch("https://api.resend.com/emails", {
             method: "POST",
             headers: {
@@ -46,6 +55,10 @@ const sendEmail = async ({ to, subject, html }) => {
         }
 
         return;
+    }
+
+    if (emailProvider !== "smtp") {
+        throw new Error("EMAIL_PROVIDER must be either resend or smtp");
     }
 
     await smtpTransporter.sendMail({

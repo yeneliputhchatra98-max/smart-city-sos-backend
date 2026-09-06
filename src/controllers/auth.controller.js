@@ -244,23 +244,26 @@ const login = async (req, res, next) => {
 
     } catch (error) {
 
-    console.log("CONTROLLER ERROR:");
-    console.log("message:", error.message);
-    console.log("code:", error.code);
-    console.log("status:", error.statusCode);
+        console.log("CONTROLLER ERROR:");
+        console.log("message:", error.message);
+        console.log("code:", error.code);
+        console.log("status:", error.statusCode);
 
-    if (error.code === "EMAIL_NOT_VERIFIED") {
-        return next(error);
+        if (
+            error.code === "EMAIL_NOT_VERIFIED" ||
+            error.code === "EMAIL_DELIVERY_UNAVAILABLE"
+        ) {
+            return next(error);
+        }
+
+        return next(
+            new AppError(
+                "Invalid email or password",
+                401,
+                "INVALID_CREDENTIALS"
+            )
+        );
     }
-
-    return next(
-        new AppError(
-            "Invalid email or password",
-            401,
-            "INVALID_CREDENTIALS"
-        )
-    );
-}
 };
 
 module.exports = {
@@ -290,10 +293,10 @@ const refresh = async (req, res, next) => {
             success: true,
             message: "Token refreshed successfully",
             data: {
-    token: result.token,
-    refreshToken: result.refreshToken,
-    expiresIn: result.expiresIn || "24h",
-},
+                token: result.token,
+                refreshToken: result.refreshToken,
+                expiresIn: result.expiresIn || "24h",
+            },
             timestamp: new Date().toISOString(),
         });
 

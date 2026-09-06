@@ -209,6 +209,11 @@ const login = async (email, password, ipAddress = null) => {
                 logger.warn(
                     `Automatic verification email failed for ${emailClean}: ${error.message}`
                 );
+                throw new AppError(
+                    "Unable to send verification email. Please try again later.",
+                    503,
+                    "EMAIL_DELIVERY_UNAVAILABLE"
+                );
             }
 
             throw new AppError(
