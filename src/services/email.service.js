@@ -6,7 +6,10 @@ dns.setDefaultResultOrder("ipv4first");
 const smtpPort = Number.parseInt(process.env.SMTP_PORT || "587", 10);
 const smtpSecure = process.env.SMTP_SECURE === "true" || smtpPort === 465;
 const emailFrom = process.env.EMAIL_FROM || process.env.SMTP_USER;
-const emailProvider = (process.env.EMAIL_PROVIDER || "resend").toLowerCase();
+const emailProvider = (
+    process.env.EMAIL_PROVIDER ||
+    (process.env.RESEND_API_KEY ? "resend" : "smtp")
+).toLowerCase();
 
 const smtpTransporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || "smtp.gmail.com",
