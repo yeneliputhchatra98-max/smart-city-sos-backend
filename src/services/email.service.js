@@ -5,8 +5,9 @@ dns.setDefaultResultOrder("ipv4first");
 
 const smtpPort = Number.parseInt(process.env.SMTP_PORT || "587", 10);
 const smtpSecure = process.env.SMTP_SECURE === "true" || smtpPort === 465;
+const emailFrom = process.env.EMAIL_FROM || process.env.SMTP_USER;
 
-const transporter = nodemailer.createTransport({
+const smtpTransporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || "smtp.gmail.com",
     port: smtpPort,
     secure: smtpSecure,
@@ -23,12 +24,40 @@ const transporter = nodemailer.createTransport({
     socketTimeout: Number.parseInt(process.env.SMTP_SOCKET_TIMEOUT || "10000", 10),
 });
 
-transporter.verify()
-    .then(() => console.log("Gmail SMTP is ready"))
-    .catch((error) => console.error("Gmail SMTP configuration error:", error.message));
+const sendEmail = async ({ to, subject, html }) => {
+    if (process.env.RESEND_API_KEY) {
+        const response = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                from: emailFrom,
+                to: [to],
+                subject,
+                html,
+            }),
+        });
+
+        if (!response.ok) {
+            const details = await response.text();
+            throw new Error(`Resend API ${response.status}: ${details}`);
+        }
+
+        return;
+    }
+
+    await smtpTransporter.sendMail({
+        from: `"Smart City SOS Cambodia" <${emailFrom}>`,
+        to,
+        subject,
+        html,
+    });
+};
+
 const sendPasswordResetEmail = async (email, resetUrl) => {
-    await transporter.sendMail({
-        from: `"Smart City SOS Cambodia" <${process.env.SMTP_USER}>`,
+    await sendEmail({
         to: email,
         subject: "🔐 Reset Your Smart City SOS Password",
 
@@ -266,8 +295,7 @@ const sendPasswordResetEmail = async (email, resetUrl) => {
     });
 };
 const sendVerificationEmail = async (email, verifyUrl) => {
-    await transporter.sendMail({
-        from: `"Smart City SOS Cambodia" <${process.env.SMTP_USER}>`,
+    await sendEmail({
         to: email,
         subject: "📧 Verify Your Smart City SOS Cambodia Email",
         html: `
