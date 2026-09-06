@@ -1,98 +1,19 @@
-const dns = require("dns");
-const net = require("net");
 const nodemailer = require("nodemailer");
 
-dns.setDefaultResultOrder("ipv4first");
+const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT),
+    secure: false,
 
-const smtpPort = Number.parseInt(process.env.SMTP_PORT || "587", 10);
-const smtpSecure = process.env.SMTP_SECURE === "true" || smtpPort === 465;
-const smtpHostname = process.env.SMTP_HOST || "smtp.gmail.com";
-const emailFrom = process.env.EMAIL_FROM || process.env.SMTP_USER;
-const emailProvider = (
-    process.env.EMAIL_PROVIDER ||
-    (process.env.RESEND_API_KEY ? "resend" : "smtp")
-).toLowerCase();
-
-let smtpTransporterPromise;
-
-const getSmtpTransporter = async () => {
-    if (!smtpTransporterPromise) {
-        smtpTransporterPromise = (async () => {
-            const smtpAddress = net.isIPv4(smtpHostname)
-                ? smtpHostname
-                : (await dns.promises.resolve4(smtpHostname))[0];
-
-            return nodemailer.createTransport({
-                host: smtpAddress,
-                port: smtpPort,
-                secure: smtpSecure,
-                requireTLS: process.env.SMTP_REQUIRE_TLS === "true" || (!smtpSecure && smtpPort === 587),
-                family: 4,
-                tls: {
-                    servername: smtpHostname,
-                },
-                auth: {
-                    user: process.env.SMTP_USER,
-                    pass: process.env.SMTP_PASS,
-                },
-                connectionTimeout: Number.parseInt(process.env.SMTP_CONNECTION_TIMEOUT || "10000", 10),
-                greetingTimeout: Number.parseInt(process.env.SMTP_GREETING_TIMEOUT || "10000", 10),
-                socketTimeout: Number.parseInt(process.env.SMTP_SOCKET_TIMEOUT || "10000", 10),
-            });
-        })();
-    }
-
-    return smtpTransporterPromise;
-};
-
-const sendEmail = async ({ to, subject, html }) => {
-    if (emailProvider === "resend") {
-        if (!process.env.RESEND_API_KEY) {
-            throw new Error("RESEND_API_KEY is not configured");
-        }
-
-        if (!process.env.EMAIL_FROM) {
-            throw new Error("EMAIL_FROM is not configured");
-        }
-
-        const response = await fetch("https://api.resend.com/emails", {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                from: emailFrom,
-                to: [to],
-                subject,
-                html,
-            }),
-        });
-
-        if (!response.ok) {
-            const details = await response.text();
-            throw new Error(`Resend API ${response.status}: ${details}`);
-        }
-
-        return;
-    }
-
-    if (emailProvider !== "smtp") {
-        throw new Error("EMAIL_PROVIDER must be either resend or smtp");
-    }
-
-    const smtpTransporter = await getSmtpTransporter();
-
-    await smtpTransporter.sendMail({
-        from: `"Smart City SOS Cambodia" <${emailFrom}>`,
-        to,
-        subject,
-        html,
-    });
-};
+    auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+    },
+});
 
 const sendPasswordResetEmail = async (email, resetUrl) => {
-    await sendEmail({
+    await transporter.sendMail({
+        from: `"Smart City SOS Cambodia" <${process.env.SMTP_USER}>`,
         to: email,
         subject: "🔐 Reset Your Smart City SOS Password",
 
@@ -330,7 +251,8 @@ const sendPasswordResetEmail = async (email, resetUrl) => {
     });
 };
 const sendVerificationEmail = async (email, verifyUrl) => {
-    await sendEmail({
+    await transporter.sendMail({
+        from: `"Smart City SOS Cambodia" <${process.env.SMTP_USER}>`,
         to: email,
         subject: "📧 Verify Your Smart City SOS Cambodia Email",
         html: `

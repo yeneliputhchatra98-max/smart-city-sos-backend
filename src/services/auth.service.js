@@ -30,7 +30,7 @@ const {
 const ROLE_MAP = {
     1: "ADMIN",
     2: "OPERATOR",
-    4: "AGENT",
+    4: "RESCUE_AGENT",
     5: "CITIZEN"
 };
 
@@ -141,10 +141,34 @@ const register = async (data) => {
                 emailVerified: false
             }
         });
+        const rawToken = crypto.randomBytes(32).toString("hex");
+
+        const tokenHash = crypto
+            .createHash("sha256")
+            .update(rawToken)
+            .digest("hex");
+
+        const expiresAt = new Date(
+            Date.now() + 24 * 60 * 60 * 1000
+        );
+
+        await prisma.emailVerificationToken.create({
+            data: {
+                userId: user.id,
+                tokenHash,
+                expiresAt
+            }
+        });
         logger.info(
             `New user registered: ${user.email}`
         );
-        await createAndSendVerificationEmail(user);
+        const verifyUrl =
+            `${process.env.FRONTEND_URL}/verify-email?token=${rawToken}`;
+
+        await sendVerificationEmail(
+            user.email,
+            verifyUrl
+        );
         return {
             userId: user.id,
             email: user.email,
@@ -198,26 +222,8 @@ const login = async (email, password, ipAddress = null) => {
         console.log("EMAIL VERIFIED:", user.emailVerified);
         // Check email verification
         if (!user.emailVerified) {
-            let verificationMessage =
-                "Please verify your email before logging in.";
-
-            try {
-                await createAndSendVerificationEmail(user);
-                verificationMessage =
-                    "Please verify your email. A verification email has been sent.";
-            } catch (error) {
-                logger.warn(
-                    `Automatic verification email failed for ${emailClean}: ${error.message}`
-                );
-                throw new AppError(
-                    "Unable to send verification email. Please try again later.",
-                    503,
-                    "EMAIL_DELIVERY_UNAVAILABLE"
-                );
-            }
-
             throw new AppError(
-                verificationMessage,
+                "Please verify your email before logging in.",
                 403,
                 "EMAIL_NOT_VERIFIED"
             );
@@ -232,19 +238,19 @@ const login = async (email, password, ipAddress = null) => {
         });
 
         // Generate refresh token
-        const refreshToken = crypto.randomBytes(64).toString("hex");
+       const refreshToken = crypto.randomBytes(64).toString("hex");
 
-        const refreshExpiresAt = new Date(
-            Date.now() + 7 * 24 * 60 * 60 * 1000
-        );
+const refreshExpiresAt = new Date(
+    Date.now() + 7 * 24 * 60 * 60 * 1000
+);
 
-        await prisma.refreshToken.create({
-            data: {
-                token: refreshToken,
-                userId: user.id,
-                expiresAt: refreshExpiresAt,
-            },
-        });
+await prisma.refreshToken.create({
+    data: {
+        token: refreshToken,
+        userId: user.id,
+        expiresAt: refreshExpiresAt,
+    },
+});
 
         // Remove password
         const {
@@ -1013,15 +1019,45 @@ const resendVerification = async (email) => {
             );
         }
 
-        try {
-            await createAndSendVerificationEmail(user);
-        } catch (error) {
-            throw new AppError(
-                "Unable to send verification email. Please try again later.",
-                503,
-                "EMAIL_DELIVERY_UNAVAILABLE"
-            );
-        }
+        // Delete old verification tokens
+        await prisma.emailVerificationToken.deleteMany({
+            where: {
+                userId: user.id,
+            },
+        });
+
+        // Generate new token
+        const rawToken = crypto
+            .randomBytes(32)
+            .toString("hex");
+
+        const tokenHash = crypto
+            .createHash("sha256")
+            .update(rawToken)
+            .digest("hex");
+
+        // Token expires in 24 hours
+        const expiresAt = new Date(
+            Date.now() + 24 * 60 * 60 * 1000
+        );
+
+        await prisma.emailVerificationToken.create({
+            data: {
+                userId: user.id,
+                tokenHash,
+                expiresAt,
+            },
+        });
+
+        // Verification URL
+        const verifyUrl =
+            `${process.env.FRONTEND_URL}/verify-email?token=${rawToken}`;
+
+        // Send email
+        await sendVerificationEmail(
+            user.email,
+            verifyUrl
+        );
 
         logger.info(
             `Verification email resent to: ${user.email}`
@@ -1360,35 +1396,4 @@ module.exports = {
     // Email Verification
     verifyEmail,
     resendVerification,
-};
-
-const createAndSendVerificationEmail = async (user) => {
-    const rawToken = crypto.randomBytes(32).toString("hex");
-    const tokenHash = crypto
-        .createHash("sha256")
-        .update(rawToken)
-        .digest("hex");
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    const verifyUrl =
-        `${process.env.FRONTEND_URL}/verify-email?token=${rawToken}`;
-
-    await prisma.emailVerificationToken.create({
-        data: { userId: user.id, tokenHash, expiresAt },
-    });
-
-    try {
-        await sendVerificationEmail(user.email, verifyUrl);
-    } catch (error) {
-        await prisma.emailVerificationToken.deleteMany({
-            where: { userId: user.id, tokenHash },
-        });
-        throw error;
-    }
-
-    await prisma.emailVerificationToken.deleteMany({
-        where: {
-            userId: user.id,
-            tokenHash: { not: tokenHash },
-        },
-    });
 };
