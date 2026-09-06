@@ -238,19 +238,19 @@ const login = async (email, password, ipAddress = null) => {
         });
 
         // Generate refresh token
-       const refreshToken = crypto.randomBytes(64).toString("hex");
+        const refreshToken = crypto.randomBytes(64).toString("hex");
 
-const refreshExpiresAt = new Date(
-    Date.now() + 7 * 24 * 60 * 60 * 1000
-);
+        const refreshExpiresAt = new Date(
+            Date.now() + 7 * 24 * 60 * 60 * 1000
+        );
 
-await prisma.refreshToken.create({
-    data: {
-        token: refreshToken,
-        userId: user.id,
-        expiresAt: refreshExpiresAt,
-    },
-});
+        await prisma.refreshToken.create({
+            data: {
+                token: refreshToken,
+                userId: user.id,
+                expiresAt: refreshExpiresAt,
+            },
+        });
 
         // Remove password
         const {
