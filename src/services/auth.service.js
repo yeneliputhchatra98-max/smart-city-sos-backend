@@ -238,19 +238,19 @@ const login = async (email, password, ipAddress = null) => {
         });
 
         // Generate refresh token
-       const refreshToken = crypto.randomBytes(64).toString("hex");
+        const refreshToken = crypto.randomBytes(64).toString("hex");
 
-const refreshExpiresAt = new Date(
-    Date.now() + 7 * 24 * 60 * 60 * 1000
-);
+        const refreshExpiresAt = new Date(
+            Date.now() + 7 * 24 * 60 * 60 * 1000
+        );
 
-await prisma.refreshToken.create({
-    data: {
-        token: refreshToken,
-        userId: user.id,
-        expiresAt: refreshExpiresAt,
-    },
-});
+        await prisma.refreshToken.create({
+            data: {
+                token: refreshToken,
+                userId: user.id,
+                expiresAt: refreshExpiresAt,
+            },
+        });
 
         // Remove password
         const {
@@ -1019,13 +1019,6 @@ const resendVerification = async (email) => {
             );
         }
 
-        // Delete old verification tokens
-        await prisma.emailVerificationToken.deleteMany({
-            where: {
-                userId: user.id,
-            },
-        });
-
         // Generate new token
         const rawToken = crypto
             .randomBytes(32)
@@ -1041,23 +1034,33 @@ const resendVerification = async (email) => {
             Date.now() + 24 * 60 * 60 * 1000
         );
 
-        await prisma.emailVerificationToken.create({
-            data: {
-                userId: user.id,
-                tokenHash,
-                expiresAt,
-            },
-        });
-
         // Verification URL
         const verifyUrl =
             `${process.env.FRONTEND_URL}/verify-email?token=${rawToken}`;
 
         // Send email
-        await sendVerificationEmail(
-            user.email,
-            verifyUrl
-        );
+        try {
+            await sendVerificationEmail(user.email, verifyUrl);
+        } catch (error) {
+            throw new AppError(
+                "Unable to send verification email. Please try again later.",
+                503,
+                "EMAIL_DELIVERY_UNAVAILABLE"
+            );
+        }
+
+        await prisma.$transaction([
+            prisma.emailVerificationToken.deleteMany({
+                where: { userId: user.id },
+            }),
+            prisma.emailVerificationToken.create({
+                data: {
+                    userId: user.id,
+                    tokenHash,
+                    expiresAt,
+                },
+            }),
+        ]);
 
         logger.info(
             `Verification email resent to: ${user.email}`

@@ -3,15 +3,14 @@ const nodemailer = require("nodemailer");
 
 dns.setDefaultResultOrder("ipv4first");
 
-// Gmail submission uses STARTTLS on port 587. Do not allow an old Railway
-// SMTP_PORT=465 variable to route this service through the blocked SMTPS port.
-const smtpPort = 587;
+const smtpPort = Number.parseInt(process.env.SMTP_PORT || "587", 10);
+const smtpSecure = process.env.SMTP_SECURE === "true" || smtpPort === 465;
 
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || "smtp.gmail.com",
     port: smtpPort,
-    secure: smtpPort === 465,
-    requireTLS: smtpPort === 587,
+    secure: smtpSecure,
+    requireTLS: process.env.SMTP_REQUIRE_TLS === "true" || (!smtpSecure && smtpPort === 587),
     family: 4,
 
     auth: {
@@ -19,9 +18,9 @@ const transporter = nodemailer.createTransport({
         pass: process.env.SMTP_PASS,
     },
 
-    connectionTimeout: 15000,
-    greetingTimeout: 15000,
-    socketTimeout: 15000,
+    connectionTimeout: Number.parseInt(process.env.SMTP_CONNECTION_TIMEOUT || "10000", 10),
+    greetingTimeout: Number.parseInt(process.env.SMTP_GREETING_TIMEOUT || "10000", 10),
+    socketTimeout: Number.parseInt(process.env.SMTP_SOCKET_TIMEOUT || "10000", 10),
 });
 
 transporter.verify()
