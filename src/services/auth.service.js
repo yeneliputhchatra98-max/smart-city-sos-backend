@@ -220,14 +220,15 @@ const login = async (email, password, ipAddress = null) => {
             throw new Error("Invalid credentials");
         }
         console.log("EMAIL VERIFIED:", user.emailVerified);
-        // Check email verification
-        if (!user.emailVerified) {
-            throw new AppError(
-                "Please verify your email before logging in.",
-                403,
-                "EMAIL_NOT_VERIFIED"
-            );
-        }
+        // Email verification is temporarily disabled.
+        // // Check email verification
+        // if (!user.emailVerified) {
+        //     throw new AppError(
+        //         "Please verify your email before logging in.",
+        //         403,
+        //         "EMAIL_NOT_VERIFIED"
+        //     );
+        // }
 
         // Generate access token
         const token = generateToken({
