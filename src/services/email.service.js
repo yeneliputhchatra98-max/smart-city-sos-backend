@@ -5,15 +5,27 @@ const transporter = nodemailer.createTransport({
     port: 587,
     secure: false,
     requireTLS: true,
+
+    // Force IPv4
+    family: 4,
+
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
     },
+
     connectionTimeout: 30000,
     greetingTimeout: 30000,
     socketTimeout: 30000,
 });
-
+console.log("SMTP CONFIG:", {
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    requireTLS: true,
+    family: 4,
+    user: process.env.SMTP_USER,
+});
 const sendPasswordResetEmail = async (email, resetUrl) => {
     await transporter.sendMail({
         from: `"Smart City SOS Cambodia" <${process.env.SMTP_USER}>`,
