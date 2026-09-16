@@ -221,14 +221,14 @@ const login = async (email, password, ipAddress = null) => {
         }
         console.log("EMAIL VERIFIED:", user.emailVerified);
         // Email verification is temporarily disabled.
-        // // Check email verification
-        // if (!user.emailVerified) {
-        //     throw new AppError(
-        //         "Please verify your email before logging in.",
-        //         403,
-        //         "EMAIL_NOT_VERIFIED"
-        //     );
-        // }
+        // Check email verification
+        if (!user.emailVerified) {
+            throw new AppError(
+                "Please verify your email before logging in.",
+                403,
+                "EMAIL_NOT_VERIFIED"
+            );
+        }
 
         // Generate access token
         const token = generateToken({
