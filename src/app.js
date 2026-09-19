@@ -8,369 +8,159 @@ const cookieParser = require("cookie-parser");
 const path = require("path");
 const fs = require("fs");
 
-// =====================================================
-// Load Environment Variables
-// =====================================================
+// --- Load Environment ---
 require("dotenv").config();
 
-// =====================================================
-// Utils
-// =====================================================
+// --- Utils ---
 const logger = require("./utils/logger");
 const { errorHandler } = require("./middleware/errorHandler");
 const { requestLogger } = require("./middleware/logger");
 
-// =====================================================
-// Initialize Express App
-// =====================================================
+// --- Initialize App ---
 const app = express();
-// Railway reverse proxy
-app.set("trust proxy", 1);
-// =====================================================
-// Ensure Log Directory Exists
-// =====================================================
-const logDir = path.join(__dirname, "logs");
 
+// --- Ensure Log Directory Exists ---
+const logDir = path.join(__dirname, "logs");
 if (!fs.existsSync(logDir)) {
     fs.mkdirSync(logDir, { recursive: true });
 }
 
-// =====================================================
-// Security Middleware - Helmet
-// =====================================================
-app.use(
-    helmet({
-        contentSecurityPolicy: {
-            directives: {
-                defaultSrc: ["'self'"],
-                scriptSrc: ["'self'", "'unsafe-inline'"],
-                styleSrc: ["'self'", "'unsafe-inline'"],
-                imgSrc: ["'self'", "data:", "https:"],
-            },
+// --- Security Middleware ---
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", "data:", "https:"],
         },
+    },
+    hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true
+    }
+}));
 
-        hsts: {
-            maxAge: 31536000,
-            includeSubDomains: true,
-            preload: true,
-        },
-    })
-);
-
-// =====================================================
-// CORS
-// =====================================================
-
-// Frontend URLs that are allowed to access this backend.
-// Set CORS_ORIGINS in Railway as a comma-separated list.
-const allowedOrigins = [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    ...(process.env.CORS_ORIGINS || process.env.CORS_ORIGIN || "")
-        .split(",")
-        .map((origin) => origin.trim())
-        .filter(Boolean),
-];
-
+// --- CORS Configuration ---
 const corsOptions = {
     origin: (origin, callback) => {
-        // Allow non-browser requests such as Postman and server-to-server calls.
-        if (!origin) {
+        if (!origin) return callback(null, true);
+        const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",") : [];
+        if (
+            allowedOrigins.includes(origin) ||
+            allowedOrigins.includes("*") ||
+            process.env.NODE_ENV === "development"
+        ) {
             return callback(null, true);
         }
-
-        if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-        }
-
-        return callback(new Error(`CORS blocked: ${origin}`));
+        return callback(new Error("Not allowed by CORS"));
     },
-
-    methods: [
-        "GET",
-        "POST",
-        "PUT",
-        "PATCH",
-        "DELETE",
-        "OPTIONS",
-    ],
-
-    allowedHeaders: [
-        "Content-Type",
-        "Authorization",
-        "X-Requested-With",
-        "Accept",
-        "Origin",
-    ],
-
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+    exposedHeaders: ["X-Total-Count", "X-RateLimit-Limit", "X-RateLimit-Remaining"],
     credentials: true,
-
-    optionsSuccessStatus: 204,
-
-    maxAge: 86400,
+    maxAge: 86400 // 24 hours
 };
-
 app.use(cors(corsOptions));
 
-// =====================================================
-// Compression
-// =====================================================
+// --- Compression ---
 app.use(compression());
 
-// =====================================================
-// Body Parsers
-// =====================================================
-app.use(
-    express.json({
-        limit: "10mb",
-    })
-);
+// --- Body Parsers ---
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(cookieParser(process.env.COOKIE_SECRET || "cookie-secret"));
 
-app.use(
-    express.urlencoded({
-        extended: true,
-        limit: "10mb",
-    })
-);
+// --- Static Files ---
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/public", express.static(path.join(__dirname, "public")));
 
-// =====================================================
-// Cookie Parser
-// =====================================================
-app.use(
-    cookieParser(
-        process.env.COOKIE_SECRET || "cookie-secret"
-    )
-);
-
-// =====================================================
-// Static Files
-// =====================================================
-app.use(
-    "/uploads",
-    express.static(
-        path.join(__dirname, "uploads")
-    )
-);
-
-app.use(
-    "/public",
-    express.static(
-        path.join(__dirname, "public")
-    )
-);
-
-// =====================================================
-// Request Logging
-// =====================================================
+// --- Request Logging ---
 if (process.env.NODE_ENV === "development") {
     app.use(morgan("dev"));
 } else {
+    // Create write stream for access logs
     const accessLogStream = fs.createWriteStream(
         path.join(logDir, "access.log"),
-        {
-            flags: "a",
-        }
+        { flags: "a" }
     );
-
-    app.use(
-        morgan("combined", {
-            stream: accessLogStream,
-        })
-    );
+    app.use(morgan("combined", { stream: accessLogStream }));
 }
 
-// =====================================================
-// Global Rate Limiting
-// =====================================================
+// --- Global Rate Limiting ---
 const globalLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-
-    max: 1000,
-
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 1000, // 1000 requests per window
     standardHeaders: true,
-
     legacyHeaders: false,
-
     message: {
         success: false,
-        message:
-            "Too many requests, please try again later",
-        code: "RATE_LIMITED",
+        message: "Too many requests, please try again later",
+        code: "RATE_LIMITED"
     },
-
     skip: (req) => {
-        return (
-            req.path === "/health" ||
-            req.path === "/ping"
-        );
-    },
+        // Skip rate limiting for health checks
+        return req.path === "/health" || req.path === "/ping";
+    }
 });
-
 app.use("/api", globalLimiter);
 
-// =====================================================
-// Custom Request Logger
-// =====================================================
+// --- Custom Request Logger ---
 app.use(requestLogger);
 
-// =====================================================
-// Health Check
-// =====================================================
+// --- Health Check Endpoints ---
 app.get("/health", (req, res) => {
     res.status(200).json({
         status: "healthy",
-
         uptime: process.uptime(),
-
         timestamp: new Date().toISOString(),
-
-        environment:
-            process.env.NODE_ENV || "development",
-
+        environment: process.env.NODE_ENV || "development",
         memory: process.memoryUsage(),
-
-        version:
-            process.env.npm_package_version || "1.0.0",
+        version: process.env.npm_package_version || "1.0.0"
     });
 });
 
-// =====================================================
-// Ping
-// =====================================================
 app.get("/ping", (req, res) => {
-    res.status(200).json({
-        message: "pong",
-    });
+    res.status(200).json({ message: "pong" });
 });
 
-// =====================================================
-// API Routes
-// =====================================================
+// --- API Routes ---
+app.use("/api/auth", require("./routes/auth.routes"));
+app.use("/api/users", require("./routes/user.routes"));
+app.use("/api/items", require("./routes/item.routes"));
+app.use("/api/sos", require("./routes/sos.routes"));
+app.use("/api/orgs", require("./routes/org.routes"));
+app.use("/api/stations", require("./routes/station.routes"));
+app.use("/api/agents", require("./routes/agent.routes"));
+app.use("/api/officers", require("./routes/officer.routes"));
+app.use("/api/broadcasts", require("./routes/broadcast.routes"));
+app.use("/api/audit-logs", require("./routes/audit.routes"));
+app.use("/api/news", require("./routes/news.routes"));
+app.use("/api/settings", require("./routes/setting.routes"));
+app.use("/api/roles-permissions", require("./routes/permission.routes"));
+app.use("/api/reports", require("./routes/report.routes"));
 
-// Authentication
-app.use(
-    "/api/auth",
-    require("./routes/auth.routes")
-);
-
-// Users
-app.use(
-    "/api/users",
-    require("./routes/user.routes")
-);
-
-// Items
-app.use(
-    "/api/items",
-    require("./routes/item.routes")
-);
-
-// SOS
-app.use(
-    "/api/sos",
-    require("./routes/sos.routes")
-);
-
-// Organizations
-app.use(
-    "/api/orgs",
-    require("./routes/org.routes")
-);
-
-// Stations
-app.use(
-    "/api/stations",
-    require("./routes/station.routes")
-);
-
-// Rescue Agents
-app.use(
-    "/api/agents",
-    require("./routes/agent.routes")
-);
-
-// Officers
-app.use(
-    "/api/officers",
-    require("./routes/officer.routes")
-);
-
-// Emergency Broadcasts
-app.use(
-    "/api/broadcasts",
-    require("./routes/broadcast.routes")
-);
-
-// Audit Logs
-app.use(
-    "/api/audit-logs",
-    require("./routes/audit.routes")
-);
-
-// News
-app.use(
-    "/api/news",
-    require("./routes/news.routes")
-);
-
-// Settings
-app.use(
-    "/api/settings",
-    require("./routes/setting.routes")
-);
-
-// Roles & Permissions
-app.use(
-    "/api/roles-permissions",
-    require("./routes/permission.routes")
-);
-
-// Reports
-app.use(
-    "/api/reports",
-    require("./routes/report.routes")
-);
-
-// =====================================================
-// Swagger API Documentation
-// =====================================================
+// --- API Documentation (Swagger) ---
 if (process.env.NODE_ENV !== "production") {
     const swaggerUi = require("swagger-ui-express");
-
     const swaggerDocument = require("./swagger.json");
-
-    app.use(
-        "/api-docs",
-        swaggerUi.serve,
-        swaggerUi.setup(swaggerDocument)
-    );
-
-    logger.info(
-        "📚 Swagger docs available at /api-docs"
-    );
+    app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+    logger.info("📚 Swagger docs available at /api-docs");
 }
 
-// =====================================================
-// 404 Handler
-// =====================================================
+// --- 404 Handler ---
 app.use((req, res, next) => {
     res.status(404).json({
         success: false,
-
         message: `Route ${req.method} ${req.path} not found`,
-
         code: "ROUTE_NOT_FOUND",
-
-        timestamp: new Date().toISOString(),
+        timestamp: new Date().toISOString()
     });
 });
 
-// =====================================================
-// Global Error Handler
-// =====================================================
+// --- Global Error Handler ---
 app.use(errorHandler);
 
-// =====================================================
-// Export App
-// =====================================================
+// --- Export App ---
 module.exports = app;

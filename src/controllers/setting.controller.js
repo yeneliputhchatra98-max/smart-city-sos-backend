@@ -1,56 +1,54 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const settingService = require('../services/setting.service');
 
-const DEFAULT_SETTINGS = {
-  systemName: 'Smart City SOS Emergency System',
-  maintenanceMode: 'false',
-  autoDispatch: 'true',
-  sosResponseSlaMins: '5',
-  sessionTimeoutMins: '30',
-  maxFailedLogins: '5',
-  mfaRequiredForAdmin: 'true',
-  smsNotifications: 'true',
-  telegramAlerts: 'true',
-  soundAlerts: 'true',
-  dataRetentionDays: '365',
-  defaultLanguage: 'km',
-};
-
+// GET /api/settings
 exports.getSettings = async (req, res) => {
   try {
-    const settingsList = await prisma.systemSetting.findMany();
-    const result = { ...DEFAULT_SETTINGS };
+    const settings = await settingService.getSettings();
 
-    settingsList.forEach(item => {
-      result[item.key] = item.value;
+    return res.status(200).json({
+      success: true,
+      data: settings,
     });
+  } catch (error) {
+    console.error('Get settings error:', error);
 
-    res.json({ success: true, data: result });
-  } catch (err) {
-    res.json({ success: true, data: DEFAULT_SETTINGS });
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to load system settings',
+    });
   }
 };
 
+// PUT /api/settings
 exports.updateSettings = async (req, res) => {
   try {
     const updates = req.body;
-    if (updates && typeof updates === 'object') {
-      for (const [key, value] of Object.entries(updates)) {
-        const valStr = typeof value === 'object' ? JSON.stringify(value) : String(value);
-        await prisma.systemSetting.upsert({
-          where: { key },
-          update: { value: valStr },
-          create: { key, value: valStr },
-        });
-      }
-    }
-    const settingsList = await prisma.systemSetting.findMany();
-    const result = { ...DEFAULT_SETTINGS };
-    settingsList.forEach(item => {
-      result[item.key] = item.value;
+
+    const updatedByUserId = req.user?.id || null;
+
+    const settings = await settingService.updateSettings(
+      updates,
+      updatedByUserId
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: settings,
+      message: 'Settings updated successfully',
     });
-    res.json({ success: true, data: result, message: 'Settings updated successfully' });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+  } catch (error) {
+    console.error('Update settings error:', error);
+
+    if (error.message === 'Invalid settings data') {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update system settings',
+    });
   }
 };
