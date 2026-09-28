@@ -2,19 +2,22 @@ const sosService = require("../services/sos.service");
 const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
+// sos.controller.js
 const listAlerts = async (req, res) => {
     try {
-        const alerts = await sosService.listAlerts();
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const { search, type, status } = req.query;
+
+        const result = await sosService.listAlerts(page, limit, { search, type, status });
 
         res.json({
             success: true,
-            data: alerts
+            data: result.alerts,
+            pagination: result.pagination,
         });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 

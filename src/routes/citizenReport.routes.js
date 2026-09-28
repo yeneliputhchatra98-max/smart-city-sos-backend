@@ -55,8 +55,9 @@ router.get(
 );
 
 // Update Citizen Report Status
+// ✅ កែពី "/:id/status" → "/:id"
 router.patch(
-    "/:id/status",
+    "/:id",
     validate(updateCitizenReportStatusSchema),
     citizenReportController.updateCitizenReportStatus
 );

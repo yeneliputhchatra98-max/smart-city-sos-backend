@@ -113,3 +113,45 @@ exports.writeAuditLog = async ({
         );
     }
 };
+// =============================
+// Create Audit Log (Manual)
+// =============================
+exports.createAuditLog = async (data, userId = null) => {
+    const { event } = data;
+
+    if (!event) {
+        throw new Error("Event is required");
+    }
+
+    try {
+        const log = await prisma.auditLog.create({
+            data: {
+                time: new Date().toLocaleTimeString("en-US", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: false
+                }),
+                event: event,
+                userName: data.userName || "System",
+                userId: userId || data.userId || null,
+                ipAddress: data.ipAddress || null
+            },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        badgeId: true,
+                        role: true
+                    }
+                }
+            }
+        });
+
+        return log;
+    } catch (err) {
+        console.error("[AuditLog Error]", err.message);
+        throw err;
+    }
+};

@@ -1,5 +1,9 @@
 const Joi = require("joi");
 
+// ==========================================
+// Create Station Validation
+// ==========================================
+
 const createStationSchema = Joi.object({
   name: Joi.string()
     .trim()
@@ -17,20 +21,31 @@ const createStationSchema = Joi.object({
       "any.required": "Station type is required",
     }),
 
-  province: Joi.string()
-    .trim()
+  // Province
+  provinceId: Joi.string()
+    .uuid()
     .required()
     .messages({
-      "string.empty": "Province is required",
+      "string.guid": "Province ID must be a valid UUID",
       "any.required": "Province is required",
     }),
 
-  district: Joi.string()
-    .trim()
+  // District
+  districtId: Joi.string()
+    .uuid()
     .required()
     .messages({
-      "string.empty": "District is required",
+      "string.guid": "District ID must be a valid UUID",
       "any.required": "District is required",
+    }),
+
+  // Commune / Sangkat
+  communeId: Joi.string()
+    .uuid()
+    .required()
+    .messages({
+      "string.guid": "Commune ID must be a valid UUID",
+      "any.required": "Commune/Sangkat is required",
     }),
 
   address: Joi.string()
@@ -49,29 +64,42 @@ const createStationSchema = Joi.object({
       "any.required": "Hotline is required",
     }),
 
-  lat: Joi.number()
-    .min(-90)
-    .max(90)
-    .allow(null),
+  // ✅ កែ — ទទួលទាំង string និង number
+  lat: Joi.alternatives()
+    .try(
+      Joi.number().min(-90).max(90),
+      Joi.string().allow('', null)
+    )
+    .optional(),
 
-  lng: Joi.number()
-    .min(-180)
-    .max(180)
-    .allow(null),
+  // ✅ កែ — ទទួលទាំង string និង number
+  lng: Joi.alternatives()
+    .try(
+      Joi.number().min(-180).max(180),
+      Joi.string().allow('', null)
+    )
+    .optional(),
 
   capacity: Joi.number()
     .integer()
     .min(0)
     .default(0),
 
+  // ✅ កែ — ទទួល empty string
   organizationId: Joi.string()
     .uuid()
-    .allow(null),
+    .allow(null, '')
+    .optional(),
 
   status: Joi.string()
     .valid("ACTIVE", "INACTIVE", "SUSPENDED")
     .default("ACTIVE"),
-});
+
+}).options({ stripUnknown: true });
+
+// ==========================================
+// Update Station Validation
+// ==========================================
 
 const updateStationSchema = Joi.object({
   name: Joi.string().trim(),
@@ -79,35 +107,55 @@ const updateStationSchema = Joi.object({
   type: Joi.string()
     .valid("POLICE", "FIRE", "MEDICAL"),
 
-  province: Joi.string().trim(),
+  provinceId: Joi.string()
+    .uuid(),
 
-  district: Joi.string().trim(),
+  districtId: Joi.string()
+    .uuid(),
+
+  communeId: Joi.string()
+    .uuid(),
 
   address: Joi.string().trim(),
 
   hotline: Joi.string().trim(),
 
-  lat: Joi.number()
-    .min(-90)
-    .max(90)
-    .allow(null),
+  // ✅ កែ — ទទួលទាំង string និង number
+  lat: Joi.alternatives()
+    .try(
+      Joi.number().min(-90).max(90),
+      Joi.string().allow('', null)
+    )
+    .optional(),
 
-  lng: Joi.number()
-    .min(-180)
-    .max(180)
-    .allow(null),
+  // ✅ កែ — ទទួលទាំង string និង number
+  lng: Joi.alternatives()
+    .try(
+      Joi.number().min(-180).max(180),
+      Joi.string().allow('', null)
+    )
+    .optional(),
 
   capacity: Joi.number()
     .integer()
     .min(0),
 
+  // ✅ កែ — ទទួល empty string
   organizationId: Joi.string()
     .uuid()
-    .allow(null),
+    .allow(null, '')
+    .optional(),
 
   status: Joi.string()
     .valid("ACTIVE", "INACTIVE", "SUSPENDED"),
-});
+
+})
+  .min(1)                              // ✅ បន្ថែម
+  .options({ stripUnknown: true });    // ✅ បន្ថែម
+
+// ==========================================
+// Update Station Status Validation
+// ==========================================
 
 const updateStationStatusSchema = Joi.object({
   status: Joi.string()

@@ -135,7 +135,7 @@ const startServer = async () => {
 
 
                 const titleText =
-                    "   🚀  Ratha[Black-Dragon] Server Active";
+                    "   🚀 Travisss Server Active ";
 
 
                 const titlePadding =
@@ -144,7 +144,7 @@ const startServer = async () => {
                         3 +
                         2 +
                         2 +
-                        "Ratha[Black-Dragon] Server Active"
+                        "Travisss Server Active"
                             .length
                     );
 

@@ -158,10 +158,6 @@ const createAlert = async (body, files = [], user) => {
     return alert;
 };
 
-
-module.exports = {
-    createAlert
-};
 // =======================
 // Update Status
 // =======================

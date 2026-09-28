@@ -140,7 +140,9 @@ app.use("/api/news", require("./routes/news.routes"));
 app.use("/api/settings", require("./routes/setting.routes"));
 app.use("/api/roles-permissions", require("./routes/permission.routes"));
 app.use("/api/reports", require("./routes/report.routes"));
-
+app.use("/api/locations", require("./routes/location.routes"));
+app.use("/api/citizen-reports", require("./routes/citizenReport.routes"));
+app.use("/api/stations", require("./routes/station.routes"));
 // --- API Documentation (Swagger) ---
 if (process.env.NODE_ENV !== "production") {
     const swaggerUi = require("swagger-ui-express");

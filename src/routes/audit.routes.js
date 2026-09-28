@@ -7,12 +7,19 @@ const {
     checkRole
 } = require("../middleware/auth.middleware");
 
-// Get Audit Logs
+// ─── Get Audit Logs ──────────────────────────────────────────────────────────
 router.get(
     "/",
     verifyToken,
     checkRole(["ADMIN", "OPERATOR"]),
     auditController.getAuditLogs
+);
+
+// ✅ បន្ថែម POST Route
+router.post(
+    "/",
+    verifyToken,
+    auditController.createAuditLog
 );
 
 module.exports = router;
