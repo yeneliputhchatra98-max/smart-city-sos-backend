@@ -93,7 +93,7 @@ router.post(
     checkRole([
         "ADMIN",
         "OPERATOR",
-        "RESCUE_AGENT"
+        "AGENT"
     ]),
     upload.array("media", 10),
     addMedia

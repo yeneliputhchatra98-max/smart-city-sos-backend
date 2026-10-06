@@ -18,7 +18,7 @@ const {
 
 router.get(
   "/reverse",
-  validateRequest(gpsLocationSchema),
+  validateRequest(gpsLocationSchema, "query"),
   locationController.getLocationFromGPS
 );
 
@@ -37,7 +37,7 @@ router.get(
 
 router.get(
   "/districts",
-  validateRequest(provinceIdSchema),
+  validateRequest(provinceIdSchema, "query"),
   locationController.getDistrictsByProvince
 );
 
@@ -47,7 +47,7 @@ router.get(
 
 router.get(
   "/communes",
-  validateRequest(districtIdSchema),
+  validateRequest(districtIdSchema, "query"),
   locationController.getCommunesByDistrict
 );
 

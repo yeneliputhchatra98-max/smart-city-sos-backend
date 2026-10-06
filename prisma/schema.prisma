@@ -22,10 +22,18 @@ model Role {
   @@map("roles")
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
 enum UserStatus {
   ACTIVE
   BLOCKED
   PENDING_VERIFICATION
+  INACTIVE
+  DELETED
 }
 
 // ─── Organization Type ─────────────────────────────
@@ -116,6 +124,24 @@ enum ShiftType {
   NIGHT
 }
 
+enum VehicleType {
+  FIRE_TRUCK
+  AMBULANCE
+  POLICE_CAR
+  MOTORBIKE
+  RESCUE_BOAT
+  COMMAND_UNIT
+  OTHER
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  ON_DUTY
+  DISPATCHED
+  MAINTENANCE
+  OUT_OF_SERVICE
+}
+
 enum PermissionAction {
   VIEW_MAP
   DISPATCH
@@ -169,6 +195,7 @@ model EmailVerificationToken {
   @@index([userId])
 }
 
+// ─── User (កែ) ──────────────────────────────────────
 model User {
   id       String  @id @default(uuid())
   fullName String
@@ -177,30 +204,46 @@ model User {
   email    String  @unique
   password String?
   phone    String?
-  avatar   String  @default("account-avatar-profile-user.svg")
-  roleId   Int?
+  avatar   String  @default("uploads/avatars/account-avatar-profile-user.svg")
+
+  birthday DateTime?
+  gender   Gender?
+
+  roleId Int?
 
   googleId String? @unique
   appleId  String? @unique
 
-  role                    Role?                    @relation(fields: [roleId], references: [id])
-  status                  UserStatus               @default(ACTIVE)
-  mfaEnabled              Boolean                  @default(false)
-  failedLoginAttempts     Int                      @default(0)
-  lastPasswordChange      DateTime                 @default(now())
-  organizationId          String?
-  organization            Organization?            @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  role                Role?      @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  status              UserStatus @default(ACTIVE)
+  mfaEnabled          Boolean    @default(false)
+  failedLoginAttempts Int        @default(0)
+  lastPasswordChange  DateTime   @default(now())
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
   refreshTokens           RefreshToken[]
+  sessions                Session[]
   auditLogs               AuditLog[]
   newsArticles            News[]                   @relation("NewsAuthor")
   settingsUpdated         SystemSetting[]          @relation("SettingUpdater")
   reportsCreated          ReportExport[]           @relation("ReportCreator")
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
   passwordResetTokens     PasswordResetToken[]
-  emailVerified           Boolean                  @default(false)
   emailVerificationTokens EmailVerificationToken[]
 
+  emailVerified Boolean @default(false)
+
+  // ✅ បន្ថែម soft delete
+  deletedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([deletedAt])
+  @@index([organizationId])
+  @@index([roleId])
+  @@index([status])
   @@map("users")
 }
 
@@ -220,6 +263,7 @@ model Organization {
   agents              Agent[]
   officers            Officer[]
   stations            Station[]
+  vehicles            Vehicle[]
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
 
@@ -227,22 +271,33 @@ model Organization {
 }
 
 model Agent {
-  id             String           @id @default(uuid())
-  name           String
-  role           String
-  type           OrganizationType
-  phone          String
-  status         AgentStatus      @default(AVAILABLE)
-  vehicleNo      String?
-  vehicleType    String?
-  organizationId String?
-  organization   Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  lat            Float?
-  lng            Float?
-  sosAlerts      SOSAlert[]
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  id              String           @id @default(uuid())
+  name            String
+  role            String
+  type            OrganizationType
+  phone           String
+  status          AgentStatus      @default(AVAILABLE)
+  vehicleNo       String?
+  vehicleType     String?
+  
+  // ✅ បន្ថែម station relation
+  stationId       String?
+  station         Station?         @relation(fields: [stationId], references: [id], onDelete: SetNull)
+  
+  organizationId  String?
+  organization    Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
 
+  assignedVehicle Vehicle?         @relation("AgentVehicle")
+  
+  lat             Float?
+  lng             Float?
+  sosAlerts       SOSAlert[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([stationId])           
+  @@index([organizationId])
+  @@index([status])
   @@map("agents")
 }
 
@@ -275,18 +330,23 @@ model Station {
   districtId String
   communeId  String
 
-  province Province @relation(fields: [provinceId], references: [id])
-  district District @relation(fields: [districtId], references: [id])
-  commune  Commune  @relation(fields: [communeId], references: [id])
+  province Province @relation(fields: [provinceId], references: [id], onDelete: Restrict)
+  district District @relation(fields: [districtId], references: [id], onDelete: Restrict)
+  commune  Commune  @relation(fields: [communeId], references: [id], onDelete: Restrict)
 
-  address  String
-  hotline  String
-  lat      Float?
-  lng      Float?
-  capacity Int    @default(0)
+  address             String
+  hotline             String
+  lat                 Float?
+  lng                 Float?
+  capacity            Int              @default(0)
+  activeVehiclesCount Int              @default(0)
 
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  // ✅ បន្ថែម agents & vehicles relation
+  agents   Agent[]
+  vehicles Vehicle[]
 
   status    OrgStatus @default(ACTIVE)
   createdAt DateTime  @default(now())
@@ -295,7 +355,38 @@ model Station {
   @@index([provinceId])
   @@index([districtId])
   @@index([communeId])
+  @@index([organizationId])
   @@map("stations")
+}
+
+model Vehicle {
+  id             String           @id @default(uuid())
+  plateNumber    String           @unique
+  model          String?
+  type           VehicleType      @default(POLICE_CAR)
+  status         VehicleStatus    @default(AVAILABLE)
+  fuelLevel      Int?             @default(100)
+  mileage        Float?           @default(0)
+  lat            Float?
+  lng            Float?
+
+  organizationId String?
+  organization   Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  stationId      String?
+  station        Station?         @relation(fields: [stationId], references: [id], onDelete: SetNull)
+
+  assignedAgentId String?         @unique
+  assignedAgent   Agent?          @relation("AgentVehicle", fields: [assignedAgentId], references: [id], onDelete: SetNull)
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([organizationId])
+  @@index([stationId])
+  @@index([status])
+  @@index([type])
+  @@map("vehicles")
 }
 
 model Province {
@@ -438,12 +529,12 @@ model SystemSetting {
   @@map("system_settings")
 }
 
+// ─── RolePermission (កែ) ─────────────────────────────
 model RolePermission {
   id String @id @default(uuid())
 
   roleId Int?
-
-  role Role? @relation(fields: [roleId], references: [id])
+  role   Role? @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   action    PermissionAction
   isGranted Boolean          @default(true)
@@ -492,4 +583,22 @@ model RefreshToken {
   revokedAt DateTime?
 
   @@map("refresh_tokens")
+}
+
+model Session {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tabId        String?
+  userAgent    String?   @db.Text
+  ipAddress    String?
+  refreshToken String    @unique
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([tabId])
+  @@map("sessions")
 }

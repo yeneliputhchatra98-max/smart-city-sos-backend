@@ -4,11 +4,11 @@ const router = express.Router();
 const authController = require("../controllers/auth.controller");
 
 // Middleware
-const { authMiddleware, roleMiddleware } = require("../utils/jwt");
 const { verifyToken } = require("../middleware/auth.middleware");
 const { rateLimiter } = require("../middleware/rateLimiter");
 const { validateRequest } = require("../middleware/validator");
 const { requestLogger: logger } = require("../middleware/logger");
+const { upload } = require("../middleware/upload.middleware");
 
 // Validation Schemas
 const {
@@ -21,25 +21,9 @@ const {
     verifyEmailSchema,
     updateProfileSchema,
     googleLoginSchema,
-    appleLoginSchema
 } = require("../validators/auth.validator");
 
-
 // ==================== PUBLIC ROUTES ====================
-
-router.post(
-    "/google",
-    rateLimiter(10, 60 * 1000),
-    validateRequest(googleLoginSchema),
-    authController.googleLogin
-);
-
-router.post(
-    "/apple",
-    rateLimiter(10, 60 * 1000),
-    validateRequest(appleLoginSchema),
-    authController.appleLogin
-);
 
 // Register
 router.post(
@@ -49,7 +33,6 @@ router.post(
     authController.register
 );
 
-
 // Login
 router.post(
     "/login",
@@ -58,6 +41,13 @@ router.post(
     authController.login
 );
 
+// Google Login
+router.post(
+    "/google",
+    rateLimiter(10, 60 * 1000),
+    validateRequest(googleLoginSchema),
+    authController.googleLogin
+);
 
 // Refresh Token
 router.post(
@@ -67,7 +57,6 @@ router.post(
     authController.refresh
 );
 
-
 // Forgot Password
 router.post(
     "/forgot-password",
@@ -75,7 +64,6 @@ router.post(
     validateRequest(forgotPasswordSchema),
     authController.forgotPassword
 );
-
 
 // Reset Password
 router.post(
@@ -85,13 +73,11 @@ router.post(
     authController.resetPassword
 );
 
-
 // Verify Email
 router.get(
     "/verify",
     authController.verifyEmail
 );
-
 
 // Resend Verification Email
 router.post(
@@ -100,45 +86,66 @@ router.post(
     authController.resendVerification
 );
 
-
-
 // ==================== PROTECTED ROUTES ====================
-
-router.use(authMiddleware);
-
-router.use(logger);
-
 
 // Logout
 router.post(
     "/logout",
     verifyToken,
+    logger,
     authController.logout
 );
 
+// Fork Session (for duplicated tabs to acquire isolated sessions)
+router.post(
+    "/fork-session",
+    verifyToken,
+    logger,
+    authController.forkSession
+);
 
 // Get Profile
 router.get(
     "/profile",
+    verifyToken,
+    logger,
     authController.getProfile
 );
 
-
-// Update Profile
+// Update Profile (with optional avatar upload)
 router.put(
     "/profile",
+    verifyToken,
+    logger,
+    upload.single("avatar"),         // ✅ បន្ថែម
     validateRequest(updateProfileSchema),
     authController.updateProfile
 );
 
+// Update Avatar only
+router.patch(
+    "/profile/avatar",
+    verifyToken,
+    logger,
+    upload.single("avatar"),         // ✅ បន្ថែម
+    authController.updateAvatar
+);
+
+// Delete Avatar
+router.delete(
+    "/profile/avatar",
+    verifyToken,
+    logger,
+    authController.deleteAvatar
+);
 
 // Change Password
 router.post(
     "/change-password",
+    verifyToken,
+    logger,
     validateRequest(changePasswordSchema),
     authController.changePassword
 );
-
-
 
 module.exports = router;

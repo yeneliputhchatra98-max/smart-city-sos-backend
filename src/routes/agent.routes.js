@@ -20,12 +20,12 @@ const {
 
 // ==========================
 // Get all agents
-// ADMIN + OPERATOR
+// ADMIN + OPERATOR + AGENT + CITIZEN
 // ==========================
 router.get(
     "/",
     verifyToken,
-    checkRole(["ADMIN", "OPERATOR"]),
+    checkRole(["ADMIN", "OPERATOR", "AGENT", "CITIZEN"]),
     agentController.getAllAgents
 );
 

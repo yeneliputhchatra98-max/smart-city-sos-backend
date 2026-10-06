@@ -5,9 +5,23 @@ const logger = require("../utils/logger");
 let io;
 
 const initSocket = (server) => {
+    const rawOrigins = process.env.CORS_ORIGIN
+        ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
+        : [process.env.FRONTEND_URL || "http://localhost:3000", "http://localhost:3000", "http://127.0.0.1:3000"];
+
     io = new Server(server, {
         cors: {
-            origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",") : "*",
+            origin: (origin, callback) => {
+                if (!origin) return callback(null, true);
+                if (
+                    rawOrigins.includes(origin) ||
+                    rawOrigins.includes("*") ||
+                    process.env.NODE_ENV === "development"
+                ) {
+                    return callback(null, origin);
+                }
+                return callback(new Error("Not allowed by CORS"));
+            },
             methods: ["GET", "POST", "OPTIONS"],
             credentials: true
         },
@@ -18,6 +32,9 @@ const initSocket = (server) => {
     // ── JWT Authentication Middleware ──────────────────────────────
     io.use((socket, next) => {
         const token = socket.handshake.auth.token || socket.handshake.headers['authorization'];
+        const tabId = socket.handshake.auth.tabId || socket.handshake.query?.tabId || null;
+        socket.tabId = tabId;
+
         if (!token) {
             // Allow unauthenticated connections only for public SOS submissions
             socket.user = null;
@@ -27,6 +44,9 @@ const initSocket = (server) => {
             const actualToken = token.startsWith('Bearer ') ? token.slice(7) : token;
             const decoded = jwt.verify(actualToken, process.env.JWT_SECRET || "your-super-secret-jwt-key-change-this-now");
             socket.user = decoded;
+            if (!socket.tabId && decoded.tabId) {
+                socket.tabId = decoded.tabId;
+            }
             next();
         } catch (err) {
             socket.user = null;
@@ -37,11 +57,15 @@ const initSocket = (server) => {
     io.on("connection", (socket) => {
         const userId = socket.user?.id ?? "anonymous";
         const role   = socket.user?.role ?? "PUBLIC";
-        logger.info(`🔌 Socket connected: ${socket.id} (userId=${userId}, role=${role})`);
+        const tabId  = socket.tabId || "none";
+        logger.info(`🔌 Socket connected: ${socket.id} (userId=${userId}, role=${role}, tabId=${tabId})`);
 
         // ── Room assignment ──────────────────────────────────────────
         // Join operators room to receive live SOS and agent GPS pushes
         socket.join("operators");
+        if (socket.tabId) {
+            socket.join(`tab:${socket.tabId}`);
+        }
         logger.info(`Socket ${socket.id} joined room: operators`);
 
         // ── Client requests to join a specific alert room ────────────
@@ -130,6 +154,30 @@ const emitBroadcastAlert = (broadcast) => {
     }
 };
 
+/**
+ * Emit vehicle update to operators and admins.
+ */
+const emitVehicleUpdated = (vehicle) => {
+    try {
+        getIO().emit("vehicle_updated", vehicle);
+        logger.info(`📡 Broadcasted vehicle_updated: ${vehicle.plateNumber || vehicle.id}`);
+    } catch (e) {
+        logger.warn(`Socket emit failed (vehicle_updated): ${e.message}`);
+    }
+};
+
+/**
+ * Emit hierarchy vehicle count change.
+ */
+const emitVehicleCountsChanged = (counts) => {
+    try {
+        getIO().emit("vehicle_counts_changed", counts);
+        logger.info(`📡 Broadcasted vehicle_counts_changed: ${JSON.stringify(counts)}`);
+    } catch (e) {
+        logger.warn(`Socket emit failed (vehicle_counts_changed): ${e.message}`);
+    }
+};
+
 module.exports = {
     initSocket,
     getIO,
@@ -137,4 +185,6 @@ module.exports = {
     emitStatusUpdated,
     emitAlertDeleted,
     emitBroadcastAlert,
+    emitVehicleUpdated,
+    emitVehicleCountsChanged,
 };

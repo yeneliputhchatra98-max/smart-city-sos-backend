@@ -3,88 +3,96 @@ const logger = require("../utils/logger");
 const { validateEmail, validatePassword, validatePhone } = require("../utils/validators");
 const { AppError } = require("../middleware/errorHandler");
 
-// ==================== AUTHENTICATION CONTROLLERS ====================
+// ==================== HELPERS ====================
 
-// Register
-// =====================================================
-// REGISTER
-// =====================================================
+const sendSuccess = (res, data = {}, message = null, status = 200) => {
+    const payload = {
+        success: true,
+        ...(message && { message }),
+        ...(Object.keys(data).length > 0 && { data }),
+        timestamp: new Date().toISOString(),
+    };
+    return res.status(status).json(payload);
+};
+
+/**
+ * បម្លែង error ទៅ AppError ជាមួយ status ត្រឹមត្រូវ
+ * រក្សា message ដើម បើជា soft delete / blocked
+ */
+const toAppError = (error, fallback = {}) => {
+    if (error instanceof AppError) return error;
+
+    // ✅ ពិនិត្យ code ជាមុន
+    if (error.code === "EMAIL_NOT_VERIFIED") {
+        return new AppError(error.message, 403, "EMAIL_NOT_VERIFIED");
+    }
+    if (error.code === "EMAIL_ALREADY_VERIFIED") {
+        return new AppError(error.message, 400, "EMAIL_ALREADY_VERIFIED");
+    }
+    if (error.code === "ACCOUNT_DELETED") {
+        return new AppError(error.message, 403, "ACCOUNT_DELETED");
+    }
+    if (error.code === "ACCOUNT_BLOCKED") {
+        return new AppError(error.message, 403, "ACCOUNT_BLOCKED");
+    }
+
+    // ✅ រក្សា message ពិតប្រាកដសម្រាប់ soft delete / status
+    if (/deleted|blocked|inactive|not active/i.test(error.message)) {
+        return new AppError(error.message, 403, "ACCOUNT_INACTIVE");
+    }
+    if (/not found/i.test(error.message)) {
+        return new AppError(error.message, 404, "NOT_FOUND");
+    }
+    if (/already (registered|exists|verified)/i.test(error.message)) {
+        return new AppError(error.message, 409, "DUPLICATE");
+    }
+    if (/invalid|required|missing|weak|must/i.test(error.message)) {
+        return new AppError(error.message, 400, "BAD_REQUEST");
+    }
+    if (/expired/i.test(error.message)) {
+        return new AppError(error.message, 410, "EXPIRED");
+    }
+    if (/credentials/i.test(error.message)) {
+        return new AppError(error.message, 401, "INVALID_CREDENTIALS");
+    }
+
+    return new AppError(
+        error.message || fallback.message || "Internal Server Error",
+        fallback.status || 500,
+        fallback.code || "INTERNAL_ERROR"
+    );
+};
+
+// ==================== REGISTER ====================
 
 const register = async (req, res, next) => {
     const startTime = Date.now();
 
     try {
-        // =============================
-        // 1. Check request body
-        // =============================
-        if (
-            !req.body ||
-            typeof req.body !== "object" ||
-            Object.keys(req.body).length === 0
-        ) {
-            throw new AppError(
-                "Request body is required",
-                400,
-                "EMPTY_BODY"
-            );
+        if (!req.body || Object.keys(req.body).length === 0) {
+            throw new AppError("Request body is required", 400, "EMPTY_BODY");
         }
 
-        // =============================
-        // 2. Get data
-        // =============================
-        const {
-            fullName,
-            username,
-            email,
-            password,
-            phone,
-            role
-        } = req.body;
+        const { fullName, username, email, password, phone, role, birthday, gender } = req.body;
 
-        // =============================
-        // 3. Required fields
-        // =============================
-        const requiredFields = {
-            fullName,
-            username,
-            email,
-            password,
-            phone
-        };
+        // Required fields
+        const required = { fullName, username, email, password, phone };
+        const missing = Object.entries(required)
+            .filter(([_, v]) => !v || typeof v !== "string" || v.trim() === "")
+            .map(([k]) => k);
 
-        const missingFields = Object.entries(
-            requiredFields
-        )
-            .filter(
-                ([_, value]) =>
-                    !value ||
-                    typeof value !== "string" ||
-                    value.trim() === ""
-            )
-            .map(([key]) => key);
-
-        if (missingFields.length > 0) {
+        if (missing.length > 0) {
             throw new AppError(
-                `Missing required fields: ${missingFields.join(", ")}`,
+                `Missing required fields: ${missing.join(", ")}`,
                 400,
                 "MISSING_FIELDS"
             );
         }
 
-        // =============================
-        // 4. Validate email
-        // =============================
+        // Validate
         if (!validateEmail(email)) {
-            throw new AppError(
-                "Invalid email format",
-                400,
-                "INVALID_EMAIL"
-            );
+            throw new AppError("Invalid email format", 400, "INVALID_EMAIL");
         }
-
-        // =============================
-        // 5. Validate password
-        // =============================
         if (!validatePassword(password)) {
             throw new AppError(
                 "Password must be at least 8 characters with uppercase, lowercase and number",
@@ -92,306 +100,226 @@ const register = async (req, res, next) => {
                 "WEAK_PASSWORD"
             );
         }
-
-        // =============================
-        // 6. Validate phone
-        // =============================
         if (!validatePhone(phone)) {
-            throw new AppError(
-                "Invalid phone number format",
-                400,
-                "INVALID_PHONE"
-            );
+            throw new AppError("Invalid phone number format", 400, "INVALID_PHONE");
         }
-
-        // =============================
-        // 7. Validate username
-        // =============================
         if (username.includes(" ")) {
-            throw new AppError(
-                "Username cannot contain spaces",
-                400,
-                "INVALID_USERNAME"
-            );
+            throw new AppError("Username cannot contain spaces", 400, "INVALID_USERNAME");
         }
 
-        // =============================
-        // 8. Call service
-        // =============================
+        // ✅ Validate birthday
+        let birthdayDate = null;
+        if (birthday) {
+            birthdayDate = new Date(birthday);
+            if (isNaN(birthdayDate.getTime())) {
+                throw new AppError("Invalid birthday format", 400, "INVALID_BIRTHDAY");
+            }
+            if (birthdayDate > new Date()) {
+                throw new AppError("Birthday cannot be in the future", 400, "INVALID_BIRTHDAY");
+            }
+        }
+
+        // ✅ Validate gender
+        const VALID_GENDERS = ["MALE", "FEMALE", "OTHER"];
+        let genderValue = null;
+        if (gender) {
+            const g = String(gender).trim().toUpperCase();
+            if (!VALID_GENDERS.includes(g)) {
+                throw new AppError(
+                    `Gender must be one of: ${VALID_GENDERS.join(", ")}`,
+                    400,
+                    "INVALID_GENDER"
+                );
+            }
+            genderValue = g;
+        }
+
         const result = await authService.register({
             fullName,
             username,
             email,
             password,
             phone,
-            role: role || "CITIZEN"
+            role: role || "CITIZEN",
+            birthday: birthdayDate,
+            gender: genderValue,
         });
 
-        // =============================
-        // 9. Logging
-        // =============================
-        const responseTime =
-            Date.now() - startTime;
+        const responseTime = Date.now() - startTime;
+        logger.info(`User registered: ${email} (${responseTime}ms)`, {
+            userId: result.userId,
+            ip: req.ip,
+        });
 
-        logger.info(
-            `User registered successfully: ${email} - ${responseTime}ms`,
+        return sendSuccess(
+            res,
             {
-                userId: result.userId,
-                email: result.email,
-                role: result.role,
-                ip: req.ip,
-                userAgent: req.get("User-Agent")
-            }
-        );
-
-        // =============================
-        // 10. Response
-        // =============================
-        return res.status(201).json({
-            success: true,
-
-            message:
-                "Registration successful! Please verify your email.",
-
-            data: {
                 userId: result.userId,
                 email: result.email,
                 fullName: result.fullName,
                 role: result.role,
-                requiresVerification:
-                    result.requiresVerification
+                birthday: result.birthday,
+                gender: result.gender,
+                requiresVerification: result.requiresVerification,
             },
-
-            timestamp:
-                new Date().toISOString()
-        });
-
+            "Registration successful! Please verify your email.",
+            201
+        );
     } catch (error) {
-        next(error);
+        logger.error(`Register error: ${error.message}`);
+        next(toAppError(error));
     }
 };
 
+// ==================== LOGIN ====================
 
-// Login
 const login = async (req, res, next) => {
     const startTime = Date.now();
-
-    const clientIP =
-        req.ip || req.connection.remoteAddress;
-
-    const userAgent =
-        req.headers["user-agent"];
 
     try {
         const { email, password } = req.body;
 
-        // =============================
-        // Validation
-        // =============================
-
         if (!email || !password) {
-            throw new AppError(
-                "Email and password are required",
-                400,
-                "MISSING_CREDENTIALS"
-            );
+            throw new AppError("Email and password are required", 400, "MISSING_CREDENTIALS");
         }
 
         if (!validateEmail(email)) {
-            throw new AppError(
-                "Invalid email format",
-                400,
-                "INVALID_EMAIL"
-            );
+            throw new AppError("Invalid email format", 400, "INVALID_EMAIL");
         }
 
-        // =============================
-        // Login Service
-        // =============================
+        const clientIP = req.ip || req.connection?.remoteAddress;
+        const userAgent = req.headers["user-agent"] || null;
+        const tabId = req.headers["x-tab-id"] || req.body?.tabId || null;
 
-        const result = await authService.login(
-            email.toLowerCase().trim(),
-            password,
-            clientIP
-        );
+        const result = await authService.login(email.toLowerCase().trim(), password, clientIP, userAgent, tabId);
 
-        const responseTime =
-            Date.now() - startTime;
+        const responseTime = Date.now() - startTime;
+        logger.info(`User logged in: ${email} (${responseTime}ms) [tab: ${tabId || "none"}]`);
 
-        logger.info(
-            `User logged in: ${email} (${responseTime}ms)`
-        );
-
-        if (userAgent) {
-            logger.debug(
-                `User Agent: ${userAgent}`
-            );
-        }
-
-        return res.status(200).json({
-            success: true,
-            message: "Login successful",
-
-            data: {
+        return sendSuccess(
+            res,
+            {
                 user: result.user,
                 token: result.token,
                 refreshToken: result.refreshToken,
-                expiresIn: result.expiresIn
+                sessionId: result.sessionId,
+                tabId: result.tabId,
+                expiresIn: result.expiresIn,
             },
-
-            timestamp: new Date().toISOString()
-        });
-
+            "Login successful"
+        );
     } catch (error) {
-
-    console.log("CONTROLLER ERROR:");
-    console.log("message:", error.message);
-    console.log("code:", error.code);
-    console.log("status:", error.statusCode);
-
-    if (error.code === "EMAIL_NOT_VERIFIED") {
-        return next(error);
+        logger.error(`Login error: ${error.message}`);
+        next(toAppError(error));
     }
-
-    return next(
-        new AppError(
-            "Invalid email or password",
-            401,
-            "INVALID_CREDENTIALS"
-        )
-    );
-}
 };
 
-module.exports = {
-    login
-};
-// Refresh Token
+// ==================== REFRESH ====================
+
 const refresh = async (req, res, next) => {
     try {
         const { refreshToken } = req.body;
 
         if (!refreshToken) {
-            throw new AppError(
-                "Refresh token required",
-                400,
-                "MISSING_REFRESH_TOKEN"
-            );
+            throw new AppError("Refresh token required", 400, "MISSING_REFRESH_TOKEN");
         }
 
-        const result =
-            await authService.refreshAccessToken(refreshToken);
+        const tabId = req.headers["x-tab-id"] || req.body?.tabId || null;
+        const result = await authService.refreshAccessToken(refreshToken, tabId);
 
-        logger.info(
-            `Token refreshed for user from IP ${req.ip}`
+        logger.info(`Token refreshed from IP ${req.ip} [tab: ${tabId || "none"}]`);
+
+        return sendSuccess(
+            res,
+            {
+                token: result.token,
+                refreshToken: result.refreshToken,
+                sessionId: result.sessionId,
+                tabId: result.tabId,
+                expiresIn: result.expiresIn || "24h",
+            },
+            "Token refreshed successfully"
         );
-
-        return res.status(200).json({
-            success: true,
-            message: "Token refreshed successfully",
-            data: {
-    token: result.token,
-    refreshToken: result.refreshToken,
-    expiresIn: result.expiresIn || "24h",
-},
-            timestamp: new Date().toISOString(),
-        });
-
     } catch (error) {
-        logger.error(
-            `Refresh token error: ${error.message}`
-        );
-
-        return next(
-            error instanceof AppError
-                ? error
-                : new AppError(
-                    "Invalid refresh token",
-                    401,
-                    "INVALID_REFRESH_TOKEN"
-                )
-        );
+        logger.error(`Refresh token error: ${error.message}`);
+        next(toAppError(error, { status: 401, code: "INVALID_REFRESH_TOKEN" }));
     }
 };
-// Logout
+
+// ==================== LOGOUT ====================
+
 const logout = async (req, res, next) => {
     try {
-
         const authHeader = req.headers.authorization;
 
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            return res.status(401).json({
-                success: false,
-                message: "Token required",
-                code: "NO_TOKEN"
-            });
+            throw new AppError("Token required", 401, "NO_TOKEN");
         }
 
         const token = authHeader.split(" ")[1];
+        const refreshToken = req.body?.refreshToken || null;
+        const tabId = req.headers["x-tab-id"] || req.body?.tabId || null;
 
-        const result = await authService.logout(token);
+        const result = await authService.logout(token, refreshToken, tabId);
 
-        return res.status(200).json({
-            success: true,
-            message: "Logout successful",
-            data: result,
-            timestamp: new Date().toISOString()
-        });
-
+        return sendSuccess(res, result, "Logout successful");
     } catch (error) {
-        next(error);
+        next(toAppError(error));
     }
 };
-// ==================== USER PROFILE CONTROLLERS ====================
 
-// Get Current User Profile
+// ==================== FORK SESSION (DUPLICATE TAB) ====================
+
+const forkSession = async (req, res, next) => {
+    try {
+        const tabId = req.headers["x-tab-id"] || req.body?.tabId || null;
+        const result = await authService.forkSession(
+            req.user,
+            tabId,
+            req.ip,
+            req.headers["user-agent"]
+        );
+
+        return sendSuccess(
+            res,
+            {
+                user: result.user,
+                token: result.token,
+                refreshToken: result.refreshToken,
+                sessionId: result.sessionId,
+                tabId: result.tabId,
+                expiresIn: result.expiresIn,
+            },
+            "Session forked successfully"
+        );
+    } catch (error) {
+        logger.error(`Fork session controller error: ${error.message}`);
+        next(toAppError(error));
+    }
+};
+
+// ==================== PROFILE ====================
+
 const getProfile = async (req, res, next) => {
     try {
-
         const userId = req.user.id;
-
         const user = await authService.getUserProfile(userId);
-
-        res.status(200).json({
-            success: true,
-            data: user,
-            timestamp: new Date().toISOString()
-        });
-
+        return sendSuccess(res, user);
     } catch (error) {
-        next(
-            new AppError(
-                error.message || "User not found",
-                404,
-                "PROFILE_NOT_FOUND"
-            )
-        );
+        logger.error(`Get profile error: ${error.message}`);
+        next(toAppError(error, { status: 404, code: "PROFILE_NOT_FOUND" }));
     }
 };
 
-
-// Update Profile
 const updateProfile = async (req, res, next) => {
     try {
         const userId = req.user.id;
-        const {
-            fullName,
-            email,
-            phone
-        } = req.body;
+        const { fullName, email, phone, birthday, gender } = req.body;   // ✅ បន្ថែម
 
-        // Avatar from upload file
-        const avatar = req.file
-            ? req.file.filename
-            : undefined;
+        // ✅ file object
+        const file = req.file || undefined;
 
-        // Check fields
-        if (
-            !fullName &&
-            !email &&
-            !phone &&
-            !avatar
-        ) {
+        if (!fullName && !email && !phone && !birthday && !gender && !file) {
             throw new AppError(
                 "At least one field to update is required",
                 400,
@@ -399,63 +327,79 @@ const updateProfile = async (req, res, next) => {
             );
         }
 
-        // Validate email
         if (email && !validateEmail(email)) {
-            throw new AppError(
-                "Invalid email format",
-                400,
-                "INVALID_EMAIL"
-            );
+            throw new AppError("Invalid email format", 400, "INVALID_EMAIL");
         }
 
-        // Validate phone
         if (phone && phone.length < 8) {
-            throw new AppError(
-                "Invalid phone number",
-                400,
-                "INVALID_PHONE"
-            );
+            throw new AppError("Invalid phone number", 400, "INVALID_PHONE");
         }
 
-        const result = await authService.updateProfile(
-            userId,
-            {
-                fullName,
-                email,
-                phone,
-                avatar
-            }
-        );
-
-        logger.info(
-            `Profile updated for user: ${req.user.email}`
-        );
-
-        return res.status(200).json({
-
-            success: true,
-
-            message: "Profile updated successfully",
-
-            data: result,
-
-            timestamp: new Date().toISOString()
-
+        const result = await authService.updateProfile(userId, {
+            fullName,
+            email,
+            phone,
+            birthday,       // ✅
+            gender,         // ✅
+            file,           // ✅
         });
 
+        logger.info(`Profile updated for user: ${req.user.email}`);
+
+        return sendSuccess(res, result, "Profile updated successfully");
     } catch (error) {
-
-        next(
-            new AppError(
-                error.message || "Unable to update profile",
-                400,
-                "UPDATE_PROFILE_FAILED"
-            )
-        );
-
+        logger.error(`Update profile error: ${error.message}`);
+        next(toAppError(error, { status: 400, code: "UPDATE_PROFILE_FAILED" }));
     }
 };
-// Change Password (Protected)
+
+// ==================== AVATAR ====================
+
+const updateAvatar = async (req, res, next) => {
+    try {
+        if (!req.file) {
+            throw new AppError("Avatar file is required", 400, "NO_FILE");
+        }
+
+        const userId = req.user.id;
+        const user = await authService.updateAvatar(userId, req.file);
+
+        logger.info(`Avatar updated for: ${req.user.email}`);
+
+        return sendSuccess(
+            res,
+            {
+                avatar: user.avatar,
+                url: `/${user.avatar}`,
+            },
+            "Avatar updated successfully"
+        );
+    } catch (error) {
+        logger.error(`Update avatar error: ${error.message}`);
+        next(toAppError(error, { status: 400, code: "UPDATE_AVATAR_FAILED" }));
+    }
+};
+
+const deleteAvatar = async (req, res, next) => {
+    try {
+        const userId = req.user.id;
+        const user = await authService.deleteAvatar(userId);
+
+        logger.info(`Avatar deleted for: ${req.user.email}`);
+
+        return sendSuccess(
+            res,
+            { avatar: user.avatar },
+            "Avatar reset to default"
+        );
+    } catch (error) {
+        logger.error(`Delete avatar error: ${error.message}`);
+        next(toAppError(error, { status: 400, code: "DELETE_AVATAR_FAILED" }));
+    }
+};
+
+// ==================== CHANGE PASSWORD ====================
+
 const changePassword = async (req, res, next) => {
     try {
         const userId = req.user.id;
@@ -473,85 +417,48 @@ const changePassword = async (req, res, next) => {
             );
         }
 
-        await authService.changePassword(userId, oldPassword, newPassword);
+        const result = await authService.changePassword(userId, oldPassword, newPassword);
 
         logger.info(`Password changed for user: ${req.user.email}`);
 
-        res.status(200).json({
-            success: true,
-            message: "Password updated successfully",
-            timestamp: new Date().toISOString()
-        });
-
+        return sendSuccess(res, result, "Password updated successfully");
     } catch (error) {
-        next(new AppError(error.message || "Password change failed", 400, "PASSWORD_CHANGE_FAILED"));
+        logger.error(`Change password error: ${error.message}`);
+        next(toAppError(error, { status: 400, code: "PASSWORD_CHANGE_FAILED" }));
     }
 };
 
-// ==================== PASSWORD RESET CONTROLLERS ====================
+// ==================== FORGOT PASSWORD ====================
 
-// Forgot Password (Request Reset)
 const forgotPassword = async (req, res, next) => {
     try {
         const { email } = req.body;
 
-        // Validate email
         if (!email || !validateEmail(email)) {
-            throw new AppError(
-                "Valid email required",
-                400,
-                "INVALID_EMAIL"
-            );
+            throw new AppError("Valid email required", 400, "INVALID_EMAIL");
         }
 
-        // Request password reset
         await authService.forgotPassword(email);
 
-        logger.info(
-            `Password reset requested for: ${email}`
-        );
+        logger.info(`Password reset requested for: ${email}`);
 
-        // Always return success
-        // Don't reveal whether email exists
-        return res.status(200).json({
-            success: true,
-            message:
-                "If the email exists, a reset link will be sent",
-            timestamp: new Date().toISOString(),
-        });
-
+        return sendSuccess(res, {}, "If the email exists, a reset link will be sent");
     } catch (error) {
-
-        logger.error(
-            `Forgot password controller error: ${error.message}`
-        );
-
-        // Don't reveal whether email exists
-        return res.status(200).json({
-            success: true,
-            message:
-                "If the email exists, a reset link will be sent",
-            timestamp: new Date().toISOString(),
-        });
+        logger.error(`Forgot password error: ${error.message}`);
+        return sendSuccess(res, {}, "If the email exists, a reset link will be sent");
     }
 };
 
+// ==================== RESET PASSWORD ====================
 
-// Reset Password (With Token)
 const resetPassword = async (req, res, next) => {
     try {
         const { token, newPassword } = req.body;
 
-        // Validate input
         if (!token || !newPassword) {
-            throw new AppError(
-                "Token and new password required",
-                400,
-                "MISSING_FIELDS"
-            );
+            throw new AppError("Token and new password required", 400, "MISSING_FIELDS");
         }
 
-        // Validate password
         if (!validatePassword(newPassword)) {
             throw new AppError(
                 "Password must be at least 8 characters with uppercase, lowercase and number",
@@ -560,217 +467,111 @@ const resetPassword = async (req, res, next) => {
             );
         }
 
-        // Reset password
-        await authService.resetPassword(
-            token,
-            newPassword
-        );
+        const result = await authService.resetPassword(token, newPassword);
 
-        logger.info(
-            "Password reset successful"
-        );
+        logger.info("Password reset successful");
 
-        return res.status(200).json({
-            success: true,
-            message: "Password reset successful",
-            timestamp: new Date().toISOString(),
-        });
-
+        return sendSuccess(res, {}, result.message || "Password reset successful");
     } catch (error) {
-
-        logger.error(
-            `Reset password controller error: ${error.message}`
-        );
-
-        return next(
-            new AppError(
-                error.message || "Password reset failed",
-                400,
-                "RESET_FAILED"
-            )
-        );
+        logger.error(`Reset password error: ${error.message}`);
+        next(toAppError(error, { status: 400, code: "RESET_FAILED" }));
     }
 };
-// ==================== EMAIL VERIFICATION CONTROLLERS ====================
 
-// Verify Email
-// User click verification link from email
+// ==================== VERIFY EMAIL ====================
+
 const verifyEmail = async (req, res, next) => {
     try {
-        const { token } = req.query;
-
-        console.log("TOKEN FROM REQUEST:");
-        console.log(token);
+        const token = req.query.token || req.body.token;
 
         if (!token) {
-            throw new AppError(
-                "Verification token is required",
-                400,
-                "TOKEN_REQUIRED"
-            );
+            throw new AppError("Verification token is required", 400, "TOKEN_REQUIRED");
         }
 
-        const result =
-            await authService.verifyEmail(token);
+        const result = await authService.verifyEmail(token);
 
-        return res.status(200).json({
-            success: true,
-            message: result.alreadyVerified
-                ? "Email is already verified."
-                : "Email verified successfully!",
-            data: result,
-            timestamp: new Date().toISOString()
-        });
-
+        return sendSuccess(
+            res,
+            result,
+            result.alreadyVerified ? "Email is already verified." : "Email verified successfully!"
+        );
     } catch (error) {
-        next(error);
+        logger.error(`Verify email error: ${error.message}`);
+        next(toAppError(error));
     }
 };
 
+// ==================== RESEND VERIFICATION ====================
 
-// Resend Verification Email
-// Send verification email again when user did not receive email
 const resendVerification = async (req, res, next) => {
     try {
         const { email } = req.body;
 
         if (!email || !validateEmail(email)) {
-            throw new AppError(
-                "Valid email required",
-                400,
-                "INVALID_EMAIL"
-            );
+            throw new AppError("Valid email required", 400, "INVALID_EMAIL");
         }
 
         const result = await authService.resendVerification(email);
 
-        logger.info(
-            `Verification email resent to: ${email}`
-        );
+        logger.info(`Verification email resent to: ${email}`);
 
-        return res.status(200).json({
-            success: true,
-            message: "Verification email sent successfully",
-            data: {
-                email: result.email
-            },
-            timestamp: new Date().toISOString()
-        });
-
+        return sendSuccess(res, { email: result.email }, "Verification email sent successfully");
     } catch (error) {
-        logger.error(
-            `Resend verification error: ${error.message}`
-        );
-
-        next(error);
+        logger.error(`Resend verification error: ${error.message}`);
+        next(toAppError(error));
     }
 };
+
+// ==================== GOOGLE LOGIN ====================
+
 const googleLogin = async (req, res, next) => {
     try {
         const { idToken } = req.body || {};
 
         if (!idToken) {
-            throw new AppError(
-                "Google ID token is required",
-                400,
-                "MISSING_GOOGLE_TOKEN"
-            );
+            throw new AppError("Google ID token is required", 400, "MISSING_GOOGLE_TOKEN");
         }
 
-        const result = await authService.googleLogin(idToken);
+        const clientIP = req.ip || req.connection?.remoteAddress;
+        const userAgent = req.headers["user-agent"] || null;
+        const tabId = req.headers["x-tab-id"] || req.body?.tabId || null;
 
-        return res.status(200).json({
-            success: true,
-            message: "Google login successful",
-            data: {
+        const result = await authService.googleLogin(idToken, clientIP, userAgent, tabId);
+
+        return sendSuccess(
+            res,
+            {
                 user: result.user,
                 token: result.token,
                 refreshToken: result.refreshToken,
-                expiresIn: result.expiresIn
+                sessionId: result.sessionId,
+                tabId: result.tabId,
+                expiresIn: result.expiresIn,
             },
-            timestamp: new Date().toISOString()
-        });
-
-    } catch (error) {
-        next(
-            new AppError(
-                error.message || "Google authentication failed",
-                401,
-                "GOOGLE_AUTH_FAILED"
-            )
+            "Google login successful"
         );
+    } catch (error) {
+        logger.error(`Google login error: ${error.message}`);
+        next(toAppError(error, { status: 401, code: "GOOGLE_AUTH_FAILED" }));
     }
 };
-// ==================== APPLE LOGIN ====================
 
-const appleLogin = async (req, res, next) => {
-    try {
-
-        const {
-            identityToken,
-            authorizationCode
-        } = req.body;
-
-        if (!identityToken) {
-            throw new AppError(
-                "Apple identity token is required",
-                400,
-                "MISSING_APPLE_TOKEN"
-            );
-        }
-
-        const result =
-            await authService.appleLogin(
-                identityToken,
-                authorizationCode
-            );
-
-        return res.status(200).json({
-
-            success: true,
-
-            message: "Apple login successful",
-
-            data: {
-                user: result.user,
-                token: result.token,
-                refreshToken: result.refreshToken,
-                expiresIn: result.expiresIn
-            },
-
-            timestamp: new Date().toISOString()
-        });
-
-    } catch (error) {
-
-        logger.error(
-            `Apple login controller error: ${error.message}`
-        );
-
-        next(
-            new AppError(
-                error.message ||
-                "Apple authentication failed",
-                401,
-                "APPLE_AUTH_FAILED"
-            )
-        );
-    }
-};
-// ==================== EXPORT CONTROLLERS ====================
+// ==================== EXPORT ====================
 
 module.exports = {
     // Authentication
     register,
     login,
     googleLogin,
-    appleLogin,
     refresh,
     logout,
+    forkSession,
 
     // User Profile
     getProfile,
     updateProfile,
+    updateAvatar,        // ✅
+    deleteAvatar,        // ✅
     changePassword,
 
     // Password Reset
@@ -780,6 +581,4 @@ module.exports = {
     // Email Verification
     verifyEmail,
     resendVerification,
-
-
 };

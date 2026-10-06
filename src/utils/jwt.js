@@ -67,10 +67,11 @@ const generateToken = (user) => {
             type: TOKEN_TYPES.ACCESS
         };
 
-        // Add fullName if available
-        if (user.fullName) {
-            payload.fullName = user.fullName;
-        }
+        if (user.fullName)  payload.fullName  = user.fullName;
+        // ✅ Embed sessionId so middleware can verify session is not revoked
+        if (user.sessionId) payload.sessionId = user.sessionId;
+        // ✅ Embed tabId for socket room assignment
+        if (user.tabId)     payload.tabId     = user.tabId;
 
         return jwt.sign(
             payload,

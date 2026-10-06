@@ -57,7 +57,17 @@ const corsOptions = {
         return callback(new Error("Not allowed by CORS"));
     },
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+    allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Accept",
+        "Origin",
+        "x-tab-id",
+        "X-Tab-Id",
+        "x-refresh-token",
+        "X-Refresh-Token"
+    ],
     exposedHeaders: ["X-Total-Count", "X-RateLimit-Limit", "X-RateLimit-Remaining"],
     credentials: true,
     maxAge: 86400 // 24 hours
@@ -133,6 +143,7 @@ app.use("/api/sos", require("./routes/sos.routes"));
 app.use("/api/orgs", require("./routes/org.routes"));
 app.use("/api/stations", require("./routes/station.routes"));
 app.use("/api/agents", require("./routes/agent.routes"));
+app.use("/api/vehicles", require("./routes/vehicle.routes"));
 app.use("/api/officers", require("./routes/officer.routes"));
 app.use("/api/broadcasts", require("./routes/broadcast.routes"));
 app.use("/api/audit-logs", require("./routes/audit.routes"));
@@ -142,7 +153,6 @@ app.use("/api/roles-permissions", require("./routes/permission.routes"));
 app.use("/api/reports", require("./routes/report.routes"));
 app.use("/api/locations", require("./routes/location.routes"));
 app.use("/api/citizen-reports", require("./routes/citizenReport.routes"));
-app.use("/api/stations", require("./routes/station.routes"));
 // --- API Documentation (Swagger) ---
 if (process.env.NODE_ENV !== "production") {
     const swaggerUi = require("swagger-ui-express");
