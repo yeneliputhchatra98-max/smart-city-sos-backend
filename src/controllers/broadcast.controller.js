@@ -1,25 +1,34 @@
 const broadcastService = require("../services/broadcast.service");
-
-
-// Get All
-exports.getAllBroadcasts = async (req, res, next) => {
-
+ 
+// Get Options / Metadata
+exports.getBroadcastOptions = async (req, res, next) => {
     try {
-
-        const broadcasts =
-            await broadcastService.getAllBroadcasts();
-
+        const options = await broadcastService.getBroadcastOptions();
         res.json({
             success: true,
-            data: broadcasts
+            data: options
         });
-
     } catch (err) {
-
         next(err);
-
     }
+};
 
+
+// Get All (Paginated + Filtered)
+exports.getAllBroadcasts = async (req, res, next) => {
+    try {
+        const result = await broadcastService.getAllBroadcasts(req.query);
+
+        res.status(200).json({
+            success: true,
+            message: "Broadcasts retrieved successfully",
+            data: result.broadcasts,
+            pagination: result.pagination,
+            stats: result.stats
+        });
+    } catch (err) {
+        next(err);
+    }
 };
 
 

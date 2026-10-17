@@ -7,6 +7,17 @@ const Joi = require("joi");
 // ✅ Validator សម្រាប់ UUID (Prisma default)
 const uuidSchema = Joi.string().uuid({ version: 'uuidv4' });
 
+const VALID_VEHICLE_TYPES = [
+    "FIRE_TRUCK",
+    "AMBULANCE",
+    "POLICE_CAR",
+    "MOTORBIKE",
+    "RESCUE_BOAT",
+    "COMMAND_UNIT",
+    "OTHER",
+    "CAR",
+];
+
 // ============================================================
 // Create Agent
 // ============================================================
@@ -40,23 +51,17 @@ const createAgentSchema = Joi.object({
     role: Joi.string()
         .max(100)
         .optional()
-        .allow('')
+        .allow('', null)
         .default('Responder'),
 
-    // ✅ Hierarchy — stationId ត្រូវការ UUID
-    stationId: uuidSchema
+    // ✅ Hierarchy — stationId
+    stationId: Joi.string()
         .optional()
-        .allow(null)
-        .messages({
-            'string.guid': 'stationId must be a valid UUID',
-        }),
+        .allow(null, ''),
 
-    organizationId: uuidSchema
+    organizationId: Joi.string()
         .optional()
-        .allow(null)
-        .messages({
-            'string.guid': 'organizationId must be a valid UUID',
-        }),
+        .allow(null, ''),
 
     // ✅ GPS Coordinates
     lat: Joi.number()
@@ -83,19 +88,19 @@ const createAgentSchema = Joi.object({
     vehicleNo: Joi.string()
         .max(50)
         .optional()
-        .allow(''),
+        .allow('', null),
 
     vehicleType: Joi.string()
-        .valid("CAR", "AMBULANCE", "FIRE_TRUCK", "MOTORBIKE")
+        .valid(...VALID_VEHICLE_TYPES)
         .optional()
-        .allow(''),
+        .allow('', null),
 
     // ✅ Status — ត្រូវនឹង AgentStatus enum
     status: Joi.string()
-        .valid("AVAILABLE", "ON_DUTY", "OFFLINE")
+        .valid("AVAILABLE", "ON_DUTY", "OFFLINE", "EN_ROUTE", "ON_SCENE", "RESOLVING")
         .default("AVAILABLE")
         .messages({
-            'any.only': 'Status must be AVAILABLE, ON_DUTY, or OFFLINE',
+            'any.only': 'Status must be AVAILABLE, ON_DUTY, OFFLINE, EN_ROUTE, ON_SCENE, or RESOLVING',
         }),
 });
 
@@ -120,15 +125,15 @@ const updateAgentSchema = Joi.object({
     role: Joi.string()
         .max(100)
         .optional()
-        .allow(''),
+        .allow('', null),
 
-    stationId: uuidSchema
+    stationId: Joi.string()
         .optional()
-        .allow(null),
+        .allow(null, ''),
 
-    organizationId: uuidSchema
+    organizationId: Joi.string()
         .optional()
-        .allow(null),
+        .allow(null, ''),
 
     lat: Joi.number()
         .min(-90)
@@ -145,15 +150,15 @@ const updateAgentSchema = Joi.object({
     vehicleNo: Joi.string()
         .max(50)
         .optional()
-        .allow(''),
+        .allow('', null),
 
     vehicleType: Joi.string()
-        .valid("CAR", "AMBULANCE", "FIRE_TRUCK", "MOTORBIKE")
+        .valid(...VALID_VEHICLE_TYPES)
         .optional()
-        .allow(''),
+        .allow('', null),
 
     status: Joi.string()
-        .valid("AVAILABLE", "ON_DUTY", "OFFLINE")
+        .valid("AVAILABLE", "ON_DUTY", "OFFLINE", "EN_ROUTE", "ON_SCENE", "RESOLVING")
         .optional(),
 })
     .min(1)
@@ -164,4 +169,5 @@ const updateAgentSchema = Joi.object({
 module.exports = {
     createAgentSchema,
     updateAgentSchema,
+    VALID_VEHICLE_TYPES,
 };

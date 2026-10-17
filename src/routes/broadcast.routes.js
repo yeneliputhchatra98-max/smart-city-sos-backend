@@ -29,6 +29,15 @@ router.get(
 
 
 // ==========================
+// Get Broadcast Options / Metadata
+// ==========================
+router.get(
+    "/options",
+    broadcastController.getBroadcastOptions
+);
+
+
+// ==========================
 // Get Broadcast By ID
 // ==========================
 router.get(
@@ -79,7 +88,7 @@ router.patch(
 router.delete(
     "/:id",
     verifyToken,
-    checkRole(["ADMIN"]),
+    checkRole(["ADMIN", "OPERATOR"]),
     broadcastController.deleteBroadcast
 );
 

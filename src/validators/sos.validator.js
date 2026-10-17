@@ -1,7 +1,6 @@
 const Joi = require("joi");
 
 const createSosSchema = Joi.object({
-    // ✅ បន្ថែម citizenName
     citizenName: Joi.string()
         .min(1)
         .max(100)
@@ -11,7 +10,6 @@ const createSosSchema = Joi.object({
             'string.empty': 'Name cannot be empty'
         }),
 
-    // ✅ បន្ថែម phone
     phone: Joi.string()
         .pattern(/^[0-9+\-\s()]+$/)
         .min(8)
@@ -23,7 +21,7 @@ const createSosSchema = Joi.object({
         }),
 
     type: Joi.string()
-        .valid("FIRE", "MEDICAL", "POLICE")
+        .valid("FIRE", "MEDICAL", "POLICE", "ACCIDENT", "CRIME", "FLOOD", "DISASTER")
         .required(),
 
     lat: Joi.number()
@@ -69,13 +67,9 @@ const createSosSchema = Joi.object({
         .default("PENDING"),
 });
 
-// validators/sos.validator.js
-
 const updateStatusSchema = Joi.object({
     status: Joi.string()
         .valid("PENDING", "EN_ROUTE", "RESOLVED", "SPAM")
-        //                                                              ↑
-        //                                                  បន្ថែម "SPAM"
         .required(),
 
     assignedAgentId: Joi.string()
@@ -85,7 +79,17 @@ const updateStatusSchema = Joi.object({
         .allow(null, "")
 });
 
+const dispatchAgentSchema = Joi.object({
+    agentId: Joi.string()
+        .required()
+        .messages({
+            'any.required': 'Agent ID is required for dispatch',
+            'string.empty': 'Agent ID cannot be empty',
+        }),
+});
+
 module.exports = {
     createSosSchema,
-    updateStatusSchema
+    updateStatusSchema,
+    dispatchAgentSchema,
 };

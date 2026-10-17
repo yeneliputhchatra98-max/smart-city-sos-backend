@@ -60,8 +60,15 @@ const getProvinces = async () => {
 
 const getDistrictsByProvince = async (provinceId) => {
   return await prisma.district.findMany({
-    where: {
-      provinceId,
+    where: provinceId ? { provinceId } : undefined,
+    include: {
+      province: {
+        select: {
+          id: true,
+          name: true,
+          nameKm: true,
+        },
+      },
     },
     orderBy: {
       name: "asc",

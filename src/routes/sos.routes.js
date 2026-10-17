@@ -13,18 +13,18 @@ const {
 
 const {
     createSosSchema,
-    updateStatusSchema
+    updateStatusSchema,
+    dispatchAgentSchema,
 } = require("../validators/sos.validator");
-
 
 const {
     listAlerts,
     getAlert,
     createAlert,
+    dispatchAgent,
     updateStatus,
     addMedia,
     deleteAlert,
-
 } = require("../controllers/sos.controller");
 
 
@@ -61,8 +61,8 @@ router.get(
 router.post(
     "/",
     verifyToken,
-    validateRequest(createSosSchema),
     upload.array("media", 5),
+    validateRequest(createSosSchema),
     createAlert
 );
 
@@ -82,6 +82,18 @@ router.patch(
     ]),
     validateRequest(updateStatusSchema),
     updateStatus
+);
+
+// ===============================
+// DISPATCH AGENT
+// Admin / Operator
+// ===============================
+router.post(
+    "/:id/dispatch",
+    verifyToken,
+    checkRole(["ADMIN", "OPERATOR"]),
+    validateRequest(dispatchAgentSchema),
+    dispatchAgent
 );
 
 // ===============================

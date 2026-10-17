@@ -22,7 +22,7 @@ const {
 router.get(
     "/",
     verifyToken,
-    checkRole(["ADMIN"]),
+    checkRole(["ADMIN", "OPERATOR", "AGENT", "CITIZEN"]),
     permissionController.getRolePermissions
 );
 
@@ -37,4 +37,14 @@ router.put(
     permissionController.updateRolePermissions
 );
 
-module.exports = router;
+// ==========================
+// Reset role permissions to defaults
+// ==========================
+router.post(
+    "/reset",
+    verifyToken,
+    checkRole(["ADMIN"]),
+    permissionController.resetRolePermissions
+);
+
+module.exports = router;

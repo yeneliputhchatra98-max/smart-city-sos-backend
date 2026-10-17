@@ -93,7 +93,7 @@ exports.getCitizenReports = async (query = {}) => {
 
     // Filter by Status
     if (status) {
-        where.status = status;
+        where.status = status === "IN_PROGRESS" ? "REVIEWING" : status;
     }
 
     // Filter by Province
@@ -166,13 +166,15 @@ exports.updateCitizenReportStatus = async (id, status) => {
         throw new Error("Citizen report not found");
     }
 
+    const normalizedStatus = status === "IN_PROGRESS" ? "REVIEWING" : status;
+
     const updatedReport =
         await prisma.citizenReport.update({
             where: {
                 id,
             },
             data: {
-                status,
+                status: normalizedStatus,
             },
         });
 

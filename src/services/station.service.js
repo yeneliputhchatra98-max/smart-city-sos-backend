@@ -33,9 +33,9 @@ const getAllStations = async (filters = {}) => {
 
         ...(search && {
             OR: [
-                { name: { contains: search, mode: 'insensitive' } },
-                { address: { contains: search, mode: 'insensitive' } },
-                { hotline: { contains: search, mode: 'insensitive' } },
+                { name: { contains: search } },
+                { address: { contains: search } },
+                { hotline: { contains: search } },
             ],
         }),
     };
@@ -181,7 +181,7 @@ const updateStation = async (id, data) => {
             }),
 
             ...(data.organizationId !== undefined && {
-                organizationId: data.organizationId,
+                organizationId: data.organizationId || null,
             }),
 
             ...(data.status !== undefined && {

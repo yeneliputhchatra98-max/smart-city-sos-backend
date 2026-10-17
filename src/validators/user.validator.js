@@ -71,12 +71,8 @@ const createUserSchema = Joi.object({
         }),
 
     organizationId: Joi.string()
-        .uuid()
         .optional()
-        .allow(null, "")
-        .messages({
-            "string.guid": "organizationId must be a valid UUID",
-        }),
+        .allow(null, ""),
 
     badgeId: Joi.string()
         .max(50)
@@ -137,12 +133,8 @@ const updateUserSchema = Joi.object({
         .allow(null),
 
     organizationId: Joi.string()
-        .uuid()
         .optional()
-        .allow(null, "")
-        .messages({
-            "string.guid": "organizationId must be a valid UUID",
-        }),
+        .allow(null, ""),
 
     badgeId: Joi.string().max(50).optional().allow(null, ""),
 
@@ -161,6 +153,8 @@ const updateUserSchema = Joi.object({
         .valid("MALE", "FEMALE", "OTHER")
         .optional()
         .allow(null, ""),
+
+    mfaEnabled: Joi.boolean().optional(),
 })
     .min(1)
     .messages({

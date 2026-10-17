@@ -18,11 +18,11 @@ const validateRequest = (schema, source = "body") => {
             });
         }
 
-        // ✅ លុប empty strings, null, undefined ចេញ
+        // ✅ លុប empty strings, undefined ចេញ (រក្សាទុក null សម្រាប់ clear field/relation)
         const cleaned = { ...data };
         for (const key in cleaned) {
             const value = cleaned[key];
-            if (value === "" || value === null || value === undefined) {
+            if (value === "" || value === undefined) {
                 delete cleaned[key];
             }
         }

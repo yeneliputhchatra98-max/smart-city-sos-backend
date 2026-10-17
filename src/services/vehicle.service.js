@@ -212,9 +212,14 @@ const getVehicleStats = async () => {
  * ─── Create New Vehicle ──────────────────────────────────────────────────────
  */
 const createVehicle = async (data) => {
+    const cleanData = { ...data };
+    if (cleanData.organizationId === '') cleanData.organizationId = null;
+    if (cleanData.stationId === '') cleanData.stationId = null;
+    if (cleanData.assignedAgentId === '') cleanData.assignedAgentId = null;
+
     // If assigned to an agent, sync the agent's vehicleNo & vehicleType
     const created = await prisma.vehicle.create({
-        data,
+        data: cleanData,
         include: {
             organization: true,
             station: true,
@@ -264,9 +269,14 @@ const updateVehicle = async (id, data) => {
         throw new Error("Vehicle not found");
     }
 
+    const cleanData = { ...data };
+    if (cleanData.organizationId === '') cleanData.organizationId = null;
+    if (cleanData.stationId === '') cleanData.stationId = null;
+    if (cleanData.assignedAgentId === '') cleanData.assignedAgentId = null;
+
     const updated = await prisma.vehicle.update({
         where: { id },
-        data,
+        data: cleanData,
         include: {
             organization: true,
             station: true,

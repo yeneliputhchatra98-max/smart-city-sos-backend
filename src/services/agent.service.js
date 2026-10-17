@@ -27,10 +27,22 @@ const getAgentById = async (id) => {
     });
 };
 
+// ─── Sanitizer Helper ─────────────────────────────
+const sanitizeAgentData = (data) => {
+    const clean = { ...data };
+    if (clean.stationId === '') clean.stationId = null;
+    if (clean.organizationId === '') clean.organizationId = null;
+    if (clean.vehicleType === '') clean.vehicleType = null;
+    if (clean.vehicleNo === '') clean.vehicleNo = null;
+    if (clean.role === '') clean.role = 'Responder';
+    return clean;
+};
+
 // ─── Create ───────────────────────────────────────
 const createAgent = async (data) => {
+    const cleanData = sanitizeAgentData(data);
     return await prisma.agent.create({
-        data,
+        data: cleanData,
         include: {
             organization: true,
             station: true,
@@ -41,9 +53,10 @@ const createAgent = async (data) => {
 
 // ─── Update ───────────────────────────────────────
 const updateAgent = async (id, data) => {
+    const cleanData = sanitizeAgentData(data);
     const updated = await prisma.agent.update({
         where: { id },
-        data,
+        data: cleanData,
         include: {
             organization: true,
             station: true,

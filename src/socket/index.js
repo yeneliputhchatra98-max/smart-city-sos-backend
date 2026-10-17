@@ -178,6 +178,63 @@ const emitVehicleCountsChanged = (counts) => {
     }
 };
 
+/**
+ * 9. Emit agent dispatch event (`agent:dispatched`) to operators and alert watchers.
+ */
+const emitDispatchAgent = (data) => {
+    try {
+        const activeIo = getIO();
+        activeIo.to("operators").emit("agent:dispatched", data);
+        activeIo.emit("agent:dispatched", data);
+        if (data?.alert?.id) {
+            activeIo.to(`alert:${data.alert.id}`).emit("agent:dispatched", data);
+        }
+        logger.info(`📡 Broadcasted agent:dispatched for Alert ${data?.alert?.id || 'N/A'}`);
+    } catch (e) {
+        logger.warn(`Socket emit failed (agent:dispatched): ${e.message}`);
+    }
+};
+
+/**
+ * 10. Emit agent status and coordinates update event (`agent:status:updated`).
+ */
+const emitAgentStatusUpdate = (agent) => {
+    try {
+        const activeIo = getIO();
+        activeIo.to("operators").emit("agent:status:updated", agent);
+        activeIo.emit("agent:status:updated", agent);
+
+        if (agent?.lat !== undefined && agent?.lng !== undefined && agent?.lat !== null && agent?.lng !== null) {
+            activeIo.to("operators").emit("agent_location_updated", {
+                agentId: agent.id,
+                lat: agent.lat,
+                lng: agent.lng,
+                status: agent.status,
+            });
+        }
+        logger.info(`📡 Broadcasted agent:status:updated for Agent ${agent?.name || agent?.id} -> ${agent?.status}`);
+    } catch (e) {
+        logger.warn(`Socket emit failed (agent:status:updated): ${e.message}`);
+    }
+};
+
+/**
+ * Emit alert resolved event (`alert:resolved`)
+ */
+const emitAlertResolved = (alert) => {
+    try {
+        const activeIo = getIO();
+        activeIo.to("operators").emit("alert:resolved", alert);
+        activeIo.emit("alert:resolved", alert);
+        if (alert?.id) {
+            activeIo.to(`alert:${alert.id}`).emit("alert:resolved", alert);
+        }
+        logger.info(`📡 Broadcasted alert:resolved for Alert ${alert?.id}`);
+    } catch (e) {
+        logger.warn(`Socket emit failed (alert:resolved): ${e.message}`);
+    }
+};
+
 module.exports = {
     initSocket,
     getIO,
@@ -187,4 +244,7 @@ module.exports = {
     emitBroadcastAlert,
     emitVehicleUpdated,
     emitVehicleCountsChanged,
+    emitDispatchAgent,
+    emitAgentStatusUpdate,
+    emitAlertResolved,
 };

@@ -11,7 +11,7 @@ const {
 router.get(
     "/",
     verifyToken,
-    checkRole(["ADMIN", "OPERATOR"]),
+    checkRole(["ADMIN", "OPERATOR", "ORG_MANAGER"]),
     auditController.getAuditLogs
 );
 
@@ -20,6 +20,21 @@ router.post(
     "/",
     verifyToken,
     auditController.createAuditLog
+);
+
+// ─── Auto Cleanup Schedule & Trigger ─────────────────────────────────────────
+router.get(
+    "/cleanup-status",
+    verifyToken,
+    checkRole(["ADMIN", "OPERATOR"]),
+    auditController.getCleanupStatus
+);
+
+router.post(
+    "/cleanup",
+    verifyToken,
+    checkRole(["ADMIN", "OPERATOR"]),
+    auditController.cleanupOldLogs
 );
 
 module.exports = router;

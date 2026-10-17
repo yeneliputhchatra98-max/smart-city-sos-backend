@@ -49,9 +49,22 @@ exports.updateRolePermissions = async (req, res, next) => {
         });
 
     } catch (err) {
-
         next(err);
-
     }
-
 };
+
+// ==========================
+// Reset Role Permissions
+// ==========================
+exports.resetRolePermissions = async (req, res, next) => {
+    try {
+        const permissions = await permissionService.resetRolePermissions();
+        return res.status(200).json({
+            success: true,
+            message: "Permissions reset to defaults",
+            data: permissions
+        });
+    } catch (err) {
+        next(err);
+    }
+};

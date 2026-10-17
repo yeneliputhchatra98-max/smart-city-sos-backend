@@ -85,9 +85,8 @@ const createStationSchema = Joi.object({
     .min(0)
     .default(0),
 
-  // ✅ កែ — ទទួល empty string
+  // ✅ ទទួល string, empty string ឬ null (organizationId អាចជា UUID ឬ slug ដូចជា 'org-medical-siemreap')
   organizationId: Joi.string()
-    .uuid()
     .allow(null, '')
     .optional(),
 
@@ -140,9 +139,8 @@ const updateStationSchema = Joi.object({
     .integer()
     .min(0),
 
-  // ✅ កែ — ទទួល empty string
+  // ✅ ទទួល string, empty string ឬ null (organizationId អាចជា UUID ឬ slug ដូចជា 'org-medical-siemreap')
   organizationId: Joi.string()
-    .uuid()
     .allow(null, '')
     .optional(),
 

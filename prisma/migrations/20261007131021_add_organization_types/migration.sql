@@ -1,0 +1,8 @@
+-- AlterTable
+ALTER TABLE `agents` MODIFY `type` ENUM('POLICE', 'FIRE', 'MEDICAL', 'ACCIDENT', 'CRIME', 'FLOOD', 'DISASTER') NOT NULL;
+
+-- AlterTable
+ALTER TABLE `organizations` MODIFY `type` ENUM('POLICE', 'FIRE', 'MEDICAL', 'ACCIDENT', 'CRIME', 'FLOOD', 'DISASTER') NOT NULL;
+
+-- AlterTable
+ALTER TABLE `stations` MODIFY `type` ENUM('POLICE', 'FIRE', 'MEDICAL', 'ACCIDENT', 'CRIME', 'FLOOD', 'DISASTER') NOT NULL;

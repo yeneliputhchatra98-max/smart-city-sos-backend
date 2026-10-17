@@ -876,6 +876,7 @@ const googleLogin = async (idToken, ipAddress = null, userAgent = null, tabId = 
             const randomPassword = crypto.randomBytes(32).toString("hex");
             const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
+            const citizenRole = await prisma.role.findUnique({ where: { name: ROLES.CITIZEN } });
             user = await prisma.user.create({
                 data: {
                     fullName: name || username,
@@ -884,7 +885,7 @@ const googleLogin = async (idToken, ipAddress = null, userAgent = null, tabId = 
                     password: hashedPassword,
                     phone: "N/A",
                     avatar: picture || DEFAULT_AVATAR,
-                    roleId: 5,
+                    roleId: citizenRole ? citizenRole.id : 4,
                     status: "ACTIVE",
                     googleId,
                     emailVerified: true,

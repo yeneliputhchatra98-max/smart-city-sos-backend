@@ -13,7 +13,7 @@ const prisma = new PrismaClient();
 
 const USER_FIELDS = [
     "fullName","username","email","phone","avatar",
-    "birthday","gender","roleId","organizationId","badgeId","password",
+    "birthday","gender","roleId","organizationId","badgeId","password","mfaEnabled",
 ];
 
 // ✅ ប្រើ VALID_USER_STATUSES ពី constants

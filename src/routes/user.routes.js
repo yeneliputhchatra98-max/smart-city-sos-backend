@@ -74,13 +74,22 @@ router.post(
 );
 
 // ========================
-// UPDATE USER
+// UPDATE USER (PUT and PATCH supported)
 // ========================
 router.put(
     "/:id",
     verifyToken,
     checkRole(["ADMIN"]),
     upload.single("avatar"),          // ✅ បន្ថែម
+    validateRequest(updateUserSchema),
+    userController.updateUser
+);
+
+router.patch(
+    "/:id",
+    verifyToken,
+    checkRole(["ADMIN"]),
+    upload.single("avatar"),
     validateRequest(updateUserSchema),
     userController.updateUser
 );

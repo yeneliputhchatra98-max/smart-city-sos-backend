@@ -125,6 +125,7 @@ exports.updateCitizenReportStatusSchema = Joi.object({
         .valid(
             "PENDING",
             "REVIEWING",
+            "IN_PROGRESS",
             "RESOLVED",
             "REJECTED"
         )

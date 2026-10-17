@@ -5,6 +5,7 @@ const logger = require("./utils/logger");
 const { createServer } = require("http");
 const prisma = require("./config/prisma");
 const { initSocket } = require("./socket");
+const auditService = require("./services/audit.service");
 
 // --- Configuration ---
 const PORT = process.env.PORT || 5000;
@@ -73,6 +74,15 @@ const startServer = async () => {
             "Database connected successfully"
         );
 
+        // ===============================
+        // Start Audit Log Auto-Cleanup Scheduler (Every 7 Days)
+        // ===============================
+        try {
+            auditService.startAuditLogAutoCleanup();
+            logger.info("Audit log 7-day auto-cleanup scheduler initialized");
+        } catch (schedulerErr) {
+            logger.warn(`Failed to start audit log auto-cleanup scheduler: ${schedulerErr.message}`);
+        }
 
         // ===============================
         // Start Listening

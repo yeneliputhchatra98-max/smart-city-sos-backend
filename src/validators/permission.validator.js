@@ -1,21 +1,11 @@
 const Joi = require("joi");
 
 const updatePermissionSchema = Joi.object({
-
-    permissions: Joi.object({
-
-        ADMIN: Joi.object().optional(),
-
-        OPERATOR: Joi.object().optional(),
-
-        AGENT: Joi.object().optional(),
-
-        CITIZEN: Joi.object().optional()
-
-    }).required()
-
+    permissions: Joi.object().pattern(
+        Joi.string(),
+        Joi.object().pattern(Joi.string(), Joi.boolean())
+    ).required()
 });
-
 
 module.exports = {
     updatePermissionSchema

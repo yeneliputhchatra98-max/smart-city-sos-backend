@@ -5120,3 +5120,38 @@ Please make sure your database server is running at `mysql.railway.internal:3306
 2026-09-05 14:15:43 [ERROR] Failed to start server: Can't reach database server at `localhost:3306`
 
 Please make sure your database server is running at `localhost:3306`.
+2026-10-06 21:23:02 [ERROR] Failed to start server: Error querying the database: Server error: `ERROR HY000 (1524): Plugin 'mysql_native_password' is not loaded'
+2026-10-06 21:29:26 [ERROR] Login error: Invalid credentials
+2026-10-06 21:29:26 [ERROR] Login error: Invalid credentials
+2026-10-06 21:29:32 [ERROR] Login error: Cannot read properties of undefined (reading 'create')
+2026-10-06 21:29:32 [ERROR] Login error: Cannot read properties of undefined (reading 'create')
+2026-10-06 21:29:32 [ERROR] [POST] /api/auth/login - Cannot read properties of undefined (reading 'create') {"statusCode":500,"code":"INTERNAL_ERROR","path":"/api/auth/login","method":"POST","ip":"127.0.0.1","user":"anonymous"}
+AppError: Cannot read properties of undefined (reading 'create')
+    at toAppError (E:\smart-city-sos-cambodia\backend\src\controllers\auth.controller.js:59:12)
+    at login (E:\smart-city-sos-cambodia\backend\src\controllers\auth.controller.js:213:14)
+2026-10-06 21:30:05 [ERROR] Login error: Cannot read properties of undefined (reading 'create')
+2026-10-06 21:30:05 [ERROR] Login error: Cannot read properties of undefined (reading 'create')
+2026-10-06 21:30:05 [ERROR] [POST] /api/auth/login - Cannot read properties of undefined (reading 'create') {"statusCode":500,"code":"INTERNAL_ERROR","path":"/api/auth/login","method":"POST","ip":"127.0.0.1","user":"anonymous"}
+AppError: Cannot read properties of undefined (reading 'create')
+    at toAppError (E:\smart-city-sos-cambodia\backend\src\controllers\auth.controller.js:59:12)
+    at login (E:\smart-city-sos-cambodia\backend\src\controllers\auth.controller.js:213:14)
+2026-10-06 21:31:51 [ERROR] Login error: Cannot read properties of undefined (reading 'create')
+2026-10-06 21:31:51 [ERROR] Login error: Cannot read properties of undefined (reading 'create')
+2026-10-06 21:31:51 [ERROR] [POST] /api/auth/login - Cannot read properties of undefined (reading 'create') {"statusCode":500,"code":"INTERNAL_ERROR","path":"/api/auth/login","method":"POST","ip":"127.0.0.1","user":"anonymous"}
+AppError: Cannot read properties of undefined (reading 'create')
+    at toAppError (E:\smart-city-sos-cambodia\backend\src\controllers\auth.controller.js:59:12)
+    at login (E:\smart-city-sos-cambodia\backend\src\controllers\auth.controller.js:213:14)
+2026-10-06 21:32:35 [ERROR] Login error: Cannot read properties of undefined (reading 'create')
+2026-10-06 21:32:35 [ERROR] Login error: Cannot read properties of undefined (reading 'create')
+2026-10-06 21:32:35 [ERROR] [POST] /api/auth/login - Cannot read properties of undefined (reading 'create') {"statusCode":500,"code":"INTERNAL_ERROR","path":"/api/auth/login","method":"POST","ip":"127.0.0.1","user":"anonymous"}
+AppError: Cannot read properties of undefined (reading 'create')
+    at toAppError (E:\smart-city-sos-cambodia\backend\src\controllers\auth.controller.js:59:12)
+    at login (E:\smart-city-sos-cambodia\backend\src\controllers\auth.controller.js:213:14)
+2026-10-06 21:34:10 [ERROR] Login error: Cannot read properties of undefined (reading 'create')
+2026-10-06 21:34:10 [ERROR] Login error: Cannot read properties of undefined (reading 'create')
+2026-10-06 21:34:10 [ERROR] [POST] /api/auth/login - Cannot read properties of undefined (reading 'create') {"statusCode":500,"code":"INTERNAL_ERROR","path":"/api/auth/login","method":"POST","ip":"127.0.0.1","user":"anonymous"}
+AppError: Cannot read properties of undefined (reading 'create')
+    at toAppError (E:\smart-city-sos-cambodia\backend\src\controllers\auth.controller.js:59:12)
+    at login (E:\smart-city-sos-cambodia\backend\src\controllers\auth.controller.js:213:14)
+2026-10-15 09:27:08 [ERROR] Login error: Invalid credentials
+2026-10-15 09:27:08 [ERROR] Login error: Invalid credentials

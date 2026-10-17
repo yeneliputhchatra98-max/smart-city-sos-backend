@@ -16,7 +16,8 @@ const createBroadcastSchema = Joi.object({
         .valid(
             "INFO",
             "WARNING",
-            "EMERGENCY"
+            "EMERGENCY",
+            "CRITICAL"
         )
         .default("WARNING"),
 
@@ -26,7 +27,12 @@ const createBroadcastSchema = Joi.object({
             "WEATHER",
             "TRAFFIC",
             "HEALTH",
-            "OTHER"
+            "OTHER",
+            "FLOOD",
+            "STORM",
+            "FIRE",
+            "MEDICAL_CRISIS",
+            "GENERAL_ANNOUNCEMENT"
         )
         .default("SECURITY"),
 
@@ -35,7 +41,8 @@ const createBroadcastSchema = Joi.object({
             "ALL_CITIZENS",
             "POLICE",
             "FIRE",
-            "MEDICAL"
+            "MEDICAL",
+            "RESCUE_AGENTS"
         )
         .default("ALL_CITIZENS"),
 
@@ -65,7 +72,8 @@ const updateBroadcastSchema = Joi.object({
         .valid(
             "INFO",
             "WARNING",
-            "EMERGENCY"
+            "EMERGENCY",
+            "CRITICAL"
         )
         .optional(),
 
@@ -75,7 +83,12 @@ const updateBroadcastSchema = Joi.object({
             "WEATHER",
             "TRAFFIC",
             "HEALTH",
-            "OTHER"
+            "OTHER",
+            "FLOOD",
+            "STORM",
+            "FIRE",
+            "MEDICAL_CRISIS",
+            "GENERAL_ANNOUNCEMENT"
         )
         .optional(),
 
@@ -84,7 +97,8 @@ const updateBroadcastSchema = Joi.object({
             "ALL_CITIZENS",
             "POLICE",
             "FIRE",
-            "MEDICAL"
+            "MEDICAL",
+            "RESCUE_AGENTS"
         )
         .optional(),
 

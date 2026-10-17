@@ -31,6 +31,18 @@ router.get(
 
 
 // ==========================
+// Get available agents
+// ADMIN + OPERATOR + AGENT + CITIZEN
+// ==========================
+router.get(
+    "/available",
+    verifyToken,
+    checkRole(["ADMIN", "OPERATOR", "AGENT", "CITIZEN"]),
+    agentController.getAvailableAgents
+);
+
+
+// ==========================
 // Get agent by ID
 // ADMIN + OPERATOR + AGENT
 // ==========================

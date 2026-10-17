@@ -23,7 +23,7 @@ const {
 router.get(
     "/",
     verifyToken,
-    checkRole(["ADMIN", "ORG_MANAGER"]),
+    checkRole(["ADMIN", "OPERATOR"]),
     organizationController.getAllOrgs
 );
 
@@ -44,7 +44,7 @@ router.post(
 router.put(
     "/:id",
     verifyToken,
-    checkRole(["ADMIN", "ORG_MANAGER"]),
+    checkRole(["ADMIN", "OPERATOR"]),
     validateRequest(updateOrganizationSchema),
     organizationController.updateOrg
 );
@@ -73,4 +73,4 @@ router.patch(
     organizationController.updateStatus
 );
 
-module.exports = router;
+module.exports = router;

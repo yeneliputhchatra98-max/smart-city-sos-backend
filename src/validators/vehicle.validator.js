@@ -75,26 +75,17 @@ const createVehicleSchema = Joi.object({
         .optional()
         .allow(null),
 
-    organizationId: uuidSchema
+    organizationId: Joi.string()
         .optional()
-        .allow(null, '')
-        .messages({
-            'string.guid': 'organizationId must be a valid UUID',
-        }),
+        .allow(null, ''),
 
-    stationId: uuidSchema
+    stationId: Joi.string()
         .optional()
-        .allow(null, '')
-        .messages({
-            'string.guid': 'stationId must be a valid UUID',
-        }),
+        .allow(null, ''),
 
-    assignedAgentId: uuidSchema
+    assignedAgentId: Joi.string()
         .optional()
-        .allow(null, '')
-        .messages({
-            'string.guid': 'assignedAgentId must be a valid UUID',
-        }),
+        .allow(null, ''),
 });
 
 // ============================================================
@@ -140,15 +131,15 @@ const updateVehicleSchema = Joi.object({
         .optional()
         .allow(null),
 
-    organizationId: uuidSchema
+    organizationId: Joi.string()
         .optional()
         .allow(null, ''),
 
-    stationId: uuidSchema
+    stationId: Joi.string()
         .optional()
         .allow(null, ''),
 
-    assignedAgentId: uuidSchema
+    assignedAgentId: Joi.string()
         .optional()
         .allow(null, ''),
 });
@@ -170,15 +161,15 @@ const updateStatusSchema = Joi.object({
 // Assign Vehicle Schema
 // ============================================================
 const assignVehicleSchema = Joi.object({
-    agentId: uuidSchema
+    agentId: Joi.string()
         .optional()
         .allow(null, ''),
 
-    stationId: uuidSchema
+    stationId: Joi.string()
         .optional()
         .allow(null, ''),
 
-    organizationId: uuidSchema
+    organizationId: Joi.string()
         .optional()
         .allow(null, ''),
 });

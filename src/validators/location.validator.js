@@ -15,7 +15,7 @@ const gpsLocationSchema = Joi.object({
 // ==========================================
 
 const provinceIdSchema = Joi.object({
-  provinceId: Joi.string().uuid().required(),
+  provinceId: Joi.string().uuid().optional(),
 });
 
 // ==========================================

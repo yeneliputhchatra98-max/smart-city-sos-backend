@@ -47,3 +47,35 @@ exports.createAuditLog = async (req, res, next) => {
         next(err);
     }
 };
+
+// =============================
+// Get Auto Cleanup Status & Schedule
+// =============================
+exports.getCleanupStatus = async (req, res, next) => {
+    try {
+        const status = await auditService.getCleanupStatus();
+        return res.status(200).json({
+            success: true,
+            data: status
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// =============================
+// Execute Audit Log Cleanup
+// =============================
+exports.cleanupOldLogs = async (req, res, next) => {
+    try {
+        const retentionDays = parseInt(req.body?.days, 10) || 7;
+        const result = await auditService.cleanupOldLogs(retentionDays, req.user);
+        return res.status(200).json({
+            success: true,
+            message: `Successfully purged ${result.deletedCount} audit logs older than ${retentionDays} days.`,
+            data: result
+        });
+    } catch (err) {
+        next(err);
+    }
+};

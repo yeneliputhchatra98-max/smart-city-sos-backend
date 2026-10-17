@@ -24,8 +24,8 @@ const ROLES = {
 const ROLE_MAP = {
     1: "ADMIN",
     2: "OPERATOR",
-    3: "CITIZEN",
-    4: "AGENT",
+    3: "AGENT",
+    4: "CITIZEN",
 };
 
 // ==================== USER STATUS ====================
