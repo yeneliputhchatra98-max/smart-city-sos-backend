@@ -181,7 +181,8 @@ const register = async (data) => {
 
         const hashPassword = await bcrypt.hash(data.password, 10);
 
-        const roleName = normalizeRole(data.role || ROLES.CITIZEN);
+        // 🔒 Public registration is strictly restricted to CITIZEN role only
+        const roleName = ROLES.CITIZEN;
         const role = await prisma.role.findUnique({ where: { name: roleName } });
         if (!role) throw new Error(`Role "${roleName}" not found`);
 

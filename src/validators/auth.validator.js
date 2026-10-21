@@ -60,9 +60,13 @@ const registerSchema = Joi.object({
             "any.required": "Phone is required",
         }),
 
+    // 🔒 Public registration is strictly restricted to CITIZEN role only
     role: Joi.string()
-        .valid("ADMIN", "OPERATOR", "AGENT", "CITIZEN")
-        .optional(),
+        .valid("CITIZEN")
+        .optional()
+        .messages({
+            "any.only": "Public registration is only permitted for the CITIZEN role",
+        }),
 
     // ✅ Birthday — allow null, ""
     birthday: Joi.date()

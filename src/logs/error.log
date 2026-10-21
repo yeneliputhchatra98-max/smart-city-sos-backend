@@ -5155,3 +5155,418 @@ AppError: Cannot read properties of undefined (reading 'create')
     at login (E:\smart-city-sos-cambodia\backend\src\controllers\auth.controller.js:213:14)
 2026-10-15 09:27:08 [ERROR] Login error: Invalid credentials
 2026-10-15 09:27:08 [ERROR] Login error: Invalid credentials
+2026-10-19 20:00:55 [ERROR] [GET] /api/agents - 
+Invalid `prisma.agent.findMany()` invocation in
+E:\smart-city-sos-cambodia\backend\src\services\agent.service.js:26:31
+
+  23 
+  24 // ─── Get all ──────────────────────────────────────
+  25 const getAllAgents = async () => {
+→ 26     return await prisma.agent.findMany({
+           include: {
+             organization: true,
+             station: true,
+             assignedVehicle: true,
+             user: {
+             ~~~~
+               select: {
+                 id: true,
+                 fullName: true,
+                 email: true,
+                 phone: true,
+                 badgeId: true,
+                 avatar: true,
+                 username: true,
+                 roleId: true,
+                 role: true
+               }
+             },
+         ?   sosAlerts?: true
+           },
+           orderBy: {
+             createdAt: "desc"
+           }
+         })
+
+Unknown field `user` for include statement on model `Agent`. Available options are marked with ?. {"statusCode":500,"code":"INTERNAL_ERROR","path":"/api/agents","method":"GET","ip":"127.0.0.1","user":"db830520-5fdf-474e-988c-949ad140f117"}
+PrismaClientValidationError: 
+Invalid `prisma.agent.findMany()` invocation in
+E:\smart-city-sos-cambodia\backend\src\services\agent.service.js:26:31
+
+  23 
+  24 // ─── Get all ──────────────────────────────────────
+  25 const getAllAgents = async () => {
+→ 26     return await prisma.agent.findMany({
+           include: {
+             organization: true,
+             station: true,
+             assignedVehicle: true,
+             user: {
+             ~~~~
+               select: {
+                 id: true,
+                 fullName: true,
+                 email: true,
+                 phone: true,
+                 badgeId: true,
+                 avatar: true,
+                 username: true,
+                 roleId: true,
+                 role: true
+               }
+             },
+         ?   sosAlerts?: true
+           },
+           orderBy: {
+             createdAt: "desc"
+           }
+         })
+
+Unknown field `user` for include statement on model `Agent`. Available options are marked with ?.
+    at Nn (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at ei.handleRequestError (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:6911)
+    at ei.handleAndLogRequestError (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:6593)
+    at ei.request (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:6300)
+    at async a (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:130:9551)
+    at async Object.getAllAgents (E:\smart-city-sos-cambodia\backend\src\services\agent.service.js:26:12)
+    at async exports.getAllAgents (E:\smart-city-sos-cambodia\backend\src\controllers\agent.controller.js:7:24)
+2026-10-19 20:00:55 [ERROR] [GET] /api/agents - 
+Invalid `prisma.agent.findMany()` invocation in
+E:\smart-city-sos-cambodia\backend\src\services\agent.service.js:26:31
+
+  23 
+  24 // ─── Get all ──────────────────────────────────────
+  25 const getAllAgents = async () => {
+→ 26     return await prisma.agent.findMany({
+           include: {
+             organization: true,
+             station: true,
+             assignedVehicle: true,
+             user: {
+             ~~~~
+               select: {
+                 id: true,
+                 fullName: true,
+                 email: true,
+                 phone: true,
+                 badgeId: true,
+                 avatar: true,
+                 username: true,
+                 roleId: true,
+                 role: true
+               }
+             },
+         ?   sosAlerts?: true
+           },
+           orderBy: {
+             createdAt: "desc"
+           }
+         })
+
+Unknown field `user` for include statement on model `Agent`. Available options are marked with ?. {"statusCode":500,"code":"INTERNAL_ERROR","path":"/api/agents","method":"GET","ip":"127.0.0.1","user":"db830520-5fdf-474e-988c-949ad140f117"}
+PrismaClientValidationError: 
+Invalid `prisma.agent.findMany()` invocation in
+E:\smart-city-sos-cambodia\backend\src\services\agent.service.js:26:31
+
+  23 
+  24 // ─── Get all ──────────────────────────────────────
+  25 const getAllAgents = async () => {
+→ 26     return await prisma.agent.findMany({
+           include: {
+             organization: true,
+             station: true,
+             assignedVehicle: true,
+             user: {
+             ~~~~
+               select: {
+                 id: true,
+                 fullName: true,
+                 email: true,
+                 phone: true,
+                 badgeId: true,
+                 avatar: true,
+                 username: true,
+                 roleId: true,
+                 role: true
+               }
+             },
+         ?   sosAlerts?: true
+           },
+           orderBy: {
+             createdAt: "desc"
+           }
+         })
+
+Unknown field `user` for include statement on model `Agent`. Available options are marked with ?.
+    at Nn (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at ei.handleRequestError (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:6911)
+    at ei.handleAndLogRequestError (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:6593)
+    at ei.request (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:6300)
+    at async a (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:130:9551)
+    at async Object.getAllAgents (E:\smart-city-sos-cambodia\backend\src\services\agent.service.js:26:12)
+    at async exports.getAllAgents (E:\smart-city-sos-cambodia\backend\src\controllers\agent.controller.js:7:24)
+2026-10-19 20:01:05 [ERROR] [GET] /api/users - 
+Invalid `prisma.user.findMany()` invocation in
+E:\smart-city-sos-cambodia\backend\src\services\user.service.js:92:21
+
+  89 const skip = (page - 1) * limit;
+  90 
+  91 const [data, total] = await Promise.all([
+→ 92     prisma.user.findMany({
+           where: {
+             deletedAt: null
+           },
+           include: {
+             role: true,
+             organization: true,
+             agentProfile: true,
+             ~~~~~~~~~~~~
+         ?   refreshTokens?: true,
+         ?   sessions?: true,
+         ?   auditLogs?: true,
+         ?   newsArticles?: true,
+         ?   settingsUpdated?: true,
+         ?   reportsCreated?: true,
+         ?   passwordResetTokens?: true,
+         ?   emailVerificationTokens?: true
+           },
+           orderBy: {
+             createdAt: "desc"
+           },
+           skip: 0,
+           take: 20
+         })
+
+Unknown field `agentProfile` for include statement on model `User`. Available options are marked with ?. {"statusCode":500,"code":"INTERNAL_ERROR","path":"/api/users","method":"GET","ip":"127.0.0.1","user":"db830520-5fdf-474e-988c-949ad140f117"}
+PrismaClientValidationError: 
+Invalid `prisma.user.findMany()` invocation in
+E:\smart-city-sos-cambodia\backend\src\services\user.service.js:92:21
+
+  89 const skip = (page - 1) * limit;
+  90 
+  91 const [data, total] = await Promise.all([
+→ 92     prisma.user.findMany({
+           where: {
+             deletedAt: null
+           },
+           include: {
+             role: true,
+             organization: true,
+             agentProfile: true,
+             ~~~~~~~~~~~~
+         ?   refreshTokens?: true,
+         ?   sessions?: true,
+         ?   auditLogs?: true,
+         ?   newsArticles?: true,
+         ?   settingsUpdated?: true,
+         ?   reportsCreated?: true,
+         ?   passwordResetTokens?: true,
+         ?   emailVerificationTokens?: true
+           },
+           orderBy: {
+             createdAt: "desc"
+           },
+           skip: 0,
+           take: 20
+         })
+
+Unknown field `agentProfile` for include statement on model `User`. Available options are marked with ?.
+    at Nn (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at ei.handleRequestError (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:6911)
+    at ei.handleAndLogRequestError (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:6593)
+    at ei.request (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:6300)
+    at async a (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:130:9551)
+    at async Promise.all (index 0)
+    at async exports.getAllUsers (E:\smart-city-sos-cambodia\backend\src\services\user.service.js:91:27)
+    at async exports.getAllUsers (E:\smart-city-sos-cambodia\backend\src\controllers\user.controller.js:14:24)
+2026-10-19 20:01:05 [ERROR] [GET] /api/users - 
+Invalid `prisma.user.findMany()` invocation in
+E:\smart-city-sos-cambodia\backend\src\services\user.service.js:92:21
+
+  89 const skip = (page - 1) * limit;
+  90 
+  91 const [data, total] = await Promise.all([
+→ 92     prisma.user.findMany({
+           where: {
+             deletedAt: null
+           },
+           include: {
+             role: true,
+             organization: true,
+             agentProfile: true,
+             ~~~~~~~~~~~~
+         ?   refreshTokens?: true,
+         ?   sessions?: true,
+         ?   auditLogs?: true,
+         ?   newsArticles?: true,
+         ?   settingsUpdated?: true,
+         ?   reportsCreated?: true,
+         ?   passwordResetTokens?: true,
+         ?   emailVerificationTokens?: true
+           },
+           orderBy: {
+             createdAt: "desc"
+           },
+           skip: 0,
+           take: 20
+         })
+
+Unknown field `agentProfile` for include statement on model `User`. Available options are marked with ?. {"statusCode":500,"code":"INTERNAL_ERROR","path":"/api/users","method":"GET","ip":"127.0.0.1","user":"db830520-5fdf-474e-988c-949ad140f117"}
+PrismaClientValidationError: 
+Invalid `prisma.user.findMany()` invocation in
+E:\smart-city-sos-cambodia\backend\src\services\user.service.js:92:21
+
+  89 const skip = (page - 1) * limit;
+  90 
+  91 const [data, total] = await Promise.all([
+→ 92     prisma.user.findMany({
+           where: {
+             deletedAt: null
+           },
+           include: {
+             role: true,
+             organization: true,
+             agentProfile: true,
+             ~~~~~~~~~~~~
+         ?   refreshTokens?: true,
+         ?   sessions?: true,
+         ?   auditLogs?: true,
+         ?   newsArticles?: true,
+         ?   settingsUpdated?: true,
+         ?   reportsCreated?: true,
+         ?   passwordResetTokens?: true,
+         ?   emailVerificationTokens?: true
+           },
+           orderBy: {
+             createdAt: "desc"
+           },
+           skip: 0,
+           take: 20
+         })
+
+Unknown field `agentProfile` for include statement on model `User`. Available options are marked with ?.
+    at Nn (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at ei.handleRequestError (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:6911)
+    at ei.handleAndLogRequestError (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:6593)
+    at ei.request (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:6300)
+    at async a (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:130:9551)
+    at async Promise.all (index 0)
+    at async exports.getAllUsers (E:\smart-city-sos-cambodia\backend\src\services\user.service.js:91:27)
+    at async exports.getAllUsers (E:\smart-city-sos-cambodia\backend\src\controllers\user.controller.js:14:24)
+2026-10-19 20:01:41 [ERROR] [GET] /api/agents - 
+Invalid `prisma.agent.findMany()` invocation in
+E:\smart-city-sos-cambodia\backend\src\services\agent.service.js:26:31
+
+  23 
+  24 // ─── Get all ──────────────────────────────────────
+  25 const getAllAgents = async () => {
+→ 26     return await prisma.agent.findMany(
+The column `emergency_sos.agents.userId` does not exist in the current database. {"statusCode":500,"code":"P2022","path":"/api/agents","method":"GET","ip":"127.0.0.1","user":"db830520-5fdf-474e-988c-949ad140f117"}
+PrismaClientKnownRequestError: 
+Invalid `prisma.agent.findMany()` invocation in
+E:\smart-city-sos-cambodia\backend\src\services\agent.service.js:26:31
+
+  23 
+  24 // ─── Get all ──────────────────────────────────────
+  25 const getAllAgents = async () => {
+→ 26     return await prisma.agent.findMany(
+The column `emergency_sos.agents.userId` does not exist in the current database.
+    at ei.handleRequestError (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:7268)
+    at ei.handleAndLogRequestError (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:6593)
+    at ei.request (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:6300)
+    at async a (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:130:9551)
+    at async Object.getAllAgents (E:\smart-city-sos-cambodia\backend\src\services\agent.service.js:26:12)
+    at async exports.getAllAgents (E:\smart-city-sos-cambodia\backend\src\controllers\agent.controller.js:7:24)
+2026-10-19 20:01:41 [ERROR] [GET] /api/users - 
+Invalid `prisma.user.findMany()` invocation in
+E:\smart-city-sos-cambodia\backend\src\services\user.service.js:92:21
+
+  89 const skip = (page - 1) * limit;
+  90 
+  91 const [data, total] = await Promise.all([
+→ 92     prisma.user.findMany(
+The column `emergency_sos.agents.userId` does not exist in the current database. {"statusCode":500,"code":"P2022","path":"/api/users","method":"GET","ip":"127.0.0.1","user":"db830520-5fdf-474e-988c-949ad140f117"}
+PrismaClientKnownRequestError: 
+Invalid `prisma.user.findMany()` invocation in
+E:\smart-city-sos-cambodia\backend\src\services\user.service.js:92:21
+
+  89 const skip = (page - 1) * limit;
+  90 
+  91 const [data, total] = await Promise.all([
+→ 92     prisma.user.findMany(
+The column `emergency_sos.agents.userId` does not exist in the current database.
+    at ei.handleRequestError (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:7268)
+    at ei.handleAndLogRequestError (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:6593)
+    at ei.request (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:6300)
+    at async a (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:130:9551)
+    at async Promise.all (index 0)
+    at async exports.getAllUsers (E:\smart-city-sos-cambodia\backend\src\services\user.service.js:91:27)
+    at async exports.getAllUsers (E:\smart-city-sos-cambodia\backend\src\controllers\user.controller.js:14:24)
+2026-10-19 20:01:41 [ERROR] [GET] /api/agents - 
+Invalid `prisma.agent.findMany()` invocation in
+E:\smart-city-sos-cambodia\backend\src\services\agent.service.js:26:31
+
+  23 
+  24 // ─── Get all ──────────────────────────────────────
+  25 const getAllAgents = async () => {
+→ 26     return await prisma.agent.findMany(
+The column `emergency_sos.agents.userId` does not exist in the current database. {"statusCode":500,"code":"P2022","path":"/api/agents","method":"GET","ip":"127.0.0.1","user":"db830520-5fdf-474e-988c-949ad140f117"}
+PrismaClientKnownRequestError: 
+Invalid `prisma.agent.findMany()` invocation in
+E:\smart-city-sos-cambodia\backend\src\services\agent.service.js:26:31
+
+  23 
+  24 // ─── Get all ──────────────────────────────────────
+  25 const getAllAgents = async () => {
+→ 26     return await prisma.agent.findMany(
+The column `emergency_sos.agents.userId` does not exist in the current database.
+    at ei.handleRequestError (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:7268)
+    at ei.handleAndLogRequestError (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:6593)
+    at ei.request (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:6300)
+    at async a (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:130:9551)
+    at async Object.getAllAgents (E:\smart-city-sos-cambodia\backend\src\services\agent.service.js:26:12)
+    at async exports.getAllAgents (E:\smart-city-sos-cambodia\backend\src\controllers\agent.controller.js:7:24)
+2026-10-19 20:01:41 [ERROR] [GET] /api/users - 
+Invalid `prisma.user.findMany()` invocation in
+E:\smart-city-sos-cambodia\backend\src\services\user.service.js:92:21
+
+  89 const skip = (page - 1) * limit;
+  90 
+  91 const [data, total] = await Promise.all([
+→ 92     prisma.user.findMany(
+The column `emergency_sos.agents.userId` does not exist in the current database. {"statusCode":500,"code":"P2022","path":"/api/users","method":"GET","ip":"127.0.0.1","user":"db830520-5fdf-474e-988c-949ad140f117"}
+PrismaClientKnownRequestError: 
+Invalid `prisma.user.findMany()` invocation in
+E:\smart-city-sos-cambodia\backend\src\services\user.service.js:92:21
+
+  89 const skip = (page - 1) * limit;
+  90 
+  91 const [data, total] = await Promise.all([
+→ 92     prisma.user.findMany(
+The column `emergency_sos.agents.userId` does not exist in the current database.
+    at ei.handleRequestError (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:7268)
+    at ei.handleAndLogRequestError (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:6593)
+    at ei.request (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:121:6300)
+    at async a (E:\smart-city-sos-cambodia\backend\node_modules\@prisma\client\runtime\library.js:130:9551)
+    at async Promise.all (index 0)
+    at async exports.getAllUsers (E:\smart-city-sos-cambodia\backend\src\services\user.service.js:91:27)
+    at async exports.getAllUsers (E:\smart-city-sos-cambodia\backend\src\controllers\user.controller.js:14:24)
+2026-10-19 23:32:23 [ERROR] Port 5000 is already in use
+2026-10-19 23:32:45 [ERROR] Port 5000 is already in use
+2026-10-19 23:33:07 [ERROR] Port 5000 is already in use
+2026-10-19 23:33:24 [ERROR] Port 5000 is already in use
+2026-10-19 23:33:34 [ERROR] Port 5000 is already in use
+2026-10-19 23:34:44 [ERROR] Port 5000 is already in use
+2026-10-19 23:48:27 [ERROR] Port 5000 is already in use
+2026-10-19 23:49:29 [ERROR] Port 5000 is already in use
+2026-10-19 23:50:21 [ERROR] Port 5000 is already in use
+2026-10-19 23:51:13 [ERROR] Port 5000 is already in use
+2026-10-20 00:06:22 [ERROR] Port 5000 is already in use
+2026-10-20 00:08:20 [ERROR] Port 5000 is already in use
+2026-10-20 00:08:48 [ERROR] Port 5000 is already in use
+2026-10-20 00:12:11 [ERROR] Port 5000 is already in use
+2026-10-20 00:13:01 [ERROR] Port 5000 is already in use
+2026-10-20 00:13:25 [ERROR] Port 5000 is already in use
+2026-10-20 00:13:49 [ERROR] Port 5000 is already in use
+2026-10-20 00:14:55 [ERROR] Port 5000 is already in use
+2026-10-20 00:16:23 [ERROR] Port 5000 is already in use

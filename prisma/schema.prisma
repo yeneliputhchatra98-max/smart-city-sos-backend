@@ -239,6 +239,7 @@ model User {
   passwordResetTokens     PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
 
+  agentProfile            Agent?
   emailVerified Boolean @default(false)
 
   // ✅ បន្ថែម soft delete
@@ -285,12 +286,16 @@ model Organization {
 model Agent {
   id          String           @id @default(uuid())
   name        String
+  email       String?
   role        String
   type        OrganizationType
   phone       String
   status      AgentStatus      @default(AVAILABLE)
   vehicleNo   String?
   vehicleType String?
+
+  userId      String?          @unique
+  user        User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   stationId String?
   station   Station? @relation(fields: [stationId], references: [id], onDelete: SetNull)

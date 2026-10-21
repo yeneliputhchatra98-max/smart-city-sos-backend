@@ -63,11 +63,13 @@ const createUserSchema = Joi.object({
     roleId: Joi.number()
         .integer()
         .positive()
+        .invalid(3)
         .optional()
         .allow(null)
         .messages({
             "number.base": "roleId must be a number",
             "number.integer": "roleId must be an integer",
+            "any.invalid": "Cannot create user with Role AGENT from User Management. Agents must be created through Agent Management.",
         }),
 
     organizationId: Joi.string()
@@ -131,6 +133,10 @@ const updateUserSchema = Joi.object({
         .positive()
         .optional()
         .allow(null),
+
+    status: Joi.string()
+        .valid("ACTIVE", "BLOCKED", "INACTIVE", "PENDING_VERIFICATION", "DELETED")
+        .optional(),
 
     organizationId: Joi.string()
         .optional()

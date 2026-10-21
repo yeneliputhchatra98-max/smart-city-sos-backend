@@ -27,12 +27,13 @@ if (!fs.existsSync(logDir)) {
 
 // --- Security Middleware ---
 app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
             scriptSrc: ["'self'", "'unsafe-inline'"],
             styleSrc: ["'self'", "'unsafe-inline'"],
-            imgSrc: ["'self'", "data:", "https:"],
+            imgSrc: ["'self'", "data:", "https:", "http:"],
         },
     },
     hsts: {
@@ -83,8 +84,24 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser(process.env.COOKIE_SECRET || "cookie-secret"));
 
 // --- Static Files ---
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use("/public", express.static(path.join(__dirname, "public")));
+app.use(
+    "/uploads",
+    (req, res, next) => {
+        res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        next();
+    },
+    express.static(path.join(__dirname, "uploads"))
+);
+app.use(
+    "/public",
+    (req, res, next) => {
+        res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        next();
+    },
+    express.static(path.join(__dirname, "public"))
+);
 
 // --- Request Logging ---
 if (process.env.NODE_ENV === "development") {
@@ -110,7 +127,8 @@ const globalLimiter = rateLimit({
         code: "RATE_LIMITED"
     },
     skip: (req) => {
-        // Skip rate limiting for health checks
+        // Skip rate limiting in development or for health checks
+        if (process.env.NODE_ENV === "development") return true;
         return req.path === "/health" || req.path === "/ping";
     }
 });

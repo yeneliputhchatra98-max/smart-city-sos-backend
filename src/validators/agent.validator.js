@@ -40,6 +40,36 @@ const createAgentSchema = Joi.object({
             'string.empty': 'Phone is required',
         }),
 
+    email: Joi.string()
+        .email()
+        .max(150)
+        .lowercase()
+        .trim()
+        .when('userId', {
+            is: Joi.exist().not('', null),
+            then: Joi.optional().allow('', null),
+            otherwise: Joi.required(),
+        })
+        .messages({
+            'string.email': 'Invalid email format',
+            'any.required': 'Email is required to create agent login account',
+            'string.empty': 'Email is required to create agent login account',
+        }),
+
+    password: Joi.string()
+        .min(8)
+        .max(128)
+        .when('userId', {
+            is: Joi.exist().not('', null),
+            then: Joi.optional().allow('', null),
+            otherwise: Joi.required(),
+        })
+        .messages({
+            'string.min': 'Password must be at least 8 characters',
+            'any.required': 'Password (min 8 chars) is required to create agent login account',
+            'string.empty': 'Password (min 8 chars) is required to create agent login account',
+        }),
+
     type: Joi.string()
         .valid("POLICE", "FIRE", "MEDICAL")
         .required()
@@ -53,6 +83,11 @@ const createAgentSchema = Joi.object({
         .optional()
         .allow('', null)
         .default('Responder'),
+
+    // ✅ User Account ID សម្រាប់ Login (1-to-1)
+    userId: Joi.string()
+        .optional()
+        .allow('', null),
 
     // ✅ Hierarchy — stationId
     stationId: Joi.string()
@@ -118,12 +153,24 @@ const updateAgentSchema = Joi.object({
         .max(20)
         .optional(),
 
+    email: Joi.string()
+        .email()
+        .max(150)
+        .lowercase()
+        .trim()
+        .optional()
+        .allow('', null),
+
     type: Joi.string()
         .valid("POLICE", "FIRE", "MEDICAL")
         .optional(),
 
     role: Joi.string()
         .max(100)
+        .optional()
+        .allow('', null),
+
+    userId: Joi.string()
         .optional()
         .allow('', null),
 

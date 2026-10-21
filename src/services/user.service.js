@@ -13,7 +13,7 @@ const prisma = new PrismaClient();
 
 const USER_FIELDS = [
     "fullName","username","email","phone","avatar",
-    "birthday","gender","roleId","organizationId","badgeId","password","mfaEnabled",
+    "birthday","gender","roleId","organizationId","badgeId","password","mfaEnabled","status",
 ];
 
 // ✅ ប្រើ VALID_USER_STATUSES ពី constants
@@ -61,14 +61,37 @@ const transformCommon = async (d) => {
 };
 
 // ============ GET ALL ============
-exports.getAllUsers = async ({ page = 1, limit = 20 } = {}) => {
-    const skip = (page - 1) * limit;
+exports.getAllUsers = async ({ page = 1, limit = 20, role, unassignedOnly = false, all = false } = {}) => {
     const where = { deletedAt: null };
+
+    // ✅ Filter តាម Role Name (ឧ. "AGENT", "ADMIN", "OPERATOR")
+    if (role) {
+        where.role = {
+            name: String(role).toUpperCase(),
+        };
+    }
+
+    // ✅ Filter យកតែ User ដែលមិនទាន់ភ្ជាប់ Agent
+    if (unassignedOnly) {
+        where.agentProfile = null;
+    }
+
+    // ប្រសិនបើសុំយកទាំងអស់ (សម្រាប់ Dropdown ឬ User Management)
+    if (all) {
+        const data = await prisma.user.findMany({
+            where,
+            include: { role: true, organization: true, agentProfile: true },
+            orderBy: { createdAt: "desc" },
+        });
+        return { data, total: data.length, page: 1, limit: data.length };
+    }
+
+    const skip = (page - 1) * limit;
 
     const [data, total] = await Promise.all([
         prisma.user.findMany({
             where,
-            include: { role: true, organization: true },
+            include: { role: true, organization: true, agentProfile: true },
             orderBy: { createdAt: "desc" },
             skip,
             take: limit,
@@ -77,6 +100,31 @@ exports.getAllUsers = async ({ page = 1, limit = 20 } = {}) => {
     ]);
 
     return { data, total, page, limit };
+};
+
+// ============ GET AGENT CANDIDATES (Role = AGENT) ============
+// API សម្រាប់ទាញយក User ដែលមាន Role = "AGENT" សម្រាប់បំពេញ Dropdown
+exports.getAgentCandidateUsers = async ({ unassignedOnly = false } = {}) => {
+    const where = {
+        deletedAt: null,
+        role: {
+            name: "AGENT",
+        },
+    };
+
+    if (unassignedOnly) {
+        where.agentProfile = null;
+    }
+
+    return await prisma.user.findMany({
+        where,
+        include: {
+            role: true,
+            organization: true,
+            agentProfile: true,
+        },
+        orderBy: { fullName: "asc" },
+    });
 };
 
 // ============ GET DELETED ============
@@ -105,6 +153,14 @@ exports.createUser = async (body, file = null) => {
     if (!d.email) fail("Email is required");
     if (!d.fullName) fail("fullName is required");
 
+    // ✅ Disallow creating User with Role = AGENT from User Management
+    if (d.roleId) {
+        const targetRole = await prisma.role.findUnique({ where: { id: d.roleId } });
+        if (targetRole && (targetRole.name === "AGENT" || targetRole.id === 3)) {
+            fail("Cannot create user with Role 'AGENT' from User Management. Agents must be created through Agent Management.", 400);
+        }
+    }
+
     // ✅ Handle file upload
     if (file) {
         d.avatar = getStoredPath(file);
@@ -112,11 +168,25 @@ exports.createUser = async (body, file = null) => {
 
     if (d.username) {
         const dup = await prisma.user.findUnique({ where: { username: d.username } });
-        if (dup && !dup.deletedAt) fail("Username already exists", 409);
+        if (dup) {
+            if (!dup.deletedAt) fail("Username already exists", 409);
+            // Free username from soft-deleted user
+            await prisma.user.update({
+                where: { id: dup.id },
+                data: { username: `${dup.username}.deleted.${Date.now()}` },
+            });
+        }
     }
 
     const dupEmail = await prisma.user.findUnique({ where: { email: d.email } });
-    if (dupEmail && !dupEmail.deletedAt) fail("Email already exists", 409);
+    if (dupEmail) {
+        if (!dupEmail.deletedAt) fail("Email already exists", 409);
+        // Free email from soft-deleted user
+        await prisma.user.update({
+            where: { id: dupEmail.id },
+            data: { email: `${dupEmail.email}.deleted.${Date.now()}` },
+        });
+    }
 
     return await prisma.user.create({
         data: d,
@@ -126,12 +196,34 @@ exports.createUser = async (body, file = null) => {
 
 // ============ UPDATE ============
 exports.updateUser = async (id, body, file = null) => {
-    const existing = await prisma.user.findFirst({ where: { id, deletedAt: null } });
+    const existing = await prisma.user.findFirst({
+        where: { id, deletedAt: null },
+        include: { role: true, agentProfile: true },
+    });
     if (!existing) fail("User not found", 404);
 
     const d = pickFields(body);
     normalizeNullable(d);
     await transformCommon(d);
+
+    const isAgent = Boolean(existing.agentProfile) || existing.role?.name === "AGENT" || existing.roleId === 3;
+
+    if (isAgent) {
+        // If agent user, reject modifying roleId or strip it if unchanged
+        if (d.roleId !== undefined && d.roleId !== existing.roleId) {
+            fail("Cannot change role of an Agent user. Role is managed exclusively by Agent Management.", 400);
+        }
+        // Always strip roleId so it cannot be altered for Agent
+        delete d.roleId;
+    } else {
+        // Non-agent user: do not allow changing role to AGENT from User Management
+        if (d.roleId) {
+            const targetRole = await prisma.role.findUnique({ where: { id: d.roleId } });
+            if (targetRole && (targetRole.name === "AGENT" || targetRole.id === 3)) {
+                fail("Cannot assign role 'AGENT' from User Management. Agents must be created through Agent Management.", 400);
+            }
+        }
+    }
 
     // ✅ Handle file upload
     if (file) {
@@ -152,10 +244,31 @@ exports.updateUser = async (id, body, file = null) => {
         if (dup) fail("Email already exists", 409);
     }
 
-    return await prisma.user.update({
-        where: { id },
-        data: d,
-        include: { role: true, organization: true },
+    // ✅ Use prisma.$transaction to update both User and Agent (if any) for synchronization
+    return await prisma.$transaction(async (tx) => {
+        const updatedUser = await tx.user.update({
+            where: { id },
+            data: d,
+            include: { role: true, organization: true, agentProfile: true },
+        });
+
+        // Keep Agent profile fields in sync with User updates
+        if (existing.agentProfile) {
+            const agentSyncData = {};
+            if (d.fullName !== undefined) agentSyncData.name = d.fullName;
+            if (d.phone !== undefined) agentSyncData.phone = d.phone;
+            if (d.email !== undefined) agentSyncData.email = d.email;
+            if (d.organizationId !== undefined) agentSyncData.organizationId = d.organizationId;
+
+            if (Object.keys(agentSyncData).length > 0) {
+                await tx.agent.update({
+                    where: { id: existing.agentProfile.id },
+                    data: agentSyncData,
+                });
+            }
+        }
+
+        return updatedUser;
     });
 };
 
@@ -164,11 +277,20 @@ exports.deleteUser = async (id) => {
     const existing = await prisma.user.findFirst({ where: { id, deletedAt: null } });
     if (!existing) fail("User not found or already deleted", 404);
 
-    // ✅ Transaction: soft delete + revoke refresh tokens
+    const deletedSuffix = `.deleted.${Date.now()}`;
+    const newEmail = `${existing.email}${deletedSuffix}`;
+    const newUsername = existing.username ? `${existing.username}${deletedSuffix}` : null;
+
+    // ✅ Transaction: soft delete + revoke refresh tokens + free unique email/username
     const [user] = await prisma.$transaction([
         prisma.user.update({
             where: { id },
-            data: { deletedAt: new Date(), status: "DELETED" },
+            data: {
+                deletedAt: new Date(),
+                status: "DELETED",
+                email: newEmail,
+                username: newUsername,
+            },
         }),
         prisma.refreshToken.updateMany({
             where: { userId: id, revokedAt: null },

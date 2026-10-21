@@ -134,13 +134,14 @@ const register = async (req, res, next) => {
             genderValue = g;
         }
 
+        // 🔒 Defense-in-depth: Force CITIZEN role for public registration
         const result = await authService.register({
             fullName,
             username,
             email,
             password,
             phone,
-            role: role || "CITIZEN",
+            role: "CITIZEN",
             birthday: birthdayDate,
             gender: genderValue,
         });

@@ -1,4 +1,5 @@
 const settingService = require('../services/setting.service');
+const backupService = require('../services/backup.service');
 
 // GET /api/settings
 exports.getSettings = async (req, res) => {
@@ -49,6 +50,99 @@ exports.updateSettings = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to update system settings',
+    });
+  }
+};
+
+// GET /api/settings/backups
+exports.getBackups = async (req, res) => {
+  try {
+    const backups = await backupService.getBackups();
+
+    return res.status(200).json({
+      success: true,
+      data: backups,
+    });
+  } catch (error) {
+    console.error('Get backups error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve database backups',
+    });
+  }
+};
+
+// POST /api/settings/backups
+exports.createBackup = async (req, res) => {
+  try {
+    const backup = await backupService.createBackup(req.user);
+
+    return res.status(201).json({
+      success: true,
+      data: backup,
+      message: 'Database backup completed successfully',
+    });
+  } catch (error) {
+    console.error('Create backup error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to create database backup',
+    });
+  }
+};
+
+// POST /api/settings/backups/:id/restore
+exports.restoreBackup = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await backupService.restoreBackup(id, req.user);
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+      message: 'System snapshot restored successfully',
+    });
+  } catch (error) {
+    console.error('Restore backup error:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to restore database snapshot',
+    });
+  }
+};
+
+// GET /api/settings/backups/:id/download
+exports.downloadBackup = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { filePath, filename } = backupService.getBackupFilePath(id);
+
+    return res.download(filePath, filename);
+  } catch (error) {
+    console.error('Download backup error:', error);
+    return res.status(404).json({
+      success: false,
+      message: error.message || 'Backup file not found',
+    });
+  }
+};
+
+// DELETE /api/settings/backups/:id
+exports.deleteBackup = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await backupService.deleteBackup(id);
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+      message: 'Backup deleted successfully',
+    });
+  } catch (error) {
+    console.error('Delete backup error:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to delete backup file',
     });
   }
 };

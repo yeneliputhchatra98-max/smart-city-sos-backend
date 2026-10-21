@@ -7,7 +7,11 @@ exports.getAllUsers = async (req, res, next) => {
     try {
         const page = Number(req.query.page) || 1;
         const limit = Number(req.query.limit) || 20;
-        const result = await userService.getAllUsers({ page, limit });
+        const role = req.query.role;
+        const unassignedOnly = req.query.unassignedOnly === 'true';
+        const all = req.query.all === 'true';
+
+        const result = await userService.getAllUsers({ page, limit, role, unassignedOnly, all });
 
         res.json({
             success: true,
@@ -18,6 +22,19 @@ exports.getAllUsers = async (req, res, next) => {
                 limit: result.limit,
                 totalPages: Math.ceil(result.total / result.limit),
             },
+        });
+    } catch (error) { next(error); }
+};
+
+// ✅ ទាញយកបញ្ជី User ដែលមាន Role = "AGENT" (សម្រាប់បំពេញ Dropdown)
+exports.getAgentCandidates = async (req, res, next) => {
+    try {
+        const unassignedOnly = req.query.unassignedOnly === 'true';
+        const users = await userService.getAgentCandidateUsers({ unassignedOnly });
+
+        res.json({
+            success: true,
+            data: users.map(sanitizeUser),
         });
     } catch (error) { next(error); }
 };

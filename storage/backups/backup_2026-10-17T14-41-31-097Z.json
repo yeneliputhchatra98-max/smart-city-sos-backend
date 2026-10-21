@@ -1,0 +1,2112 @@
+{
+  "version": "1.0.0",
+  "system": "Smart City SOS Cambodia",
+  "createdAt": "2026-10-17T14:41:31.097Z",
+  "createdBy": "System Admin",
+  "totalRecords": 239,
+  "tables": {
+    "systemSettings": [
+      {
+        "id": "0d661e44-a4a3-4789-9a1f-ce5691fff635",
+        "key": "sessionTimeoutMins",
+        "value": "30",
+        "description": null,
+        "isEncrypted": false,
+        "updatedByUserId": null,
+        "updatedAt": "2026-10-17T14:22:13.691Z"
+      },
+      {
+        "id": "133d1785-6537-478f-8564-ffd62ece56de",
+        "key": "audit_log_retention_days",
+        "value": "7",
+        "description": "Retention period in days for audit logs",
+        "isEncrypted": false,
+        "updatedByUserId": null,
+        "updatedAt": "2026-10-17T14:36:04.608Z"
+      },
+      {
+        "id": "1ca68cc3-4f1d-4594-bec9-d3e4be1c24fb",
+        "key": "emergencyAlert",
+        "value": "true",
+        "description": null,
+        "isEncrypted": false,
+        "updatedByUserId": null,
+        "updatedAt": "2026-10-17T14:22:13.625Z"
+      },
+      {
+        "id": "4bd14e28-80e9-4244-bbe3-9b2659edfb97",
+        "key": "mfaRequiredForAdmin",
+        "value": "true",
+        "description": null,
+        "isEncrypted": false,
+        "updatedByUserId": null,
+        "updatedAt": "2026-10-17T14:22:13.707Z"
+      },
+      {
+        "id": "5afba8bc-598e-4108-a654-225548668e27",
+        "key": "backupTime",
+        "value": "02:00 AM",
+        "description": null,
+        "isEncrypted": false,
+        "updatedByUserId": null,
+        "updatedAt": "2026-10-17T14:22:13.738Z"
+      },
+      {
+        "id": "67c28334-0f88-4f22-ba70-388f84789058",
+        "key": "maintenanceMode",
+        "value": "false",
+        "description": null,
+        "isEncrypted": false,
+        "updatedByUserId": null,
+        "updatedAt": "2026-10-17T14:24:20.656Z"
+      },
+      {
+        "id": "886dacb9-fa16-482e-89a6-72844c98ab3a",
+        "key": "autoRouting",
+        "value": "true",
+        "description": null,
+        "isEncrypted": false,
+        "updatedByUserId": null,
+        "updatedAt": "2026-10-17T14:22:13.542Z"
+      },
+      {
+        "id": "9d2e5085-922b-43d1-9f63-2d135ec1175d",
+        "key": "systemName",
+        "value": "Smart City SOS Emergency System",
+        "description": null,
+        "isEncrypted": false,
+        "updatedByUserId": null,
+        "updatedAt": "2026-10-17T14:22:13.433Z"
+      },
+      {
+        "id": "a3721c34-3101-45ca-a558-0ad587cf2e23",
+        "key": "defaultPriority",
+        "value": "HIGH",
+        "description": null,
+        "isEncrypted": false,
+        "updatedByUserId": null,
+        "updatedAt": "2026-10-17T14:22:13.675Z"
+      },
+      {
+        "id": "a67956ee-8290-4d77-9a29-9d21c0f55379",
+        "key": "enableNotification",
+        "value": "true",
+        "description": null,
+        "isEncrypted": false,
+        "updatedByUserId": null,
+        "updatedAt": "2026-10-17T14:22:13.593Z"
+      },
+      {
+        "id": "b368fe1e-c7ba-48de-a1dd-e00ddaab3b81",
+        "key": "responseTime",
+        "value": "15",
+        "description": null,
+        "isEncrypted": false,
+        "updatedByUserId": null,
+        "updatedAt": "2026-10-17T14:22:13.660Z"
+      },
+      {
+        "id": "b87aa771-7119-42af-9751-46059fbc88c8",
+        "key": "automatedBackups",
+        "value": "true",
+        "description": null,
+        "isEncrypted": false,
+        "updatedByUserId": null,
+        "updatedAt": "2026-10-17T14:22:13.723Z"
+      },
+      {
+        "id": "bcb793ce-f1e6-473e-84ef-51758309aff5",
+        "key": "emergencyNumber",
+        "value": "119",
+        "description": null,
+        "isEncrypted": false,
+        "updatedByUserId": null,
+        "updatedAt": "2026-10-17T14:22:13.643Z"
+      },
+      {
+        "id": "c0cafd90-6f40-4010-b4b8-eab6de02e5a7",
+        "key": "autoDispatch",
+        "value": "true",
+        "description": null,
+        "isEncrypted": false,
+        "updatedByUserId": null,
+        "updatedAt": "2026-10-17T14:22:13.566Z"
+      },
+      {
+        "id": "d8240909-6c71-43df-8842-fd1cd22a644a",
+        "key": "sosTimeout",
+        "value": "30",
+        "description": null,
+        "isEncrypted": false,
+        "updatedByUserId": null,
+        "updatedAt": "2026-10-17T14:24:20.663Z"
+      },
+      {
+        "id": "f62d7921-a996-4be8-ae3e-8da8dc35219a",
+        "key": "audit_log_last_cleanup",
+        "value": "2026-10-17T14:36:04.579Z",
+        "description": "Timestamp of last audit log auto cleanup",
+        "isEncrypted": false,
+        "updatedByUserId": null,
+        "updatedAt": "2026-10-17T14:36:04.586Z"
+      },
+      {
+        "id": "f8310e79-0662-41c3-abbd-7cec23188ca2",
+        "key": "smsNotification",
+        "value": "true",
+        "description": null,
+        "isEncrypted": false,
+        "updatedByUserId": null,
+        "updatedAt": "2026-10-17T14:22:13.609Z"
+      },
+      {
+        "id": "f89ebb27-0631-4402-86f4-0282e620a4fe",
+        "key": "systemDescription",
+        "value": "Smart City Emergency Response System",
+        "description": null,
+        "isEncrypted": false,
+        "updatedByUserId": null,
+        "updatedAt": "2026-10-17T14:22:13.471Z"
+      }
+    ],
+    "roles": [
+      {
+        "id": 1,
+        "name": "ADMIN",
+        "description": "System Administrator",
+        "createdAt": "2026-10-07T12:27:56.289Z",
+        "updatedAt": "2026-10-07T12:27:56.289Z"
+      },
+      {
+        "id": 2,
+        "name": "OPERATOR",
+        "description": "Emergency Operator",
+        "createdAt": "2026-10-07T12:27:56.300Z",
+        "updatedAt": "2026-10-07T12:27:56.300Z"
+      },
+      {
+        "id": 3,
+        "name": "AGENT",
+        "description": "Rescue Agent",
+        "createdAt": "2026-10-07T12:27:56.306Z",
+        "updatedAt": "2026-10-07T12:27:56.306Z"
+      },
+      {
+        "id": 4,
+        "name": "CITIZEN",
+        "description": "Regular Citizen",
+        "createdAt": "2026-10-07T12:27:56.311Z",
+        "updatedAt": "2026-10-07T12:27:56.311Z"
+      }
+    ],
+    "rolePermissions": [
+      {
+        "id": "03cc9a2f-ba63-4f6d-a72d-05ad124ecdb2",
+        "roleId": 3,
+        "action": "BROADCAST",
+        "isGranted": false
+      },
+      {
+        "id": "0e8437f9-ad63-41ca-9a28-9e1ff5e4844c",
+        "roleId": 1,
+        "action": "VIEW_MAP",
+        "isGranted": true
+      },
+      {
+        "id": "324b6e31-42c6-4320-b7a4-e18e2b3b356d",
+        "roleId": 4,
+        "action": "EXPORT_REPORTS",
+        "isGranted": false
+      },
+      {
+        "id": "404520db-3090-410a-a051-f827613720fb",
+        "roleId": 2,
+        "action": "MANAGE_ORGS",
+        "isGranted": false
+      },
+      {
+        "id": "420b24b1-6eee-4686-a997-473962fdc394",
+        "roleId": 2,
+        "action": "DISPATCH",
+        "isGranted": true
+      },
+      {
+        "id": "44d192a7-61c6-41ac-b93f-bcdd297b2f85",
+        "roleId": 3,
+        "action": "DISPATCH",
+        "isGranted": true
+      },
+      {
+        "id": "4d05ced8-3c8c-43ae-88ac-23fafc26ce2b",
+        "roleId": 2,
+        "action": "BROADCAST",
+        "isGranted": true
+      },
+      {
+        "id": "510449b0-959a-4215-a830-b8caa1b79220",
+        "roleId": 1,
+        "action": "MANAGE_ORGS",
+        "isGranted": true
+      },
+      {
+        "id": "5c4ff29f-c1dc-4666-bc74-3046d476bff9",
+        "roleId": 3,
+        "action": "MANAGE_USERS",
+        "isGranted": false
+      },
+      {
+        "id": "6ce31a7b-cf0f-49e5-ab56-319f3d7209b1",
+        "roleId": 3,
+        "action": "EXPORT_REPORTS",
+        "isGranted": false
+      },
+      {
+        "id": "7c13f921-8f05-4200-8dab-969af155caca",
+        "roleId": 4,
+        "action": "MANAGE_USERS",
+        "isGranted": false
+      },
+      {
+        "id": "7e73404b-83bb-477e-a81f-f11445ff2212",
+        "roleId": 4,
+        "action": "DISPATCH",
+        "isGranted": false
+      },
+      {
+        "id": "803ff227-9c23-4246-ae8c-76e60918880b",
+        "roleId": 2,
+        "action": "VIEW_MAP",
+        "isGranted": true
+      },
+      {
+        "id": "83ca0cda-1191-4c83-afdb-1f1f05a596d3",
+        "roleId": 4,
+        "action": "VIEW_MAP",
+        "isGranted": false
+      },
+      {
+        "id": "8468cce1-ab2b-4a3f-b7b6-25e8f331c70e",
+        "roleId": 3,
+        "action": "SYSTEM_SETTINGS",
+        "isGranted": false
+      },
+      {
+        "id": "84d20017-b270-47de-aba0-b43a88b3628c",
+        "roleId": 2,
+        "action": "EXPORT_REPORTS",
+        "isGranted": true
+      },
+      {
+        "id": "8f60089f-d5f0-450c-8058-6e6efff77ca8",
+        "roleId": 2,
+        "action": "PUBLISH_NEWS",
+        "isGranted": true
+      },
+      {
+        "id": "90310a8b-f056-40bf-9708-65521468ec32",
+        "roleId": 4,
+        "action": "BROADCAST",
+        "isGranted": false
+      },
+      {
+        "id": "9b1dd15f-a7d5-477c-82d0-7f8bb1376297",
+        "roleId": 2,
+        "action": "MANAGE_USERS",
+        "isGranted": false
+      },
+      {
+        "id": "b0c3a668-76de-4447-81bd-e8cd14c33e01",
+        "roleId": 4,
+        "action": "MANAGE_ORGS",
+        "isGranted": false
+      },
+      {
+        "id": "b1cff3cd-9180-44a1-8359-454188157af4",
+        "roleId": 1,
+        "action": "PUBLISH_NEWS",
+        "isGranted": true
+      },
+      {
+        "id": "bcbd3296-126f-44b3-8b0e-34e194c84388",
+        "roleId": 1,
+        "action": "MANAGE_USERS",
+        "isGranted": true
+      },
+      {
+        "id": "c1434160-9c6d-4320-b1c7-66f45071ed7a",
+        "roleId": 3,
+        "action": "PUBLISH_NEWS",
+        "isGranted": false
+      },
+      {
+        "id": "c1df6174-6daf-4f70-bfeb-4b54d94b432a",
+        "roleId": 3,
+        "action": "VIEW_MAP",
+        "isGranted": true
+      },
+      {
+        "id": "c28b217d-5efc-4542-8f0a-7ee73b74b98c",
+        "roleId": 1,
+        "action": "SYSTEM_SETTINGS",
+        "isGranted": true
+      },
+      {
+        "id": "c6386022-c87f-460f-a851-e46080303678",
+        "roleId": 1,
+        "action": "BROADCAST",
+        "isGranted": true
+      },
+      {
+        "id": "ca5ab8be-e4fc-4759-9345-27cb0e636254",
+        "roleId": 1,
+        "action": "DISPATCH",
+        "isGranted": true
+      },
+      {
+        "id": "da316903-4812-450c-a0ab-daaaad8aef2b",
+        "roleId": 4,
+        "action": "PUBLISH_NEWS",
+        "isGranted": false
+      },
+      {
+        "id": "e09647e6-901f-404b-b20b-9c75976a3c2b",
+        "roleId": 2,
+        "action": "SYSTEM_SETTINGS",
+        "isGranted": false
+      },
+      {
+        "id": "e856c0e3-4874-4ca5-949c-cca43a959058",
+        "roleId": 3,
+        "action": "MANAGE_ORGS",
+        "isGranted": false
+      },
+      {
+        "id": "f0ddd533-5561-4774-8a7f-bdc54e8d8a36",
+        "roleId": 4,
+        "action": "SYSTEM_SETTINGS",
+        "isGranted": false
+      },
+      {
+        "id": "f338bfe3-6ef7-437a-a4f6-83cddbfb8800",
+        "roleId": 1,
+        "action": "EXPORT_REPORTS",
+        "isGranted": true
+      }
+    ],
+    "provinces": [
+      {
+        "id": "01ba8bc8-b28b-4531-b969-79c04c031b66",
+        "name": "Pailin",
+        "nameKm": "ប៉ៃលិន",
+        "createdAt": "2026-10-07T12:22:38.303Z",
+        "updatedAt": "2026-10-07T12:25:35.339Z"
+      },
+      {
+        "id": "0c8fab69-0223-4ebe-91d5-31112c3d5d6d",
+        "name": "Kampong Speu",
+        "nameKm": "កំពង់ស្ពឺ",
+        "createdAt": "2026-10-07T12:22:38.254Z",
+        "updatedAt": "2026-10-07T12:25:35.275Z"
+      },
+      {
+        "id": "1e10bd5f-b6e8-45c5-91c0-eada890f6e89",
+        "name": "Kep",
+        "nameKm": "កែប",
+        "createdAt": "2026-10-07T12:22:38.280Z",
+        "updatedAt": "2026-10-07T12:25:35.294Z"
+      },
+      {
+        "id": "3986a5a4-c8fc-4c4f-bc74-dcd7d815e217",
+        "name": "Mondulkiri",
+        "nameKm": "មណ្ឌលគិរី",
+        "createdAt": "2026-10-07T12:22:38.294Z",
+        "updatedAt": "2026-10-07T12:25:35.329Z"
+      },
+      {
+        "id": "4ec4d938-99e6-467b-8d94-11eb7c762dec",
+        "name": "Preah Sihanouk",
+        "nameKm": "ព្រះសីហនុ",
+        "createdAt": "2026-10-07T12:22:38.311Z",
+        "updatedAt": "2026-10-07T12:25:35.368Z"
+      },
+      {
+        "id": "5eb43083-0998-4021-8800-abf999426ae9",
+        "name": "Prey Veng",
+        "nameKm": "ព្រៃវែង",
+        "createdAt": "2026-10-07T12:22:38.324Z",
+        "updatedAt": "2026-10-07T12:25:35.384Z"
+      },
+      {
+        "id": "61af06da-b246-4f1e-817b-81caa2d34ce9",
+        "name": "Ratanakiri",
+        "nameKm": "រតនគិរី",
+        "createdAt": "2026-10-07T12:22:38.329Z",
+        "updatedAt": "2026-10-07T12:25:35.389Z"
+      },
+      {
+        "id": "62115d22-4f3a-4ce5-a6cc-8072d2d9e538",
+        "name": "Battambang",
+        "nameKm": "បាត់ដំបង",
+        "createdAt": "2026-10-07T12:22:38.242Z",
+        "updatedAt": "2026-10-07T12:25:35.240Z"
+      },
+      {
+        "id": "69cfb886-39fc-4268-b12e-4a6f31359849",
+        "name": "Kandal",
+        "nameKm": "កណ្ដាល",
+        "createdAt": "2026-10-07T12:22:38.274Z",
+        "updatedAt": "2026-10-07T12:25:35.290Z"
+      },
+      {
+        "id": "6e73b0c6-f7f4-4400-aeca-0ce2e9e59ca0",
+        "name": "Koh Kong",
+        "nameKm": "កោះកុង",
+        "createdAt": "2026-10-07T12:22:38.286Z",
+        "updatedAt": "2026-10-07T12:25:35.319Z"
+      },
+      {
+        "id": "6f7e483d-f65b-4ff9-9844-e758e670559c",
+        "name": "Kampong Cham",
+        "nameKm": "កំពង់ចាម",
+        "createdAt": "2026-10-07T12:22:38.246Z",
+        "updatedAt": "2026-10-07T12:25:35.245Z"
+      },
+      {
+        "id": "780a9d6f-7611-46d5-b2bd-dc58f2a1cd19",
+        "name": "Pursat",
+        "nameKm": "ពោធិ៍សាត់",
+        "createdAt": "2026-10-07T12:22:38.320Z",
+        "updatedAt": "2026-10-07T12:25:35.379Z"
+      },
+      {
+        "id": "801d74c8-7e51-42e0-96c9-71f2e1434921",
+        "name": "Takeo",
+        "nameKm": "តាកែវ",
+        "createdAt": "2026-10-07T12:22:38.347Z",
+        "updatedAt": "2026-10-07T12:25:35.409Z"
+      },
+      {
+        "id": "97303036-eaea-4ada-ba93-2135250138b5",
+        "name": "Siem Reap",
+        "nameKm": "សៀមរាប",
+        "createdAt": "2026-10-07T12:22:38.334Z",
+        "updatedAt": "2026-10-07T12:25:35.394Z"
+      },
+      {
+        "id": "98938613-61c1-4381-92cc-8812fbfba158",
+        "name": "Kampong Thom",
+        "nameKm": "កំពង់ធំ",
+        "createdAt": "2026-10-07T12:22:38.260Z",
+        "updatedAt": "2026-10-07T12:25:35.280Z"
+      },
+      {
+        "id": "9986f6e0-b55b-45c7-a89b-d487a0c53295",
+        "name": "Preah Vihear",
+        "nameKm": "ព្រះវិហារ",
+        "createdAt": "2026-10-07T12:22:38.316Z",
+        "updatedAt": "2026-10-07T12:25:35.374Z"
+      },
+      {
+        "id": "b2e00ccf-e58e-4e64-a106-0c3fac0279c3",
+        "name": "Kampot",
+        "nameKm": "កំពត",
+        "createdAt": "2026-10-07T12:22:38.268Z",
+        "updatedAt": "2026-10-07T12:25:35.285Z"
+      },
+      {
+        "id": "b46fa50d-4351-469b-a89f-05d7deb70dd3",
+        "name": "Phnom Penh",
+        "nameKm": "ភ្នំពេញ",
+        "createdAt": "2026-10-07T12:22:38.307Z",
+        "updatedAt": "2026-10-07T12:25:35.344Z"
+      },
+      {
+        "id": "b5947652-32dc-4686-8e52-e11ec41726ed",
+        "name": "Oddar Meanchey",
+        "nameKm": "ឧត្តរមានជ័យ",
+        "createdAt": "2026-10-07T12:22:38.298Z",
+        "updatedAt": "2026-10-07T12:25:35.334Z"
+      },
+      {
+        "id": "c22a80eb-754e-4bfd-a598-eb46f43ea9a3",
+        "name": "Banteay Meanchey",
+        "nameKm": "បន្ទាយមានជ័យ",
+        "createdAt": "2026-10-07T12:22:38.233Z",
+        "updatedAt": "2026-10-07T12:25:35.231Z"
+      },
+      {
+        "id": "c3964068-e300-4b74-99a5-a8e7f397b5c6",
+        "name": "Svay Rieng",
+        "nameKm": "ស្វាយរៀង",
+        "createdAt": "2026-10-07T12:22:38.343Z",
+        "updatedAt": "2026-10-07T12:25:35.403Z"
+      },
+      {
+        "id": "c53ea957-4823-49d2-8e84-1c7efa7a92f5",
+        "name": "Tboung Khmum",
+        "nameKm": "ត្បូងឃ្មុំ",
+        "createdAt": "2026-10-07T12:22:38.351Z",
+        "updatedAt": "2026-10-07T12:25:35.414Z"
+      },
+      {
+        "id": "d0096c5a-cd17-4cca-acf6-d087701282c4",
+        "name": "Kampong Chhnang",
+        "nameKm": "កំពង់ឆ្នាំង",
+        "createdAt": "2026-10-07T12:22:38.250Z",
+        "updatedAt": "2026-10-07T12:25:35.250Z"
+      },
+      {
+        "id": "d0ef3237-6784-4c6e-992b-9b0338feff3c",
+        "name": "Stung Treng",
+        "nameKm": "ស្ទឹងត្រែង",
+        "createdAt": "2026-10-07T12:22:38.339Z",
+        "updatedAt": "2026-10-07T12:25:35.399Z"
+      },
+      {
+        "id": "fddb6e19-9863-4e24-8dcc-724e32879c7d",
+        "name": "Kratie",
+        "nameKm": "ក្រចេះ",
+        "createdAt": "2026-10-07T12:22:38.290Z",
+        "updatedAt": "2026-10-07T12:25:35.324Z"
+      }
+    ],
+    "districts": [
+      {
+        "id": "3fabfd64-5bae-4023-9d82-417229b18eb6",
+        "name": "Kralanh",
+        "nameKm": "ក្រឡាញ់",
+        "provinceId": "97303036-eaea-4ada-ba93-2135250138b5",
+        "createdAt": "2026-10-07T12:22:38.380Z",
+        "updatedAt": "2026-10-07T12:25:35.444Z"
+      },
+      {
+        "id": "4d59f956-1269-4087-81f9-87baffaa69eb",
+        "name": "Svay Leu",
+        "nameKm": "ស្វាយលើ",
+        "provinceId": "97303036-eaea-4ada-ba93-2135250138b5",
+        "createdAt": "2026-10-07T12:22:38.410Z",
+        "updatedAt": "2026-10-07T12:25:35.480Z"
+      },
+      {
+        "id": "4e8ecf7b-cd60-4033-af5b-b8215ed0cd9a",
+        "name": "Prasat Bakong",
+        "nameKm": "ប្រាសាទបាគង",
+        "provinceId": "97303036-eaea-4ada-ba93-2135250138b5",
+        "createdAt": "2026-10-07T12:22:38.390Z",
+        "updatedAt": "2026-10-07T12:25:35.458Z"
+      },
+      {
+        "id": "4f7081b9-3380-4094-abed-b70fa85a026e",
+        "name": "Chi Kraeng",
+        "nameKm": "ជីក្រែង",
+        "provinceId": "97303036-eaea-4ada-ba93-2135250138b5",
+        "createdAt": "2026-10-07T12:22:38.375Z",
+        "updatedAt": "2026-10-07T12:25:35.439Z"
+      },
+      {
+        "id": "6027be84-e84f-48c7-88da-8ad0d0369dd9",
+        "name": "Run Ta Aek Techo Sen",
+        "nameKm": "រុនតាឯកតេជោសែន",
+        "provinceId": "97303036-eaea-4ada-ba93-2135250138b5",
+        "createdAt": "2026-10-07T12:22:38.420Z",
+        "updatedAt": "2026-10-07T12:25:35.491Z"
+      },
+      {
+        "id": "89c69962-4b97-478e-8d2f-ca401558d675",
+        "name": "Varin",
+        "nameKm": "វ៉ារិន",
+        "provinceId": "97303036-eaea-4ada-ba93-2135250138b5",
+        "createdAt": "2026-10-07T12:22:38.415Z",
+        "updatedAt": "2026-10-07T12:25:35.486Z"
+      },
+      {
+        "id": "8b5c9131-1168-47ae-841e-062ba96384b2",
+        "name": "Siem Reap",
+        "nameKm": "សៀមរាប",
+        "provinceId": "97303036-eaea-4ada-ba93-2135250138b5",
+        "createdAt": "2026-10-07T12:22:38.395Z",
+        "updatedAt": "2026-10-07T12:25:35.463Z"
+      },
+      {
+        "id": "8de1b892-d756-4b4c-8517-3216bfaa304a",
+        "name": "Angkor Thum",
+        "nameKm": "អង្គរធំ",
+        "provinceId": "97303036-eaea-4ada-ba93-2135250138b5",
+        "createdAt": "2026-10-07T12:22:38.364Z",
+        "updatedAt": "2026-10-07T12:25:35.428Z"
+      },
+      {
+        "id": "8ee31646-d857-4f2d-b96f-3eda912b0684",
+        "name": "Banteay Srei",
+        "nameKm": "បន្ទាយស្រី",
+        "provinceId": "97303036-eaea-4ada-ba93-2135250138b5",
+        "createdAt": "2026-10-07T12:22:38.369Z",
+        "updatedAt": "2026-10-07T12:25:35.433Z"
+      },
+      {
+        "id": "a0fddcae-ec22-407c-abf3-6fd43c16ab1d",
+        "name": "Puok",
+        "nameKm": "ពួក",
+        "provinceId": "97303036-eaea-4ada-ba93-2135250138b5",
+        "createdAt": "2026-10-07T12:22:38.384Z",
+        "updatedAt": "2026-10-07T12:25:35.450Z"
+      },
+      {
+        "id": "a3a6b224-1236-4d5d-a230-b081101088b5",
+        "name": "Angkor Chum",
+        "nameKm": "អង្គរជុំ",
+        "provinceId": "97303036-eaea-4ada-ba93-2135250138b5",
+        "createdAt": "2026-10-07T12:22:38.357Z",
+        "updatedAt": "2026-10-07T12:25:35.421Z"
+      },
+      {
+        "id": "c4d71175-8db6-46a1-bedc-10c3962d8aae",
+        "name": "Soutr Nikom",
+        "nameKm": "សូទ្រនិគម",
+        "provinceId": "97303036-eaea-4ada-ba93-2135250138b5",
+        "createdAt": "2026-10-07T12:22:38.400Z",
+        "updatedAt": "2026-10-07T12:25:35.468Z"
+      },
+      {
+        "id": "c6fbfe9e-df35-4d3f-9925-f5db67c2788c",
+        "name": "Srei Snam",
+        "nameKm": "ស្រីស្នំ",
+        "provinceId": "97303036-eaea-4ada-ba93-2135250138b5",
+        "createdAt": "2026-10-07T12:22:38.405Z",
+        "updatedAt": "2026-10-07T12:25:35.474Z"
+      }
+    ],
+    "communes": [
+      {
+        "id": "02c681c3-b515-44a4-9615-69b93d7c7c22",
+        "name": "Samraong Yea",
+        "nameKm": "សំរោងយា",
+        "districtId": "a0fddcae-ec22-407c-abf3-6fd43c16ab1d",
+        "createdAt": "2026-10-07T12:22:38.670Z",
+        "updatedAt": "2026-10-07T12:25:35.762Z"
+      },
+      {
+        "id": "03d59b1d-b495-4bb3-95a3-b515cd5009a7",
+        "name": "Slaeng Spean",
+        "nameKm": "ស្លែងស្ពាន",
+        "districtId": "c6fbfe9e-df35-4d3f-9925-f5db67c2788c",
+        "createdAt": "2026-10-07T12:22:38.854Z",
+        "updatedAt": "2026-10-07T12:25:35.956Z"
+      },
+      {
+        "id": "0559708f-19b9-46b8-acf4-b30ea0a839d4",
+        "name": "Saen Sokh",
+        "nameKm": "សែនសុខ",
+        "districtId": "3fabfd64-5bae-4023-9d82-417229b18eb6",
+        "createdAt": "2026-10-07T12:22:38.598Z",
+        "updatedAt": "2026-10-07T12:25:35.684Z"
+      },
+      {
+        "id": "0989f6d1-490e-429f-93bd-294e635b022c",
+        "name": "Moung",
+        "nameKm": "ម៉ោង",
+        "districtId": "c6fbfe9e-df35-4d3f-9925-f5db67c2788c",
+        "createdAt": "2026-10-07T12:22:38.846Z",
+        "updatedAt": "2026-10-07T12:25:35.946Z"
+      },
+      {
+        "id": "0a417601-b1a2-44e5-8855-4592bf5b8333",
+        "name": "Svay Sa",
+        "nameKm": "ស្វាយសា",
+        "districtId": "89c69962-4b97-478e-8d2f-ca401558d675",
+        "createdAt": "2026-10-07T12:22:38.901Z",
+        "updatedAt": "2026-10-07T12:25:36.001Z"
+      },
+      {
+        "id": "0b95959d-77aa-4ef9-be7f-b95edb1d0383",
+        "name": "Srae Nouy",
+        "nameKm": "ស្រែណូយ",
+        "districtId": "89c69962-4b97-478e-8d2f-ca401558d675",
+        "createdAt": "2026-10-07T12:22:38.896Z",
+        "updatedAt": "2026-10-07T12:25:35.997Z"
+      },
+      {
+        "id": "0c1baf2e-b47b-4a0c-967a-19a385037841",
+        "name": "Kok Chak",
+        "nameKm": "គោកចក",
+        "districtId": "8b5c9131-1168-47ae-841e-062ba96384b2",
+        "createdAt": "2026-10-07T12:22:38.736Z",
+        "updatedAt": "2026-10-07T12:25:35.830Z"
+      },
+      {
+        "id": "0d0b9476-a14b-4b36-9139-09f1e480adb8",
+        "name": "Svay Chek",
+        "nameKm": "ស្វាយចេក",
+        "districtId": "8de1b892-d756-4b4c-8517-3216bfaa304a",
+        "createdAt": "2026-10-07T12:22:38.481Z",
+        "updatedAt": "2026-10-07T12:25:35.555Z"
+      },
+      {
+        "id": "0ef1f124-3980-4e3b-8a98-0b54240d433c",
+        "name": "Chanleas Dai",
+        "nameKm": "ចន្លាសដៃ",
+        "districtId": "3fabfd64-5bae-4023-9d82-417229b18eb6",
+        "createdAt": "2026-10-07T12:22:38.569Z",
+        "updatedAt": "2026-10-07T12:25:35.654Z"
+      },
+      {
+        "id": "0f6d919a-c1fc-4555-bba8-5e499c522821",
+        "name": "Sasar Sdam",
+        "nameKm": "សសរស្ដម្ភ",
+        "districtId": "a0fddcae-ec22-407c-abf3-6fd43c16ab1d",
+        "createdAt": "2026-10-07T12:22:38.617Z",
+        "updatedAt": "2026-10-07T12:25:35.705Z"
+      },
+      {
+        "id": "0fa5819d-ead6-45af-9b47-5f976228eb8d",
+        "name": "Char Chhuk",
+        "nameKm": "ចារឈូក",
+        "districtId": "a3a6b224-1236-4d5d-a230-b081101088b5",
+        "createdAt": "2026-10-07T12:22:38.428Z",
+        "updatedAt": "2026-10-07T12:25:35.499Z"
+      },
+      {
+        "id": "112fa024-4d40-4ac9-b574-84e01025bc63",
+        "name": "Snuol",
+        "nameKm": "ស្នួល",
+        "districtId": "3fabfd64-5bae-4023-9d82-417229b18eb6",
+        "createdAt": "2026-10-07T12:22:38.602Z",
+        "updatedAt": "2026-10-07T12:25:35.690Z"
+      },
+      {
+        "id": "1326f028-5257-4533-93f2-83d611c1f390",
+        "name": "Chan Sa",
+        "nameKm": "ចាន់សា",
+        "districtId": "c4d71175-8db6-46a1-bedc-10c3962d8aae",
+        "createdAt": "2026-10-07T12:22:38.783Z",
+        "updatedAt": "2026-10-07T12:25:35.878Z"
+      },
+      {
+        "id": "1521465e-d7f8-4200-9fe8-75612dc2fe33",
+        "name": "Anlong Samnar",
+        "nameKm": "អន្លង់សំណរ",
+        "districtId": "4f7081b9-3380-4094-abed-b70fa85a026e",
+        "createdAt": "2026-10-07T12:22:38.511Z",
+        "updatedAt": "2026-10-07T12:25:35.589Z"
+      },
+      {
+        "id": "15b78ced-0ccc-48cc-aea9-d69d1a1e72e5",
+        "name": "Reul",
+        "nameKm": "រួល",
+        "districtId": "a0fddcae-ec22-407c-abf3-6fd43c16ab1d",
+        "createdAt": "2026-10-07T12:22:38.666Z",
+        "updatedAt": "2026-10-07T12:25:35.757Z"
+      },
+      {
+        "id": "16dec207-72c4-4096-ad1e-d0a3239ce008",
+        "name": "Kralanh",
+        "nameKm": "ក្រឡាញ់",
+        "districtId": "3fabfd64-5bae-4023-9d82-417229b18eb6",
+        "createdAt": "2026-10-07T12:22:38.578Z",
+        "updatedAt": "2026-10-07T12:25:35.664Z"
+      },
+      {
+        "id": "19627d4e-e67c-4c6d-9928-7753d49184a8",
+        "name": "Mean Chey",
+        "nameKm": "មានជ័យ",
+        "districtId": "4e8ecf7b-cd60-4033-af5b-b8215ed0cd9a",
+        "createdAt": "2026-10-07T12:22:38.705Z",
+        "updatedAt": "2026-10-07T12:25:35.798Z"
+      },
+      {
+        "id": "1a3598c0-96f3-4976-9799-6c0f272c64a9",
+        "name": "Kampong Khleang",
+        "nameKm": "កំពង់ឃ្លាំង",
+        "districtId": "c4d71175-8db6-46a1-bedc-10c3962d8aae",
+        "createdAt": "2026-10-07T12:22:38.798Z",
+        "updatedAt": "2026-10-07T12:25:35.894Z"
+      },
+      {
+        "id": "1dc7f8c2-191b-4e08-82a3-747ae58acd6e",
+        "name": "Boeng Mealea",
+        "nameKm": "បឹងមាលា",
+        "districtId": "4d59f956-1269-4087-81f9-87baffaa69eb",
+        "createdAt": "2026-10-07T12:22:38.860Z",
+        "updatedAt": "2026-10-07T12:25:35.962Z"
+      },
+      {
+        "id": "28c6b568-5ef1-4907-8a02-f99ffd181c7b",
+        "name": "Run Ta Aek",
+        "nameKm": "រុនតាឯក",
+        "districtId": "6027be84-e84f-48c7-88da-8ad0d0369dd9",
+        "createdAt": "2026-10-07T12:22:38.913Z",
+        "updatedAt": "2026-10-07T12:25:36.014Z"
+      },
+      {
+        "id": "33033dc0-e0f2-4bcf-b10c-594fd9dcd151",
+        "name": "Tbaeng",
+        "nameKm": "ត្បែង",
+        "districtId": "8ee31646-d857-4f2d-b96f-3eda912b0684",
+        "createdAt": "2026-10-07T12:22:38.506Z",
+        "updatedAt": "2026-10-07T12:25:35.583Z"
+      },
+      {
+        "id": "35be4452-3718-450f-a127-f3f5ff637b3a",
+        "name": "Khvav",
+        "nameKm": "ខ្វាវ",
+        "districtId": "4f7081b9-3380-4094-abed-b70fa85a026e",
+        "createdAt": "2026-10-07T12:22:38.525Z",
+        "updatedAt": "2026-10-07T12:25:35.605Z"
+      },
+      {
+        "id": "38501668-e41e-48e6-bf60-9646b0aae40e",
+        "name": "Chi Kraeng",
+        "nameKm": "ជីក្រែង",
+        "districtId": "4f7081b9-3380-4094-abed-b70fa85a026e",
+        "createdAt": "2026-10-07T12:22:38.516Z",
+        "updatedAt": "2026-10-07T12:25:35.594Z"
+      },
+      {
+        "id": "38d80318-725e-490f-9ef7-5146810f3352",
+        "name": "Chong Khnies",
+        "nameKm": "ជ្រោយខ្នារ",
+        "districtId": "8b5c9131-1168-47ae-841e-062ba96384b2",
+        "createdAt": "2026-10-07T12:22:38.754Z",
+        "updatedAt": "2026-10-07T12:25:35.849Z"
+      },
+      {
+        "id": "399b0be1-8165-4da0-bddd-ab0a853e97c7",
+        "name": "Kien Sangkae",
+        "nameKm": "គៀនសង្កែ",
+        "districtId": "c4d71175-8db6-46a1-bedc-10c3962d8aae",
+        "createdAt": "2026-10-07T12:22:38.802Z",
+        "updatedAt": "2026-10-07T12:25:35.899Z"
+      },
+      {
+        "id": "3e0d2f68-62ae-421b-ab58-f97dc15aead3",
+        "name": "Trei Nhoar",
+        "nameKm": "ត្រីញ័រ",
+        "districtId": "a0fddcae-ec22-407c-abf3-6fd43c16ab1d",
+        "createdAt": "2026-10-07T12:22:38.675Z",
+        "updatedAt": "2026-10-07T12:25:35.766Z"
+      },
+      {
+        "id": "417b229d-4f3a-4b84-8914-e219a9cdb8a2",
+        "name": "Ruessei Lok",
+        "nameKm": "ឫស្សីឡក",
+        "districtId": "4f7081b9-3380-4094-abed-b70fa85a026e",
+        "createdAt": "2026-10-07T12:22:38.554Z",
+        "updatedAt": "2026-10-07T12:25:35.637Z"
+      },
+      {
+        "id": "46f259b4-21b4-46c8-9b9c-1dd553e372f9",
+        "name": "Prei",
+        "nameKm": "ព្រៃ",
+        "districtId": "c6fbfe9e-df35-4d3f-9925-f5db67c2788c",
+        "createdAt": "2026-10-07T12:22:38.850Z",
+        "updatedAt": "2026-10-07T12:25:35.950Z"
+      },
+      {
+        "id": "4ca8291e-9a66-4f5c-8937-d7a9724e1916",
+        "name": "Khchas",
+        "nameKm": "ខ្ជាស់",
+        "districtId": "c4d71175-8db6-46a1-bedc-10c3962d8aae",
+        "createdAt": "2026-10-07T12:22:38.807Z",
+        "updatedAt": "2026-10-07T12:25:35.904Z"
+      },
+      {
+        "id": "52254e37-b02b-44b9-8236-e261510273e0",
+        "name": "Kaev Poar",
+        "nameKm": "កែវព័រ",
+        "districtId": "a0fddcae-ec22-407c-abf3-6fd43c16ab1d",
+        "createdAt": "2026-10-07T12:22:38.632Z",
+        "updatedAt": "2026-10-07T12:25:35.720Z"
+      },
+      {
+        "id": "53e727d6-e946-44c0-8631-2af4ce2735cc",
+        "name": "Sangvaeuy",
+        "nameKm": "សង្វើយ",
+        "districtId": "4f7081b9-3380-4094-abed-b70fa85a026e",
+        "createdAt": "2026-10-07T12:22:38.558Z",
+        "updatedAt": "2026-10-07T12:25:35.642Z"
+      },
+      {
+        "id": "543df7e9-236c-4f60-86f5-11eb230776f4",
+        "name": "Roluos",
+        "nameKm": "រលួស",
+        "districtId": "4e8ecf7b-cd60-4033-af5b-b8215ed0cd9a",
+        "createdAt": "2026-10-07T12:22:38.710Z",
+        "updatedAt": "2026-10-07T12:25:35.803Z"
+      },
+      {
+        "id": "56d684b1-db20-46a9-a396-cb1c354ccbb9",
+        "name": "Ballangk",
+        "nameKm": "បល្ល័ង្ក",
+        "districtId": "6027be84-e84f-48c7-88da-8ad0d0369dd9",
+        "createdAt": "2026-10-07T12:22:38.918Z",
+        "updatedAt": "2026-10-07T12:25:36.019Z"
+      },
+      {
+        "id": "5c042da5-2410-42d3-93be-2019a82f0ce7",
+        "name": "Ta Saom",
+        "nameKm": "តាសោម",
+        "districtId": "a3a6b224-1236-4d5d-a230-b081101088b5",
+        "createdAt": "2026-10-07T12:22:38.459Z",
+        "updatedAt": "2026-10-07T12:25:35.532Z"
+      },
+      {
+        "id": "5c17de75-b14f-4196-bb26-f20ca09a694a",
+        "name": "Samraong",
+        "nameKm": "សំរោង",
+        "districtId": "c4d71175-8db6-46a1-bedc-10c3962d8aae",
+        "createdAt": "2026-10-07T12:22:38.822Z",
+        "updatedAt": "2026-10-07T12:25:35.918Z"
+      },
+      {
+        "id": "5c190811-77e0-4c9d-b177-ee30ab74015c",
+        "name": "Prasat",
+        "nameKm": "ប្រាសាទ",
+        "districtId": "89c69962-4b97-478e-8d2f-ca401558d675",
+        "createdAt": "2026-10-07T12:22:38.885Z",
+        "updatedAt": "2026-10-07T12:25:35.987Z"
+      },
+      {
+        "id": "6459bfa4-1675-4d4e-85fe-a8e1fe6ffc40",
+        "name": "Sla Kram",
+        "nameKm": "ស្លក្រាម",
+        "districtId": "8b5c9131-1168-47ae-841e-062ba96384b2",
+        "createdAt": "2026-10-07T12:22:38.726Z",
+        "updatedAt": "2026-10-07T12:25:35.820Z"
+      },
+      {
+        "id": "6584b7de-05e7-4a0a-a42d-48a9aeb3ee31",
+        "name": "Peak Snaeng",
+        "nameKm": "ពាក់ស្នែង",
+        "districtId": "8de1b892-d756-4b4c-8517-3216bfaa304a",
+        "createdAt": "2026-10-07T12:22:38.476Z",
+        "updatedAt": "2026-10-07T12:25:35.550Z"
+      },
+      {
+        "id": "67646fcc-376f-4bfd-b916-ee52b3c64723",
+        "name": "Svay Dankum",
+        "nameKm": "ស្វាយដង្គំ",
+        "districtId": "8b5c9131-1168-47ae-841e-062ba96384b2",
+        "createdAt": "2026-10-07T12:22:38.731Z",
+        "updatedAt": "2026-10-07T12:25:35.825Z"
+      },
+      {
+        "id": "69a27ae5-a599-4e33-a00a-5664cde728bc",
+        "name": "Krabei Riel",
+        "nameKm": "ក្របីរៀល",
+        "districtId": "8b5c9131-1168-47ae-841e-062ba96384b2",
+        "createdAt": "2026-10-07T12:22:38.772Z",
+        "updatedAt": "2026-10-07T12:25:35.867Z"
+      },
+      {
+        "id": "69e8dc7c-b887-40d7-91e5-2cc63ec62951",
+        "name": "Popel",
+        "nameKm": "ពពេល",
+        "districtId": "c4d71175-8db6-46a1-bedc-10c3962d8aae",
+        "createdAt": "2026-10-07T12:22:38.817Z",
+        "updatedAt": "2026-10-07T12:25:35.914Z"
+      },
+      {
+        "id": "6da37205-70e5-4ddd-b01b-eb5014fa0ef7",
+        "name": "Tram Sasar",
+        "nameKm": "ត្រពាំងសសរ",
+        "districtId": "c6fbfe9e-df35-4d3f-9925-f5db67c2788c",
+        "createdAt": "2026-10-07T12:22:38.841Z",
+        "updatedAt": "2026-10-07T12:25:35.941Z"
+      },
+      {
+        "id": "6f1b1c58-5bb1-43ae-ba54-57fe5761de5d",
+        "name": "Prey Chruk",
+        "nameKm": "ព្រៃជ្រុក",
+        "districtId": "a0fddcae-ec22-407c-abf3-6fd43c16ab1d",
+        "createdAt": "2026-10-07T12:22:38.661Z",
+        "updatedAt": "2026-10-07T12:25:35.752Z"
+      },
+      {
+        "id": "70f2a7af-d9ab-4359-b1bd-3ed8f5de9f67",
+        "name": "Nokor Pheas",
+        "nameKm": "នគរភាស",
+        "districtId": "a3a6b224-1236-4d5d-a230-b081101088b5",
+        "createdAt": "2026-10-07T12:22:38.449Z",
+        "updatedAt": "2026-10-07T12:25:35.522Z"
+      },
+      {
+        "id": "70ffd7ec-f6a5-4f69-9ab3-308ae5b920f9",
+        "name": "Kantuot",
+        "nameKm": "កន្ទួត",
+        "districtId": "4d59f956-1269-4087-81f9-87baffaa69eb",
+        "createdAt": "2026-10-07T12:22:38.865Z",
+        "updatedAt": "2026-10-07T12:25:35.967Z"
+      },
+      {
+        "id": "7173c8b2-85f0-4aa9-b45c-1effb28d2ca2",
+        "name": "Ta Yaek",
+        "nameKm": "តាយ៉ែក",
+        "districtId": "c4d71175-8db6-46a1-bedc-10c3962d8aae",
+        "createdAt": "2026-10-07T12:22:38.826Z",
+        "updatedAt": "2026-10-07T12:25:35.924Z"
+      },
+      {
+        "id": "76841eee-4195-4a69-84c4-d77edaa3ea2b",
+        "name": "Srangae",
+        "nameKm": "ស្រង៉ែ",
+        "districtId": "8b5c9131-1168-47ae-841e-062ba96384b2",
+        "createdAt": "2026-10-07T12:22:38.768Z",
+        "updatedAt": "2026-10-07T12:25:35.863Z"
+      },
+      {
+        "id": "78ff976d-c312-494e-8eed-44071500d228",
+        "name": "Nokor Thum",
+        "nameKm": "នគរធំ",
+        "districtId": "8b5c9131-1168-47ae-841e-062ba96384b2",
+        "createdAt": "2026-10-07T12:22:38.745Z",
+        "updatedAt": "2026-10-07T12:25:35.840Z"
+      },
+      {
+        "id": "7f3c5b96-3358-4f13-aa1c-46ad785c890b",
+        "name": "Lveaeng Ruessei",
+        "nameKm": "ល្វែងឫស្សី",
+        "districtId": "4f7081b9-3380-4094-abed-b70fa85a026e",
+        "createdAt": "2026-10-07T12:22:38.539Z",
+        "updatedAt": "2026-10-07T12:25:35.621Z"
+      },
+      {
+        "id": "7f7d0fc7-8737-47bf-92a8-c45072c85aff",
+        "name": "Kandaek",
+        "nameKm": "កណ្ដែក",
+        "districtId": "4e8ecf7b-cd60-4033-af5b-b8215ed0cd9a",
+        "createdAt": "2026-10-07T12:22:38.700Z",
+        "updatedAt": "2026-10-07T12:25:35.793Z"
+      },
+      {
+        "id": "809f837c-4965-4a1b-98cb-cf4b0b091ac1",
+        "name": "Trapeang Thum",
+        "nameKm": "ត្រពាំងធំ",
+        "districtId": "4e8ecf7b-cd60-4033-af5b-b8215ed0cd9a",
+        "createdAt": "2026-10-07T12:22:38.715Z",
+        "updatedAt": "2026-10-07T12:25:35.808Z"
+      },
+      {
+        "id": "81e4de3a-8d9e-410e-94db-d841128e54cd",
+        "name": "Bakong",
+        "nameKm": "បាគង",
+        "districtId": "4e8ecf7b-cd60-4033-af5b-b8215ed0cd9a",
+        "createdAt": "2026-10-07T12:22:38.685Z",
+        "updatedAt": "2026-10-07T12:25:35.778Z"
+      },
+      {
+        "id": "88fabc29-3a5f-4ac2-9d22-d5517b60ed05",
+        "name": "Doun Peng",
+        "nameKm": "ដូនពេញ",
+        "districtId": "a3a6b224-1236-4d5d-a230-b081101088b5",
+        "createdAt": "2026-10-07T12:22:38.434Z",
+        "updatedAt": "2026-10-07T12:25:35.506Z"
+      },
+      {
+        "id": "8d9478e3-f0a7-467d-a10b-060c3f6f144c",
+        "name": "Varin",
+        "nameKm": "វ៉ារិន",
+        "districtId": "89c69962-4b97-478e-8d2f-ca401558d675",
+        "createdAt": "2026-10-07T12:22:38.906Z",
+        "updatedAt": "2026-10-07T12:25:36.006Z"
+      },
+      {
+        "id": "965557ff-81e5-46b7-9f1b-7d6acab6b6ce",
+        "name": "Khnar Sanday",
+        "nameKm": "ខ្នារសណ្ដាយ",
+        "districtId": "8ee31646-d857-4f2d-b96f-3eda912b0684",
+        "createdAt": "2026-10-07T12:22:38.487Z",
+        "updatedAt": "2026-10-07T12:25:35.561Z"
+      },
+      {
+        "id": "97a21ade-7920-4484-bb4f-a80acd873c1d",
+        "name": "Srae Khvav",
+        "nameKm": "ស្រែខ្វាវ",
+        "districtId": "a3a6b224-1236-4d5d-a230-b081101088b5",
+        "createdAt": "2026-10-07T12:22:38.454Z",
+        "updatedAt": "2026-10-07T12:25:35.527Z"
+      },
+      {
+        "id": "98ba55aa-3e89-493e-95c6-2440d2070107",
+        "name": "Svay Leu",
+        "nameKm": "ស្វាយលើ",
+        "districtId": "4d59f956-1269-4087-81f9-87baffaa69eb",
+        "createdAt": "2026-10-07T12:22:38.875Z",
+        "updatedAt": "2026-10-07T12:25:35.976Z"
+      },
+      {
+        "id": "9a62a34c-7c97-42ab-b33a-f8f668ad9fc6",
+        "name": "Dam Daek",
+        "nameKm": "ដំដែក",
+        "districtId": "c4d71175-8db6-46a1-bedc-10c3962d8aae",
+        "createdAt": "2026-10-07T12:22:38.788Z",
+        "updatedAt": "2026-10-07T12:25:35.883Z"
+      },
+      {
+        "id": "9adea111-8b5b-4589-bde8-99974043e929",
+        "name": "Chrouy Neang Nguon",
+        "nameKm": "ជ្រោយនាងងួន",
+        "districtId": "c6fbfe9e-df35-4d3f-9925-f5db67c2788c",
+        "createdAt": "2026-10-07T12:22:38.832Z",
+        "updatedAt": "2026-10-07T12:25:35.931Z"
+      },
+      {
+        "id": "9bae179f-d56b-481f-851a-71fae104300c",
+        "name": "Kampong Phluk",
+        "nameKm": "កំពង់ភ្លុក",
+        "districtId": "4e8ecf7b-cd60-4033-af5b-b8215ed0cd9a",
+        "createdAt": "2026-10-07T12:22:38.691Z",
+        "updatedAt": "2026-10-07T12:25:35.783Z"
+      },
+      {
+        "id": "9c14804a-3eb4-44bf-8b8c-cf143c6f5433",
+        "name": "Spean Thnot",
+        "nameKm": "ស្ពានថ្នល់",
+        "districtId": "4f7081b9-3380-4094-abed-b70fa85a026e",
+        "createdAt": "2026-10-07T12:22:38.563Z",
+        "updatedAt": "2026-10-07T12:25:35.647Z"
+      },
+      {
+        "id": "9ed0e540-b48b-478d-ae3c-b0dc7e9f9251",
+        "name": "Pongro Leu",
+        "nameKm": "ពង្រោមលើ",
+        "districtId": "4f7081b9-3380-4094-abed-b70fa85a026e",
+        "createdAt": "2026-10-07T12:22:38.549Z",
+        "updatedAt": "2026-10-07T12:25:35.631Z"
+      },
+      {
+        "id": "a4a6638f-b840-472c-9ec9-194e0a2ee370",
+        "name": "Pongro Kraom",
+        "nameKm": "ពង្រោមក្រោម",
+        "districtId": "4f7081b9-3380-4094-abed-b70fa85a026e",
+        "createdAt": "2026-10-07T12:22:38.544Z",
+        "updatedAt": "2026-10-07T12:25:35.626Z"
+      },
+      {
+        "id": "a4c43cc0-577d-4c6e-ad33-97a954195d0f",
+        "name": "Kantreang",
+        "nameKm": "កន្ទ្រាំង",
+        "districtId": "4e8ecf7b-cd60-4033-af5b-b8215ed0cd9a",
+        "createdAt": "2026-10-07T12:22:38.695Z",
+        "updatedAt": "2026-10-07T12:25:35.788Z"
+      },
+      {
+        "id": "a805bbb5-7f91-452d-af2c-c668e1493486",
+        "name": "Kouk Thlok Leu",
+        "nameKm": "គោកធ្លកលើ",
+        "districtId": "4f7081b9-3380-4094-abed-b70fa85a026e",
+        "createdAt": "2026-10-07T12:22:38.534Z",
+        "updatedAt": "2026-10-07T12:25:35.616Z"
+      },
+      {
+        "id": "a8540f0f-994b-4112-8ac4-ce77c3034c06",
+        "name": "Koul",
+        "nameKm": "គោក",
+        "districtId": "a3a6b224-1236-4d5d-a230-b081101088b5",
+        "createdAt": "2026-10-07T12:22:38.445Z",
+        "updatedAt": "2026-10-07T12:25:35.515Z"
+      },
+      {
+        "id": "aa39418b-4cf4-4741-b795-36161938d480",
+        "name": "Dan Run",
+        "nameKm": "ដាន់រុន",
+        "districtId": "c4d71175-8db6-46a1-bedc-10c3962d8aae",
+        "createdAt": "2026-10-07T12:22:38.793Z",
+        "updatedAt": "2026-10-07T12:25:35.888Z"
+      },
+      {
+        "id": "acb318ee-2c77-4167-9ffb-b9f075c521e0",
+        "name": "Siem Reap",
+        "nameKm": "សៀមរាប",
+        "districtId": "8b5c9131-1168-47ae-841e-062ba96384b2",
+        "createdAt": "2026-10-07T12:22:38.763Z",
+        "updatedAt": "2026-10-07T12:25:35.858Z"
+      },
+      {
+        "id": "ae03e7fd-82ea-4561-9dbc-87f6bdf52fa9",
+        "name": "Ampil",
+        "nameKm": "អំពិល",
+        "districtId": "4e8ecf7b-cd60-4033-af5b-b8215ed0cd9a",
+        "createdAt": "2026-10-07T12:22:38.720Z",
+        "updatedAt": "2026-10-07T12:25:35.813Z"
+      },
+      {
+        "id": "aee3b33f-2a34-4719-a5a8-93f05e90f2de",
+        "name": "Sambuor",
+        "nameKm": "សំបួរ",
+        "districtId": "3fabfd64-5bae-4023-9d82-417229b18eb6",
+        "createdAt": "2026-10-07T12:22:38.594Z",
+        "updatedAt": "2026-10-07T12:25:35.679Z"
+      },
+      {
+        "id": "af27796b-684f-4f06-9eca-331d5767aaa3",
+        "name": "Kouk Doung",
+        "nameKm": "គោកដូង",
+        "districtId": "a3a6b224-1236-4d5d-a230-b081101088b5",
+        "createdAt": "2026-10-07T12:22:38.440Z",
+        "updatedAt": "2026-10-07T12:25:35.510Z"
+      },
+      {
+        "id": "b2c748af-f77d-44da-9675-bb84f6cf1c52",
+        "name": "Khnang Phnum",
+        "nameKm": "ខ្នងភ្នំ",
+        "districtId": "4d59f956-1269-4087-81f9-87baffaa69eb",
+        "createdAt": "2026-10-07T12:22:38.870Z",
+        "updatedAt": "2026-10-07T12:25:35.972Z"
+      },
+      {
+        "id": "b51875ad-7ec6-4789-8a8a-a02c46fe9ad9",
+        "name": "Chreav",
+        "nameKm": "ជ្រាវ",
+        "districtId": "8b5c9131-1168-47ae-841e-062ba96384b2",
+        "createdAt": "2026-10-07T12:22:38.749Z",
+        "updatedAt": "2026-10-07T12:25:35.844Z"
+      },
+      {
+        "id": "b7d4eaed-cf93-467c-9c82-6e4f4864f426",
+        "name": "Leang Dai",
+        "nameKm": "លាងដៃ",
+        "districtId": "8de1b892-d756-4b4c-8517-3216bfaa304a",
+        "createdAt": "2026-10-07T12:22:38.471Z",
+        "updatedAt": "2026-10-07T12:25:35.544Z"
+      },
+      {
+        "id": "b8691087-0eaf-4f3e-93f5-1afe408225eb",
+        "name": "Khnat",
+        "nameKm": "ខ្នាត",
+        "districtId": "a0fddcae-ec22-407c-abf3-6fd43c16ab1d",
+        "createdAt": "2026-10-07T12:22:38.637Z",
+        "updatedAt": "2026-10-07T12:25:35.725Z"
+      },
+      {
+        "id": "b9f52eb4-9060-41a4-abc9-f06ce7704d91",
+        "name": "Yeang",
+        "nameKm": "យាង",
+        "districtId": "a0fddcae-ec22-407c-abf3-6fd43c16ab1d",
+        "createdAt": "2026-10-07T12:22:38.679Z",
+        "updatedAt": "2026-10-07T12:25:35.771Z"
+      },
+      {
+        "id": "bb866315-76a1-406f-b6b2-b878a46cd25c",
+        "name": "Kampong Kdei",
+        "nameKm": "កំពង់ក្តី",
+        "districtId": "4f7081b9-3380-4094-abed-b70fa85a026e",
+        "createdAt": "2026-10-07T12:22:38.521Z",
+        "updatedAt": "2026-10-07T12:25:35.599Z"
+      },
+      {
+        "id": "bf2c36e4-d41e-4dda-b429-47103c5aa038",
+        "name": "Klang Hay",
+        "nameKm": "ខ្លាំងហាយ",
+        "districtId": "c6fbfe9e-df35-4d3f-9925-f5db67c2788c",
+        "createdAt": "2026-10-07T12:22:38.837Z",
+        "updatedAt": "2026-10-07T12:25:35.936Z"
+      },
+      {
+        "id": "bfb70481-29ab-4411-832f-64bf625657a1",
+        "name": "Puok",
+        "nameKm": "ពួក",
+        "districtId": "a0fddcae-ec22-407c-abf3-6fd43c16ab1d",
+        "createdAt": "2026-10-07T12:22:38.656Z",
+        "updatedAt": "2026-10-07T12:25:35.747Z"
+      },
+      {
+        "id": "d2a825f8-034f-4e32-88b1-04cf2a8ce688",
+        "name": "Krouch Kor",
+        "nameKm": "ក្រូចកុរ",
+        "districtId": "3fabfd64-5bae-4023-9d82-417229b18eb6",
+        "createdAt": "2026-10-07T12:22:38.583Z",
+        "updatedAt": "2026-10-07T12:25:35.669Z"
+      },
+      {
+        "id": "d7509ee3-fd79-4369-9e32-56d3a8cd3848",
+        "name": "Preah Dak",
+        "nameKm": "ព្រះដាក់",
+        "districtId": "8ee31646-d857-4f2d-b96f-3eda912b0684",
+        "createdAt": "2026-10-07T12:22:38.497Z",
+        "updatedAt": "2026-10-07T12:25:35.573Z"
+      },
+      {
+        "id": "d93c1e32-e0b3-4b63-badc-e67276ea711e",
+        "name": "Tuek Vil",
+        "nameKm": "ទឹកវិល",
+        "districtId": "8b5c9131-1168-47ae-841e-062ba96384b2",
+        "createdAt": "2026-10-07T12:22:38.777Z",
+        "updatedAt": "2026-10-07T12:25:35.872Z"
+      },
+      {
+        "id": "db8adc51-2981-4589-bf4a-6472912bb01a",
+        "name": "Doun Kaev",
+        "nameKm": "ដូនកែវ",
+        "districtId": "a0fddcae-ec22-407c-abf3-6fd43c16ab1d",
+        "createdAt": "2026-10-07T12:22:38.623Z",
+        "updatedAt": "2026-10-07T12:25:35.711Z"
+      },
+      {
+        "id": "ddb4ade4-36c3-4c9e-af03-df184c4810b1",
+        "name": "Sranal",
+        "nameKm": "ស្រណាល",
+        "districtId": "3fabfd64-5bae-4023-9d82-417229b18eb6",
+        "createdAt": "2026-10-07T12:22:38.607Z",
+        "updatedAt": "2026-10-07T12:25:35.695Z"
+      },
+      {
+        "id": "defec08f-ccf2-4147-b945-8b956c6fe6de",
+        "name": "Mukh Paen",
+        "nameKm": "មុខពែន",
+        "districtId": "a0fddcae-ec22-407c-abf3-6fd43c16ab1d",
+        "createdAt": "2026-10-07T12:22:38.646Z",
+        "updatedAt": "2026-10-07T12:25:35.734Z"
+      },
+      {
+        "id": "e0aae7df-d878-4e95-a443-347afd9e7d30",
+        "name": "Sala Kamreuk",
+        "nameKm": "សាលាកំរើក",
+        "districtId": "8b5c9131-1168-47ae-841e-062ba96384b2",
+        "createdAt": "2026-10-07T12:22:38.740Z",
+        "updatedAt": "2026-10-07T12:25:35.835Z"
+      },
+      {
+        "id": "e152e285-7d8c-473c-9121-90a3804d39e2",
+        "name": "Rumchek",
+        "nameKm": "រំចេក",
+        "districtId": "8ee31646-d857-4f2d-b96f-3eda912b0684",
+        "createdAt": "2026-10-07T12:22:38.502Z",
+        "updatedAt": "2026-10-07T12:25:35.578Z"
+      },
+      {
+        "id": "e38e45be-a12b-418f-911a-c444f98f7b76",
+        "name": "Roung Kou",
+        "nameKm": "រោងគោ",
+        "districtId": "3fabfd64-5bae-4023-9d82-417229b18eb6",
+        "createdAt": "2026-10-07T12:22:38.589Z",
+        "updatedAt": "2026-10-07T12:25:35.674Z"
+      },
+      {
+        "id": "e67d9cc5-7fdc-44c7-9a56-b262ffd5ad78",
+        "name": "Khnar Pou",
+        "nameKm": "ខ្នារពោធិ៍",
+        "districtId": "c4d71175-8db6-46a1-bedc-10c3962d8aae",
+        "createdAt": "2026-10-07T12:22:38.812Z",
+        "updatedAt": "2026-10-07T12:25:35.909Z"
+      },
+      {
+        "id": "e711abe2-1b63-408b-8fe6-3afa9998776e",
+        "name": "Ta Siem",
+        "nameKm": "តាសៀម",
+        "districtId": "4d59f956-1269-4087-81f9-87baffaa69eb",
+        "createdAt": "2026-10-07T12:22:38.880Z",
+        "updatedAt": "2026-10-07T12:25:35.981Z"
+      },
+      {
+        "id": "e8f26634-b1a0-454d-b2b8-024af010b4c7",
+        "name": "Lvea",
+        "nameKm": "ល្វា",
+        "districtId": "a0fddcae-ec22-407c-abf3-6fd43c16ab1d",
+        "createdAt": "2026-10-07T12:22:38.641Z",
+        "updatedAt": "2026-10-07T12:25:35.730Z"
+      },
+      {
+        "id": "eb3357d7-407d-450f-ae78-e5e8a55dcd0c",
+        "name": "Sambuor",
+        "nameKm": "សំបួរ",
+        "districtId": "8b5c9131-1168-47ae-841e-062ba96384b2",
+        "createdAt": "2026-10-07T12:22:38.758Z",
+        "updatedAt": "2026-10-07T12:25:35.853Z"
+      },
+      {
+        "id": "eefa18d1-ebc7-4eb8-9892-9ca3a2164e14",
+        "name": "Ta An",
+        "nameKm": "តាអាន",
+        "districtId": "3fabfd64-5bae-4023-9d82-417229b18eb6",
+        "createdAt": "2026-10-07T12:22:38.612Z",
+        "updatedAt": "2026-10-07T12:25:35.700Z"
+      },
+      {
+        "id": "efc92c93-5ed0-434d-9339-b25964d3d885",
+        "name": "Kouk Thlok Kraom",
+        "nameKm": "គោកធ្លកក្រោម",
+        "districtId": "4f7081b9-3380-4094-abed-b70fa85a026e",
+        "createdAt": "2026-10-07T12:22:38.530Z",
+        "updatedAt": "2026-10-07T12:25:35.610Z"
+      },
+      {
+        "id": "f02dffdf-c090-409c-b7ac-e9545916856f",
+        "name": "Kdei Run",
+        "nameKm": "ក្ដីរុន",
+        "districtId": "a0fddcae-ec22-407c-abf3-6fd43c16ab1d",
+        "createdAt": "2026-10-07T12:22:38.628Z",
+        "updatedAt": "2026-10-07T12:25:35.715Z"
+      },
+      {
+        "id": "f16d718b-87ec-4861-9a98-c581ca2ffbad",
+        "name": "Khun Ream",
+        "nameKm": "ឃុនរាម",
+        "districtId": "8ee31646-d857-4f2d-b96f-3eda912b0684",
+        "createdAt": "2026-10-07T12:22:38.492Z",
+        "updatedAt": "2026-10-07T12:25:35.568Z"
+      },
+      {
+        "id": "f4a1e615-5d88-4712-a595-2c04c3037f77",
+        "name": "Kampong Thkov",
+        "nameKm": "កំពង់ថ្កូវ",
+        "districtId": "3fabfd64-5bae-4023-9d82-417229b18eb6",
+        "createdAt": "2026-10-07T12:22:38.574Z",
+        "updatedAt": "2026-10-07T12:25:35.659Z"
+      },
+      {
+        "id": "f5316724-2829-40ec-b60f-faa49c47cc60",
+        "name": "Svay Dangkum",
+        "nameKm": "ស្វាយដង្គំ",
+        "districtId": "8b5c9131-1168-47ae-841e-062ba96384b2",
+        "createdAt": "2026-10-07T12:27:56.398Z",
+        "updatedAt": "2026-10-07T12:27:56.398Z"
+      },
+      {
+        "id": "f5c82424-88e4-4a1d-bde9-5896ebf49e11",
+        "name": "Pou Treay",
+        "nameKm": "ពួកត្រៃ",
+        "districtId": "a0fddcae-ec22-407c-abf3-6fd43c16ab1d",
+        "createdAt": "2026-10-07T12:22:38.651Z",
+        "updatedAt": "2026-10-07T12:25:35.740Z"
+      },
+      {
+        "id": "f9ff5904-eb29-4420-8955-06fe6eeadf5f",
+        "name": "Chob Ta Trav",
+        "nameKm": "ជប់តាត្រវ",
+        "districtId": "8de1b892-d756-4b4c-8517-3216bfaa304a",
+        "createdAt": "2026-10-07T12:22:38.465Z",
+        "updatedAt": "2026-10-07T12:25:35.538Z"
+      },
+      {
+        "id": "feb9a87f-291c-4f02-b405-f42e45be1a1a",
+        "name": "Lvea Krang",
+        "nameKm": "ល្វាក្រាំង",
+        "districtId": "89c69962-4b97-478e-8d2f-ca401558d675",
+        "createdAt": "2026-10-07T12:22:38.891Z",
+        "updatedAt": "2026-10-07T12:25:35.992Z"
+      }
+    ],
+    "organizations": [
+      {
+        "id": "org-fire-siemreap",
+        "name": "Siem Reap Fire Department",
+        "type": "FIRE",
+        "hotline": "118",
+        "head": "Fire Department Chief",
+        "address": "Siem Reap",
+        "status": "ACTIVE",
+        "accessLevel": "MEDIUM",
+        "gpsLat": 13.363,
+        "gpsLng": 103.861,
+        "activeVehiclesCount": 3,
+        "createdAt": "2026-10-07T12:27:56.409Z",
+        "updatedAt": "2026-10-08T10:40:14.353Z"
+      },
+      {
+        "id": "org-medical-siemreap",
+        "name": "Siem Reap Health Department",
+        "type": "MEDICAL",
+        "hotline": "119",
+        "head": "Health Department Director",
+        "address": "Siem Reap",
+        "status": "ACTIVE",
+        "accessLevel": "HIGH",
+        "gpsLat": 13.363916,
+        "gpsLng": 103.856914,
+        "activeVehiclesCount": 2,
+        "createdAt": "2026-10-07T12:27:56.414Z",
+        "updatedAt": "2026-10-08T13:19:09.446Z"
+      },
+      {
+        "id": "org-police-siemreap",
+        "name": "Siem Reap Provincial Police",
+        "type": "POLICE",
+        "hotline": "117",
+        "head": "Police Chief",
+        "address": "Siem Reap",
+        "status": "ACTIVE",
+        "accessLevel": "HIGH",
+        "gpsLat": 13.3615,
+        "gpsLng": 103.859,
+        "activeVehiclesCount": 2,
+        "createdAt": "2026-10-07T12:27:56.403Z",
+        "updatedAt": "2026-10-08T13:14:57.523Z"
+      }
+    ],
+    "stations": [
+      {
+        "id": "eaa9aa77-ad4d-4819-bf3b-4f2533926c71",
+        "name": "ff",
+        "type": "MEDICAL",
+        "provinceId": "97303036-eaea-4ada-ba93-2135250138b5",
+        "districtId": "8b5c9131-1168-47ae-841e-062ba96384b2",
+        "communeId": "6459bfa4-1675-4d4e-85fe-a8e1fe6ffc40",
+        "address": "60",
+        "hotline": "0988545",
+        "lat": 13.361977,
+        "lng": 103.871282,
+        "capacity": 5,
+        "activeVehiclesCount": 0,
+        "organizationId": "org-medical-siemreap",
+        "status": "ACTIVE",
+        "createdAt": "2026-10-08T09:48:18.354Z",
+        "updatedAt": "2026-10-08T09:48:18.354Z"
+      },
+      {
+        "id": "station-fire-siemreap",
+        "name": "Fire Station Siem Reap",
+        "type": "FIRE",
+        "provinceId": "97303036-eaea-4ada-ba93-2135250138b5",
+        "districtId": "8b5c9131-1168-47ae-841e-062ba96384b2",
+        "communeId": "76841eee-4195-4a69-84c4-d77edaa3ea2b",
+        "address": "Siem Reap",
+        "hotline": "118",
+        "lat": 13.363556,
+        "lng": 103.865756,
+        "capacity": 30,
+        "activeVehiclesCount": 3,
+        "organizationId": "org-fire-siemreap",
+        "status": "ACTIVE",
+        "createdAt": "2026-10-07T12:27:56.426Z",
+        "updatedAt": "2026-10-08T10:40:14.362Z"
+      },
+      {
+        "id": "station-medical-siemreap",
+        "name": "Hospital Emergency Unit",
+        "type": "MEDICAL",
+        "provinceId": "97303036-eaea-4ada-ba93-2135250138b5",
+        "districtId": "8b5c9131-1168-47ae-841e-062ba96384b2",
+        "communeId": "38d80318-725e-490f-9ef7-5146810f3352",
+        "address": "Siem Reap",
+        "hotline": "119",
+        "lat": 13.368563,
+        "lng": 103.853136,
+        "capacity": 60,
+        "activeVehiclesCount": 2,
+        "organizationId": "org-medical-siemreap",
+        "status": "ACTIVE",
+        "createdAt": "2026-10-07T12:27:56.432Z",
+        "updatedAt": "2026-10-08T13:19:09.458Z"
+      },
+      {
+        "id": "station-police-siemreap",
+        "name": "Police Station Siem Reap",
+        "type": "POLICE",
+        "provinceId": "97303036-eaea-4ada-ba93-2135250138b5",
+        "districtId": "8b5c9131-1168-47ae-841e-062ba96384b2",
+        "communeId": "76841eee-4195-4a69-84c4-d77edaa3ea2b",
+        "address": "Siem Reap",
+        "hotline": "117",
+        "lat": 13.358841,
+        "lng": 103.857472,
+        "capacity": 50,
+        "activeVehiclesCount": 2,
+        "organizationId": "org-police-siemreap",
+        "status": "ACTIVE",
+        "createdAt": "2026-10-07T12:27:56.420Z",
+        "updatedAt": "2026-10-08T13:14:57.531Z"
+      }
+    ],
+    "users": [
+      {
+        "id": "1ddda740-6262-4d84-959e-57e4b6d9fb8e",
+        "fullName": "yen eliputhchatra",
+        "badgeId": "N/A",
+        "username": "yeneliputhchatra98@gmail.com",
+        "email": "yeneliputhchatra98@gmail.com",
+        "password": "$2b$10$Zk5CW0tBINMfqj2fcdEvY.l8M0TsP9MW4P5rqTlyu6E9XAVtZYh8S",
+        "phone": "+85568289514",
+        "avatar": "uploads/avatars/account-avatar-profile-user.svg",
+        "birthday": "2026-09-20T00:00:00.000Z",
+        "gender": "MALE",
+        "roleId": 4,
+        "status": "ACTIVE",
+        "mfaEnabled": false,
+        "organizationId": null,
+        "emailVerified": true,
+        "createdAt": "2026-10-07T16:10:03.040Z",
+        "updatedAt": "2026-10-12T14:29:28.053Z"
+      },
+      {
+        "id": "db830520-5fdf-474e-988c-949ad140f117",
+        "fullName": "ELIX BALDE",
+        "badgeId": "N/A",
+        "username": "admin",
+        "email": "administration47@gmail.com",
+        "password": "$2b$10$PFjljLoflWxlKM4caeu5k.gqQX6fUaMFH09kWb5OA1P9tClMXGaF.",
+        "phone": "068289514",
+        "avatar": "uploads/avatars/account-avatar-profile-user.svg",
+        "birthday": null,
+        "gender": null,
+        "roleId": 1,
+        "status": "ACTIVE",
+        "mfaEnabled": false,
+        "organizationId": null,
+        "emailVerified": true,
+        "createdAt": "2026-10-07T12:27:56.380Z",
+        "updatedAt": "2026-10-12T14:08:18.247Z"
+      }
+    ],
+    "agents": [
+      {
+        "id": "agent-fire-1",
+        "name": "សំណាង លី",
+        "role": "Fire Officer",
+        "type": "FIRE",
+        "phone": "012111222",
+        "status": "AVAILABLE",
+        "vehicleNo": "PP-01-9876",
+        "vehicleType": "FIRE_TRUCK",
+        "stationId": "station-fire-siemreap",
+        "organizationId": "org-fire-siemreap",
+        "lat": 13.363389,
+        "lng": 103.86318,
+        "lastUpdated": "2026-10-08T09:53:50.711Z",
+        "createdAt": "2026-10-07T12:27:56.443Z",
+        "updatedAt": "2026-10-08T11:33:27.732Z"
+      },
+      {
+        "id": "agent-medical-1",
+        "name": "ចិន្តា វន",
+        "role": "Medical Officer",
+        "type": "MEDICAL",
+        "phone": "077333444",
+        "status": "AVAILABLE",
+        "vehicleNo": "AMB-119-04",
+        "vehicleType": "AMBULANCE",
+        "stationId": "station-medical-siemreap",
+        "organizationId": "org-medical-siemreap",
+        "lat": 13.361274,
+        "lng": 103.875039,
+        "lastUpdated": "2026-10-17T03:18:48.201Z",
+        "createdAt": "2026-10-07T12:27:56.450Z",
+        "updatedAt": "2026-10-17T03:18:48.203Z"
+      },
+      {
+        "id": "agent-police-1",
+        "name": "ពិសិដ្ឋ កែវ",
+        "role": "Police Officer",
+        "type": "POLICE",
+        "phone": "010555666",
+        "status": "EN_ROUTE",
+        "vehicleNo": null,
+        "vehicleType": "CAR",
+        "stationId": "station-police-siemreap",
+        "organizationId": "org-police-siemreap",
+        "lat": 13.36126,
+        "lng": 103.857128,
+        "lastUpdated": "2026-10-17T03:28:25.600Z",
+        "createdAt": "2026-10-07T12:27:56.456Z",
+        "updatedAt": "2026-10-17T03:28:25.603Z"
+      },
+      {
+        "id": "cc06c410-a56b-49af-b42c-4e845d5d44b8",
+        "name": "tra",
+        "role": "Medical",
+        "type": "MEDICAL",
+        "phone": "097857353",
+        "status": "AVAILABLE",
+        "vehicleNo": "AMB-119-09",
+        "vehicleType": "AMBULANCE",
+        "stationId": "station-medical-siemreap",
+        "organizationId": "org-medical-siemreap",
+        "lat": 13.36284,
+        "lng": 103.895735,
+        "lastUpdated": "2026-10-08T13:41:31.483Z",
+        "createdAt": "2026-10-08T11:52:00.814Z",
+        "updatedAt": "2026-10-08T13:41:31.485Z"
+      }
+    ],
+    "officers": [],
+    "vehicles": [
+      {
+        "id": "2ee8d482-0408-4422-887b-b307d16be91d",
+        "plateNumber": "AMB-119-04",
+        "model": "Toyota HiAce Super Custom Mobile ICU",
+        "type": "AMBULANCE",
+        "status": "AVAILABLE",
+        "fuelLevel": 78,
+        "mileage": 34119,
+        "lat": 11.576,
+        "lng": 104.9189,
+        "organizationId": "org-medical-siemreap",
+        "stationId": "station-medical-siemreap",
+        "assignedAgentId": "agent-medical-1",
+        "createdAt": "2026-10-07T12:28:26.412Z",
+        "updatedAt": "2026-10-17T03:18:48.232Z"
+      },
+      {
+        "id": "5423faec-82cf-4267-81c0-29db5db93f74",
+        "plateNumber": "AMB-119-09",
+        "model": "Mercedes-Benz Sprinter Advanced Life Support",
+        "type": "AMBULANCE",
+        "status": "AVAILABLE",
+        "fuelLevel": 64,
+        "mileage": 29800,
+        "lat": 11.5621,
+        "lng": 104.908,
+        "organizationId": "org-medical-siemreap",
+        "stationId": "station-medical-siemreap",
+        "assignedAgentId": "cc06c410-a56b-49af-b42c-4e845d5d44b8",
+        "createdAt": "2026-10-07T12:28:26.426Z",
+        "updatedAt": "2026-10-08T13:41:31.523Z"
+      },
+      {
+        "id": "56740573-f85f-4408-94e1-a2f9ba2f6239",
+        "plateNumber": "CMD-EOC-01",
+        "model": "MAN TGM Tactical Mobile EOC Command Unit",
+        "type": "COMMAND_UNIT",
+        "status": "AVAILABLE",
+        "fuelLevel": 95,
+        "mileage": 12200,
+        "lat": 11.548,
+        "lng": 104.92,
+        "organizationId": "org-police-siemreap",
+        "stationId": "station-police-siemreap",
+        "assignedAgentId": null,
+        "createdAt": "2026-10-07T12:28:26.449Z",
+        "updatedAt": "2026-10-08T13:14:57.515Z"
+      },
+      {
+        "id": "67d6445f-5791-4665-84f9-44acb8f68528",
+        "plateNumber": "POL-2A-3341",
+        "model": "Toyota Hilux 4x4 Heavy Duty Patrol",
+        "type": "POLICE_CAR",
+        "status": "DISPATCHED",
+        "fuelLevel": 85,
+        "mileage": 42300,
+        "lat": 11.5972,
+        "lng": 104.8839,
+        "organizationId": "org-police-siemreap",
+        "stationId": "station-police-siemreap",
+        "assignedAgentId": "agent-police-1",
+        "createdAt": "2026-10-07T12:28:26.420Z",
+        "updatedAt": "2026-10-17T03:28:25.620Z"
+      },
+      {
+        "id": "8019891e-03c6-4351-b96e-7d551b5bc0b7",
+        "plateNumber": "MOTO-PP-8821",
+        "model": "Honda CB500X Rapid Police Interceptor",
+        "type": "MOTORBIKE",
+        "status": "MAINTENANCE",
+        "fuelLevel": 30,
+        "mileage": 15400,
+        "lat": 13.355961,
+        "lng": 103.872467,
+        "organizationId": "org-police-siemreap",
+        "stationId": "station-police-siemreap",
+        "assignedAgentId": null,
+        "createdAt": "2026-10-07T12:28:26.432Z",
+        "updatedAt": "2026-10-07T15:32:10.544Z"
+      },
+      {
+        "id": "9c88b70f-403d-4f8d-b1df-3e5fa300236f",
+        "plateNumber": "FT-PP-03",
+        "model": "Hino 500 Water Cannon Ladder Truck",
+        "type": "FIRE_TRUCK",
+        "status": "ON_DUTY",
+        "fuelLevel": 88,
+        "mileage": 21600,
+        "lat": 11.532,
+        "lng": 104.935,
+        "organizationId": "org-fire-siemreap",
+        "stationId": "station-fire-siemreap",
+        "assignedAgentId": null,
+        "createdAt": "2026-10-07T12:28:26.438Z",
+        "updatedAt": "2026-10-07T12:28:26.438Z"
+      },
+      {
+        "id": "f3cb9192-2b3f-44b3-96bc-b3123498f276",
+        "plateNumber": "RB-TK-01",
+        "model": "Yamaha 70HP Aluminum Flood Rescue Boat",
+        "type": "RESCUE_BOAT",
+        "status": "AVAILABLE",
+        "fuelLevel": 100,
+        "mileage": 4800,
+        "lat": 11.5688,
+        "lng": 104.892,
+        "organizationId": "org-fire-siemreap",
+        "stationId": "station-fire-siemreap",
+        "assignedAgentId": null,
+        "createdAt": "2026-10-07T12:28:26.444Z",
+        "updatedAt": "2026-10-07T12:28:26.444Z"
+      },
+      {
+        "id": "febc3845-f7f1-404a-bf6a-8d15bc0e7ba5",
+        "plateNumber": "PP-01-9876",
+        "model": "Isuzu Giga 10,000L Fire Tender",
+        "type": "FIRE_TRUCK",
+        "status": "AVAILABLE",
+        "fuelLevel": 92,
+        "mileage": 18450,
+        "lat": 11.561968,
+        "lng": 104.923598,
+        "organizationId": "org-fire-siemreap",
+        "stationId": "station-fire-siemreap",
+        "assignedAgentId": "agent-fire-1",
+        "createdAt": "2026-10-07T12:28:26.403Z",
+        "updatedAt": "2026-10-08T11:33:27.732Z"
+      }
+    ],
+    "sosAlerts": [
+      {
+        "id": "51c1f74d-958c-44c4-aec8-a9a179b28413",
+        "citizenName": "yen eliputhchatra",
+        "phone": "+85568289514",
+        "type": "MEDICAL",
+        "district": "Siem Reap",
+        "province": "Siem Reap",
+        "lat": 13.361849,
+        "lng": 103.875841,
+        "reportText": "help",
+        "hasMedia": false,
+        "mediaUrls": null,
+        "status": "PENDING",
+        "assignedOrganizationId": "org-medical-siemreap",
+        "assignedOrganizationName": "Siem Reap Health Department",
+        "assignedStationId": "station-medical-siemreap",
+        "assignedStationName": "Hospital Emergency Unit",
+        "assignedAgentId": "agent-medical-1",
+        "assignedAgentName": "ចិន្តា វន",
+        "createdAt": "2026-10-07T16:15:59.211Z",
+        "updatedAt": "2026-10-17T03:18:48.278Z",
+        "resolvedAt": null
+      },
+      {
+        "id": "9c42922d-e1e2-4e3c-bff0-21f3ad07b1bf",
+        "citizenName": "yen eliputhchatra",
+        "phone": "+85568289514",
+        "type": "POLICE",
+        "district": "Siem Reap",
+        "province": "Siem Reap",
+        "lat": 13.350559,
+        "lng": 103.864049,
+        "reportText": "help",
+        "hasMedia": false,
+        "mediaUrls": null,
+        "status": "EN_ROUTE",
+        "assignedOrganizationId": "org-police-siemreap",
+        "assignedOrganizationName": "Siem Reap Provincial Police",
+        "assignedStationId": "station-police-siemreap",
+        "assignedStationName": "Police Station Siem Reap",
+        "assignedAgentId": "agent-police-1",
+        "assignedAgentName": "ពិសិដ្ឋ កែវ",
+        "createdAt": "2026-10-17T03:27:18.397Z",
+        "updatedAt": "2026-10-17T03:28:25.632Z",
+        "resolvedAt": null
+      }
+    ],
+    "citizenReports": [],
+    "broadcasts": [],
+    "news": [],
+    "auditLogs": [
+      {
+        "id": "1c065e62-78ac-4e6a-bcb0-482a5ac24b3a",
+        "time": "10:28:25",
+        "event": "10:28 - Dispatcher assigned Agent ពិសិដ្ឋ កែវ to SOS Alert #9c42922d-e1e2-4e3c-bff0-21f3ad07b1bf",
+        "userId": "db830520-5fdf-474e-988c-949ad140f117",
+        "userName": "ELIX BALDE",
+        "ipAddress": "127.0.0.1",
+        "createdAt": "2026-10-17T03:28:25.758Z"
+      },
+      {
+        "id": "95ece75b-f6e4-41c1-ae67-10b98909c32f",
+        "time": "10:28:25",
+        "event": "Agent ពិសិដ្ឋ កែវ dispatched to SOS #9c42922d-e1e2-4e3c-bff0-21f3ad07b1bf",
+        "userId": "db830520-5fdf-474e-988c-949ad140f117",
+        "userName": "ELIX BALDE",
+        "ipAddress": null,
+        "createdAt": "2026-10-17T03:28:25.650Z"
+      },
+      {
+        "id": "16ec8524-4c40-4a64-98a0-4384e5f0fd15",
+        "time": "10:18:18",
+        "event": "10:18 - Dispatcher assigned Agent ចិន្តា វន to SOS Alert #51c1f74d-958c-44c4-aec8-a9a179b28413",
+        "userId": "db830520-5fdf-474e-988c-949ad140f117",
+        "userName": "ELIX BALDE",
+        "ipAddress": "127.0.0.1",
+        "createdAt": "2026-10-17T03:18:18.462Z"
+      },
+      {
+        "id": "89c93104-375f-40f7-9b6d-2b6cff1e968c",
+        "time": "10:18:18",
+        "event": "Agent ចិន្តា វន dispatched to SOS #51c1f74d-958c-44c4-aec8-a9a179b28413",
+        "userId": "db830520-5fdf-474e-988c-949ad140f117",
+        "userName": "ELIX BALDE",
+        "ipAddress": null,
+        "createdAt": "2026-10-17T03:18:18.268Z"
+      },
+      {
+        "id": "eb2c1438-c565-4f19-997d-fcd6df91d7cd",
+        "time": "16:42:31",
+        "event": "16:42 - Admin exported Summary Report (PDF) — 1 records",
+        "userId": "db830520-5fdf-474e-988c-949ad140f117",
+        "userName": "ELIX BALDE",
+        "ipAddress": "127.0.0.1",
+        "createdAt": "2026-10-16T09:42:31.967Z"
+      },
+      {
+        "id": "d6af4893-c38b-4c52-9862-ae0333a23c4f",
+        "time": "16:21:09",
+        "event": "16:21 - Admin exported Summary Report (PDF) — 1 records",
+        "userId": "db830520-5fdf-474e-988c-949ad140f117",
+        "userName": "ELIX BALDE",
+        "ipAddress": "127.0.0.1",
+        "createdAt": "2026-10-16T09:21:09.374Z"
+      },
+      {
+        "id": "ce184365-cbb9-4e77-aac5-91296350cbfd",
+        "time": "16:09:04",
+        "event": "Auto Cleanup: Purged 27 audit logs older than 7 days",
+        "userId": null,
+        "userName": "System Scheduler (Auto)",
+        "ipAddress": "127.0.0.1",
+        "createdAt": "2026-10-16T09:09:04.627Z"
+      },
+      {
+        "id": "5cf35d48-b3e3-46b6-abb2-68dbd4606e0e",
+        "time": "17:49:43",
+        "event": "Auto Cleanup: Purged 7 audit logs older than 7 days",
+        "userId": null,
+        "userName": "System Scheduler (Auto)",
+        "ipAddress": "127.0.0.1",
+        "createdAt": "2026-10-15T10:49:43.330Z"
+      },
+      {
+        "id": "6299a42b-11f4-4ae5-acea-d61c2ebc2156",
+        "time": "16:53:53",
+        "event": "Auto Cleanup: Purged 2 audit logs older than 7 days",
+        "userId": null,
+        "userName": "System Scheduler (Auto)",
+        "ipAddress": "127.0.0.1",
+        "createdAt": "2026-10-15T09:53:53.069Z"
+      },
+      {
+        "id": "4fb2e648-183f-43bc-b270-7d4f52324be3",
+        "time": "16:50:35",
+        "event": "Auto Cleanup: Purged 1 audit logs older than 7 days",
+        "userId": null,
+        "userName": "System Scheduler (Auto)",
+        "ipAddress": "127.0.0.1",
+        "createdAt": "2026-10-15T09:50:35.767Z"
+      },
+      {
+        "id": "752439b5-f08a-46a7-ae07-764ecf566899",
+        "time": "16:27:01",
+        "event": "Auto Cleanup: Purged 9 audit logs older than 7 days",
+        "userId": null,
+        "userName": "System Scheduler (Auto)",
+        "ipAddress": "127.0.0.1",
+        "createdAt": "2026-10-15T09:27:01.758Z"
+      },
+      {
+        "id": "8b9c2668-e9e5-4862-9d32-ca63f7cd81ac",
+        "time": "14:37:03",
+        "event": "14:37 - Admin deleted broadcast alert \"Flash Food\" (396221e6)",
+        "userId": "db830520-5fdf-474e-988c-949ad140f117",
+        "userName": "ELIX BALDE",
+        "ipAddress": "127.0.0.1",
+        "createdAt": "2026-10-15T07:37:03.774Z"
+      },
+      {
+        "id": "cf09fcea-09a8-4f24-99b0-6d266b2d5a44",
+        "time": "21:48:35",
+        "event": "21:48 - Admin broadcasted emergency alert \"Flash Food\" (396221e6) to រុនតាឯកតេជោសែន (Run Ta Aek Techo Sen), សៀមរាប",
+        "userId": "db830520-5fdf-474e-988c-949ad140f117",
+        "userName": "ELIX BALDE",
+        "ipAddress": "127.0.0.1",
+        "createdAt": "2026-10-14T14:48:35.857Z"
+      },
+      {
+        "id": "11fb8f72-a1f6-4838-afc9-84bb4cbdacc8",
+        "time": "19:53:17",
+        "event": "19:53 - Admin deleted broadcast alert \"wedding\" (e429ae0f)",
+        "userId": "db830520-5fdf-474e-988c-949ad140f117",
+        "userName": "ELIX BALDE",
+        "ipAddress": "127.0.0.1",
+        "createdAt": "2026-10-14T12:53:17.059Z"
+      },
+      {
+        "id": "f7845215-4ff6-4d74-b879-7963096b0564",
+        "time": "19:53:05",
+        "event": "19:53 - Admin revoked emergency alert \"wedding\" (e429ae0f)",
+        "userId": "db830520-5fdf-474e-988c-949ad140f117",
+        "userName": "ELIX BALDE",
+        "ipAddress": "127.0.0.1",
+        "createdAt": "2026-10-14T12:53:05.365Z"
+      },
+      {
+        "id": "856aa46b-69cc-4271-8094-e06a0e0f48f9",
+        "time": "19:52:53",
+        "event": "19:52 - Admin broadcasted emergency alert \"wedding\" (e429ae0f) to សូទ្រនិគម (Soutr Nikom), សៀមរាប",
+        "userId": "db830520-5fdf-474e-988c-949ad140f117",
+        "userName": "ELIX BALDE",
+        "ipAddress": "127.0.0.1",
+        "createdAt": "2026-10-14T12:52:53.835Z"
+      },
+      {
+        "id": "ecc3ca5b-e364-4752-9d23-0e22ef7b0e06",
+        "time": "21:29:28",
+        "event": "21:29 - Admin updated credentials/role for user yen eliputhchatra (1ddda740-6262-4d84-959e-57e4b6d9fb8e)",
+        "userId": "db830520-5fdf-474e-988c-949ad140f117",
+        "userName": "ELIX BALDE",
+        "ipAddress": "127.0.0.1",
+        "createdAt": "2026-10-12T14:29:28.100Z"
+      },
+      {
+        "id": "775ad7de-546a-4fe7-8502-2a01a8d17465",
+        "time": "21:26:06",
+        "event": "21:26 - Admin updated credentials/role for user yen eliputhchatra (1ddda740-6262-4d84-959e-57e4b6d9fb8e)",
+        "userId": "db830520-5fdf-474e-988c-949ad140f117",
+        "userName": "ELIX BALDE",
+        "ipAddress": "127.0.0.1",
+        "createdAt": "2026-10-12T14:26:06.697Z"
+      },
+      {
+        "id": "98cdf1be-8dad-44d1-8c29-2666da69463e",
+        "time": "21:08:26",
+        "event": "21:08 - Admin updated credentials/role for user yen eliputhchatra (1ddda740-6262-4d84-959e-57e4b6d9fb8e)",
+        "userId": "db830520-5fdf-474e-988c-949ad140f117",
+        "userName": "ELIX BALDE",
+        "ipAddress": "127.0.0.1",
+        "createdAt": "2026-10-12T14:08:26.143Z"
+      },
+      {
+        "id": "8da76464-6770-4648-b16c-b1fd206d6f66",
+        "time": "21:08:18",
+        "event": "21:08 - Admin updated credentials/role for user ELIX BALDE (db830520-5fdf-474e-988c-949ad140f117)",
+        "userId": "db830520-5fdf-474e-988c-949ad140f117",
+        "userName": "ELIX BALDE",
+        "ipAddress": "127.0.0.1",
+        "createdAt": "2026-10-12T14:08:18.309Z"
+      },
+      {
+        "id": "841c2b34-22bd-42ea-80a0-7068cc96bacb",
+        "time": "20:53:26",
+        "event": "20:53 - Admin updated credentials/role for user yen eliputhchatra (1ddda740-6262-4d84-959e-57e4b6d9fb8e)",
+        "userId": "db830520-5fdf-474e-988c-949ad140f117",
+        "userName": "ELIX BALDE",
+        "ipAddress": "127.0.0.1",
+        "createdAt": "2026-10-12T13:53:26.500Z"
+      },
+      {
+        "id": "5af87894-633f-442e-9723-18f4eaf0156a",
+        "time": "20:51:29",
+        "event": "20:51 - Dispatcher assigned Agent ចិន្តា វន to SOS Alert #51c1f74d-958c-44c4-aec8-a9a179b28413",
+        "userId": "db830520-5fdf-474e-988c-949ad140f117",
+        "userName": "ELIX BALDE",
+        "ipAddress": "127.0.0.1",
+        "createdAt": "2026-10-12T13:51:29.164Z"
+      },
+      {
+        "id": "512a1254-49c5-4f8a-8fe7-c686afd12d28",
+        "time": "20:51:28",
+        "event": "Agent ចិន្តា វន dispatched to SOS #51c1f74d-958c-44c4-aec8-a9a179b28413",
+        "userId": "db830520-5fdf-474e-988c-949ad140f117",
+        "userName": "ELIX BALDE",
+        "ipAddress": null,
+        "createdAt": "2026-10-12T13:51:28.975Z"
+      }
+    ]
+  }
+}

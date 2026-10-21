@@ -22,6 +22,12 @@ const DEFAULT_SETTINGS = {
   emergencyNumber: '119',
   responseTime: '15',
   defaultPriority: 'HIGH',
+
+  // Security & Backup
+  mfaRequiredForAdmin: 'true',
+  sessionTimeoutMins: '30',
+  automatedBackups: 'true',
+  backupTime: '02:00 AM',
 };
 
 const getSettings = async () => {

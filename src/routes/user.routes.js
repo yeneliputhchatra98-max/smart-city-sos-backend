@@ -23,13 +23,23 @@ const {
 } = require("../validators/user.validator");
 
 // ========================
-// GET ALL USERS
+// GET ALL USERS (គាំទ្រ ?role=AGENT&unassignedOnly=true)
 // ========================
 router.get(
     "/",
     verifyToken,
-    checkRole(["ADMIN"]),
+    checkRole(["ADMIN", "OPERATOR"]),
     userController.getAllUsers
+);
+
+// ========================
+// GET AGENT CANDIDATES (Role = AGENT សម្រាប់ Dropdown)
+// ========================
+router.get(
+    "/agent-candidates",
+    verifyToken,
+    checkRole(["ADMIN", "OPERATOR"]),
+    userController.getAgentCandidates
 );
 
 // ========================
