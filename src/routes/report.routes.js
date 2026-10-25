@@ -19,7 +19,7 @@ const {
 router.get(
     "/",
     verifyToken,
-    checkRole(["ADMIN", "OPERATOR"]),
+    checkRole(["ADMIN", "OPERATOR", "AGENT"]),
     reportController.getReports
 );
 
@@ -29,7 +29,7 @@ router.get(
 router.get(
     "/summary",
     verifyToken,
-    checkRole(["ADMIN", "OPERATOR"]),
+    checkRole(["ADMIN", "OPERATOR", "AGENT"]),
     reportController.getSummary
 );
 
@@ -39,7 +39,7 @@ router.get(
 router.get(
     "/:id",
     verifyToken,
-    checkRole(["ADMIN", "OPERATOR"]),
+    checkRole(["ADMIN", "OPERATOR", "AGENT"]),
     reportController.getReportById
 );
 
@@ -49,7 +49,7 @@ router.get(
 router.post(
     "/generate",
     verifyToken,
-    checkRole(["ADMIN", "OPERATOR"]),
+    checkRole(["ADMIN", "OPERATOR", "AGENT"]),
     validateRequest(generateReportSchema),
     reportController.generateReport
 );
@@ -60,7 +60,7 @@ router.post(
 router.get(
     "/:id/pdf",
     verifyToken,
-    checkRole(["ADMIN", "OPERATOR"]),
+    checkRole(["ADMIN", "OPERATOR", "AGENT"]),
     reportController.exportPdf
 );
 
@@ -70,7 +70,7 @@ router.get(
 router.get(
     "/:id/excel",
     verifyToken,
-    checkRole(["ADMIN", "OPERATOR"]),
+    checkRole(["ADMIN", "OPERATOR", "AGENT"]),
     reportController.exportExcel
 );
 

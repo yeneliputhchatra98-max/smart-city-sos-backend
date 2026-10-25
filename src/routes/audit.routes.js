@@ -11,7 +11,7 @@ const {
 router.get(
     "/",
     verifyToken,
-    checkRole(["ADMIN", "OPERATOR", "ORG_MANAGER"]),
+    checkRole(["ADMIN", "OPERATOR", "AGENT", "ORG_MANAGER"]),
     auditController.getAuditLogs
 );
 

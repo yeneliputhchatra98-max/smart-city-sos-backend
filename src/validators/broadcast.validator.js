@@ -44,7 +44,7 @@ const createBroadcastSchema = Joi.object({
             "MEDICAL",
             "RESCUE_AGENTS"
         )
-        .default("ALL_CITIZENS"),
+        .optional(),
 
     targetProvinces: Joi.array()
         .items(Joi.string())

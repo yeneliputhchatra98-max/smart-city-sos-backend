@@ -79,7 +79,7 @@ const verifyToken = async (req, res, next) => {
         // Find user + role
         const user = await prisma.user.findUnique({
             where: { id: decoded.id || decoded.userId },
-            include: { role: true },
+            include: { role: true, agentProfile: true },
         });
 
         // ✅ Check user exists
@@ -164,6 +164,8 @@ const verifyToken = async (req, res, next) => {
             status: user.status,
             emailVerified: user.emailVerified,
             role: user.role ? user.role.name : null,
+            agentId: user.agentProfile?.id || null,
+            agentProfile: user.agentProfile || null,
             roleId: user.roleId,
             organizationId: user.organizationId,
             sessionId: decoded.sessionId || null,

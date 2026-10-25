@@ -62,14 +62,14 @@ const createSosSchema = Joi.object({
         .optional(),
 
     status: Joi.string()
-        .valid("PENDING", "EN_ROUTE", "RESOLVED", "SPAM")
+        .valid("PENDING", "ASSIGNED", "EN_ROUTE", "ARRIVED", "RESOLVED", "SPAM")
         .optional()
         .default("PENDING"),
 });
 
 const updateStatusSchema = Joi.object({
     status: Joi.string()
-        .valid("PENDING", "EN_ROUTE", "RESOLVED", "SPAM")
+        .valid("PENDING", "ASSIGNED", "EN_ROUTE", "ARRIVED", "RESOLVED", "SPAM")
         .required(),
 
     assignedAgentId: Joi.string()
@@ -86,6 +86,9 @@ const dispatchAgentSchema = Joi.object({
             'any.required': 'Agent ID is required for dispatch',
             'string.empty': 'Agent ID cannot be empty',
         }),
+    dispatchReason: Joi.string()
+        .allow(null, "")
+        .optional(),
 });
 
 module.exports = {

@@ -5570,3 +5570,247 @@ The column `emergency_sos.agents.userId` does not exist in the current database.
 2026-10-20 00:13:49 [ERROR] Port 5000 is already in use
 2026-10-20 00:14:55 [ERROR] Port 5000 is already in use
 2026-10-20 00:16:23 [ERROR] Port 5000 is already in use
+2026-10-22 08:20:28 [ERROR] [GET] /api/reports/summary - districtsList is not defined {"statusCode":500,"code":"INTERNAL_ERROR","path":"/api/reports/summary","method":"GET","ip":"127.0.0.1","user":"db830520-5fdf-474e-988c-949ad140f117"}
+ReferenceError: districtsList is not defined
+    at exports.getSummary (E:\smart-city-sos-cambodia\backend\src\services\report.service.js:186:5)
+    at async exports.getSummary (E:\smart-city-sos-cambodia\backend\src\controllers\report.controller.js:45:25)
+2026-10-22 08:20:29 [ERROR] [GET] /api/reports/summary - districtsList is not defined {"statusCode":500,"code":"INTERNAL_ERROR","path":"/api/reports/summary","method":"GET","ip":"127.0.0.1","user":"db830520-5fdf-474e-988c-949ad140f117"}
+ReferenceError: districtsList is not defined
+    at exports.getSummary (E:\smart-city-sos-cambodia\backend\src\services\report.service.js:186:5)
+    at async exports.getSummary (E:\smart-city-sos-cambodia\backend\src\controllers\report.controller.js:45:25)
+2026-10-22 08:22:02 [ERROR] [GET] /api/reports/summary - districtsList is not defined {"statusCode":500,"code":"INTERNAL_ERROR","path":"/api/reports/summary","method":"GET","ip":"127.0.0.1","user":"db830520-5fdf-474e-988c-949ad140f117"}
+ReferenceError: districtsList is not defined
+    at exports.getSummary (E:\smart-city-sos-cambodia\backend\src\services\report.service.js:186:5)
+    at async exports.getSummary (E:\smart-city-sos-cambodia\backend\src\controllers\report.controller.js:45:25)
+2026-10-22 09:28:03 [ERROR] Forgot password error: Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 a92af1059eb24-19035c0c9a6sm9405245c88.3 - gsmtp
+2026-10-22 09:28:03 [ERROR] Forgot password error: Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 a92af1059eb24-19035c0c9a6sm9405245c88.3 - gsmtp
+2026-10-22 09:28:20 [ERROR] Forgot password error: Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 5a478bee46e88-3673e15353csm20946508eec.2 - gsmtp
+2026-10-22 09:28:20 [ERROR] Forgot password error: Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 5a478bee46e88-3673e15353csm20946508eec.2 - gsmtp
+2026-10-22 09:31:26 [ERROR] Forgot password error: Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 5a478bee46e88-367405ed295sm12979417eec.9 - gsmtp
+2026-10-22 09:31:26 [ERROR] Forgot password error: Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 5a478bee46e88-367405ed295sm12979417eec.9 - gsmtp
+2026-10-22 09:32:46 [ERROR] Login error: Please verify your email before logging in.
+2026-10-22 09:32:46 [ERROR] Login error: Please verify your email before logging in.
+2026-10-22 09:33:01 [ERROR] Forgot password error: Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 5a478bee46e88-36741e71eaesm24010564eec.26 - gsmtp
+2026-10-22 09:33:01 [ERROR] Forgot password error: Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 5a478bee46e88-36741e71eaesm24010564eec.26 - gsmtp
+2026-10-22 09:39:08 [ERROR] Failed to send password reset email to yeneliputhchatra98@gmail.com: Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 5a478bee46e88-368ee692656sm1977237eec.28 - gsmtp
+2026-10-22 09:39:51 [ERROR] Failed to send password reset email to administration47@gmail.com: Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 5a478bee46e88-368b4b8e9c6sm3717405eec.1 - gsmtp
+2026-10-22 09:42:15 [ERROR] Failed to send password reset email to yeneliputhchatra98@gmail.com: Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 a92af1059eb24-1903bf5d61csm10621270c88.15 - gsmtp
+2026-10-22 09:42:33 [ERROR] Failed to send password reset email to yeneliputhchatra98@gmail.com: Greeting never received
+2026-10-22 10:39:29 [ERROR] Login error: Please verify your email before logging in.
+2026-10-22 10:39:29 [ERROR] Login error: Please verify your email before logging in.
+2026-10-22 10:39:58 [ERROR] Verify email error: Invalid verification token
+2026-10-22 10:39:58 [ERROR] Verify email error: Invalid verification token
+2026-10-22 10:39:58 [ERROR] Verify email error: Invalid verification token
+2026-10-22 10:39:58 [ERROR] Verify email error: Invalid verification token
+2026-10-22 10:40:44 [ERROR] Resend verification error: Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 d9443c01a7336-2ea3b435492sm17986125ad.33 - gsmtp
+2026-10-22 10:40:44 [ERROR] Resend verification error: Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 d9443c01a7336-2ea3b435492sm17986125ad.33 - gsmtp
+2026-10-22 10:40:44 [ERROR] [POST] /api/auth/verify/resend - Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 d9443c01a7336-2ea3b435492sm17986125ad.33 - gsmtp {"statusCode":500,"code":"INTERNAL_ERROR","path":"/api/auth/verify/resend","method":"POST","ip":"127.0.0.1","user":"anonymous"}
+AppError: Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 d9443c01a7336-2ea3b435492sm17986125ad.33 - gsmtp
+    at toAppError (E:\smart-city-sos-cambodia\backend\src\controllers\auth.controller.js:59:12)
+    at resendVerification (E:\smart-city-sos-cambodia\backend\src\controllers\auth.controller.js:522:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2026-10-22 10:47:29 [ERROR] Failed to send password reset email to yeneliputhchatra98@gmail.com: Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 98e67ed59e1d1-3ada48a63e7sm2081687a91.11 - gsmtp
+2026-10-22 10:51:07 [ERROR] Login error: Please verify your email before logging in.
+2026-10-22 10:51:07 [ERROR] Login error: Please verify your email before logging in.
+2026-10-22 10:51:19 [ERROR] Resend verification error: Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 d9443c01a7336-2ea3b41097dsm17734205ad.18 - gsmtp
+2026-10-22 10:51:19 [ERROR] Resend verification error: Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 d9443c01a7336-2ea3b41097dsm17734205ad.18 - gsmtp
+2026-10-22 10:51:19 [ERROR] [POST] /api/auth/verify/resend - Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 d9443c01a7336-2ea3b41097dsm17734205ad.18 - gsmtp {"statusCode":500,"code":"INTERNAL_ERROR","path":"/api/auth/verify/resend","method":"POST","ip":"127.0.0.1","user":"anonymous"}
+AppError: Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 d9443c01a7336-2ea3b41097dsm17734205ad.18 - gsmtp
+    at toAppError (E:\smart-city-sos-cambodia\backend\src\controllers\auth.controller.js:59:12)
+    at resendVerification (E:\smart-city-sos-cambodia\backend\src\controllers\auth.controller.js:522:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2026-10-22 10:55:03 [ERROR] Failed to send verification email to yeneliputhchatra98@gmail.com: Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 d2e1a72fcca58-8a08933a9e3sm1491231b3a.8 - gsmtp
+2026-10-22 10:56:29 [ERROR] Failed to send password reset email to yeneliputhchatra98@gmail.com: Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 d2e1a72fcca58-8a0895fb005sm1535890b3a.49 - gsmtp
+2026-10-22 10:57:14 [ERROR] Login error: Please verify your email before logging in.
+2026-10-22 10:57:14 [ERROR] Login error: Please verify your email before logging in.
+2026-10-22 10:57:22 [ERROR] Failed to send verification email to yeneliputhchatra98@gmail.com: Data command failed: 550-5.4.5 Daily user sending limit exceeded. For more information on Gmail
+550-5.4.5 sending limits go to
+550 5.4.5  https://support.google.com/a/answer/166852 d2e1a72fcca58-8a08933ca8fsm1540537b3a.5 - gsmtp
+2026-10-22 10:57:27 [ERROR] Verify email error: Invalid verification token
+2026-10-22 10:57:27 [ERROR] Verify email error: Invalid verification token
+2026-10-22 21:09:27 [ERROR] Login error: Invalid credentials
+2026-10-22 21:09:27 [ERROR] Login error: Invalid credentials
+2026-10-23 11:17:17 [ERROR] Refresh token error: Refresh token revoked
+2026-10-23 11:17:17 [ERROR] Refresh token error: Refresh token revoked
+2026-10-23 11:17:38 [ERROR] Login error: Invalid credentials
+2026-10-23 11:17:38 [ERROR] Login error: Invalid credentials
+2026-10-23 20:53:59 [ERROR] Refresh token error: Refresh token revoked
+2026-10-23 20:53:59 [ERROR] Refresh token error: Refresh token revoked
+2026-10-23 21:23:33 [ERROR] Port 5000 is already in use
+2026-10-23 21:26:54 [ERROR] Login error: Invalid credentials
+2026-10-23 21:26:54 [ERROR] Login error: Invalid credentials
+2026-10-23 22:05:22 [ERROR] evaluateAndAutoDispatch error for Alert a3e01ecd-4b41-4cce-9518-e6149d2f7d6a: dispatchAgent error: 
+Invalid `prisma.sOSAlert.update()` invocation in
+E:\smart-city-sos-cambodia\backend\src\services\sos.service.js:524:52
+
+  521 }
+  522 
+  523 // Update SOS alert -> EN_ROUTE
+→ 524 const updatedAlert = await prisma.sOSAlert.update({
+        where: {
+          id: "a3e01ecd-4b41-4cce-9518-e6149d2f7d6a"
+        },
+        data: {
+          status: "ASSIGNED",
+                  ~~~~~~~~~~
+          assignedAt: new Date("2026-10-23T15:05:22.581Z"),
+          assignedAgentId: "b81a5bda-dd1f-408d-80fe-de2e49eeccfb",
+          assignedAgentName: "TRaaa",
+          assignedOrganizationId: "org-police-siemreap",
+          assignedOrganizationName: "Siem Reap Provincial Police",
+          assignedStationId: "station-police-siemreap",
+          assignedStationName: "Police Station Siem Reap"
+        },
+        include: {
+          assignedAgent: true,
+          assignedOrganization: true,
+          assignedStation: true
+        }
+      })
+
+Invalid value for argument `status`. Expected SOSStatus.
+2026-10-23 22:22:04 [ERROR] evaluateAndAutoDispatch error for Alert a3e01ecd-4b41-4cce-9518-e6149d2f7d6a: dispatchAgent error: 
+Invalid `prisma.sOSAlert.update()` invocation in
+E:\smart-city-sos-cambodia\backend\src\services\sos.service.js:524:52
+
+  521 }
+  522 
+  523 // Update SOS alert -> EN_ROUTE
+→ 524 const updatedAlert = await prisma.sOSAlert.update({
+        where: {
+          id: "a3e01ecd-4b41-4cce-9518-e6149d2f7d6a"
+        },
+        data: {
+          status: "ASSIGNED",
+                  ~~~~~~~~~~
+          assignedAt: new Date("2026-10-23T15:22:04.772Z"),
+          assignedAgentId: "agent-police-1",
+          assignedAgentName: "ពិសិដ្ឋ កែវ",
+          assignedOrganizationId: "org-police-siemreap",
+          assignedOrganizationName: "Siem Reap Provincial Police",
+          assignedStationId: "station-police-siemreap",
+          assignedStationName: "Police Station Siem Reap"
+        },
+        include: {
+          assignedAgent: true,
+          assignedOrganization: true,
+          assignedStation: true
+        }
+      })
+
+Invalid value for argument `status`. Expected SOSStatus.
+2026-10-23 22:24:37 [ERROR] evaluateAndAutoDispatch error for Alert a3e01ecd-4b41-4cce-9518-e6149d2f7d6a: dispatchAgent error: 
+Invalid `prisma.sOSAlert.update()` invocation in
+E:\smart-city-sos-cambodia\backend\src\services\sos.service.js:524:52
+
+  521 }
+  522 
+  523 // Update SOS alert -> EN_ROUTE
+→ 524 const updatedAlert = await prisma.sOSAlert.update({
+        where: {
+          id: "a3e01ecd-4b41-4cce-9518-e6149d2f7d6a"
+        },
+        data: {
+          status: "ASSIGNED",
+                  ~~~~~~~~~~
+          assignedAt: new Date("2026-10-23T15:24:37.117Z"),
+          assignedAgentId: "agent-police-2",
+          assignedAgentName: "វីរៈ សាន",
+          assignedOrganizationId: "org-police-siemreap",
+          assignedOrganizationName: "Siem Reap Provincial Police",
+          assignedStationId: "station-police-siemreap",
+          assignedStationName: "Police Station Siem Reap"
+        },
+        include: {
+          assignedAgent: true,
+          assignedOrganization: true,
+          assignedStation: true
+        }
+      })
+
+Invalid value for argument `status`. Expected SOSStatus.
+2026-10-23 22:24:38 [ERROR] evaluateAndAutoDispatch error for Alert a3e01ecd-4b41-4cce-9518-e6149d2f7d6a: dispatchAgent error: 
+Invalid `prisma.sOSAlert.update()` invocation in
+E:\smart-city-sos-cambodia\backend\src\services\sos.service.js:524:52
+
+  521 }
+  522 
+  523 // Update SOS alert -> EN_ROUTE
+→ 524 const updatedAlert = await prisma.sOSAlert.update({
+        where: {
+          id: "a3e01ecd-4b41-4cce-9518-e6149d2f7d6a"
+        },
+        data: {
+          status: "ASSIGNED",
+                  ~~~~~~~~~~
+          assignedAt: new Date("2026-10-23T15:24:38.629Z"),
+          assignedAgentId: "b81a5bda-dd1f-408d-80fe-de2e49eeccfb",
+          assignedAgentName: "TRaaa",
+          assignedOrganizationId: "org-police-siemreap",
+          assignedOrganizationName: "Siem Reap Provincial Police",
+          assignedStationId: "station-police-siemreap",
+          assignedStationName: "Police Station Siem Reap"
+        },
+        include: {
+          assignedAgent: true,
+          assignedOrganization: true,
+          assignedStation: true
+        }
+      })
+
+Invalid value for argument `status`. Expected SOSStatus.
+2026-10-23 22:28:15 [ERROR] evaluateAndAutoDispatch error for Alert a3e01ecd-4b41-4cce-9518-e6149d2f7d6a: 
+Invalid `prisma.sOSAlert.findUnique()` invocation in
+E:\smart-city-sos-cambodia\backend\src\services\sos.service.js:1265:45
+
+  1262  */
+  1263 const evaluateAndAutoDispatch = async (alertId) => {
+  1264     try {
+→ 1265         const alert = await prisma.sOSAlert.findUnique(
+The column `emergency_sos.sos_alerts.assignedAt` does not exist in the current database.
+2026-10-24 16:43:17 [ERROR] Login error: Invalid credentials
+2026-10-24 16:43:17 [ERROR] Login error: Invalid credentials

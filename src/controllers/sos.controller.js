@@ -3,6 +3,31 @@ const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 // sos.controller.js
+
+const listAssignedAlerts = async (req, res) => {
+    try {
+        const agentId = req.user?.agentId || req.query.agentId;
+        if (!agentId) {
+            return res.status(400).json({
+                success: false,
+                message: "No responder agent profile associated with this account",
+            });
+        }
+        const { status, page, limit } = req.query;
+        const result = await sosService.getAssignedAlerts(agentId, { status, page, limit });
+        res.json({
+            success: true,
+            data: result.alerts,
+            pagination: result.pagination,
+        });
+    } catch (error) {
+        res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 const listAlerts = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -29,14 +54,14 @@ const listAlerts = async (req, res) => {
 
 const getAlert = async (req, res) => {
     try {
-        const alert = await sosService.getAlert(req.params.id);
+        const alert = await sosService.getAlert(req.params.id, req.user);
 
         res.json({
             success: true,
             data: alert
         });
     } catch (error) {
-        res.status(500).json({
+        res.status(error.statusCode || 500).json({
             success: false,
             message: error.message
         });
@@ -67,7 +92,7 @@ const createAlert = async (req, res) => {
 const dispatchAgent = async (req, res) => {
     try {
         const { id } = req.params;
-        const { agentId } = req.body;
+        const { agentId, dispatchReason } = req.body;
 
         if (!agentId) {
             return res.status(400).json({
@@ -76,7 +101,7 @@ const dispatchAgent = async (req, res) => {
             });
         }
 
-        const result = await sosService.dispatchAgent(id, agentId, req.user);
+        const result = await sosService.dispatchAgent(id, agentId, req.user, dispatchReason);
 
         res.json({
             success: true,
@@ -93,14 +118,14 @@ const dispatchAgent = async (req, res) => {
 
 const updateStatus = async (req, res) => {
     try {
-        const alert = await sosService.updateStatus(req.params.id, req.body);
+        const alert = await sosService.updateStatus(req.params.id, req.body, req.user);
 
         res.json({
             success: true,
             data: alert
         });
     } catch (error) {
-        res.status(500).json({
+        res.status(error.statusCode || 500).json({
             success: false,
             message: error.message
         });
@@ -139,12 +164,124 @@ const deleteAlert = async (req, res) => {
     }
 };
 
+const declineMission = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { reason, agentId } = req.body || {};
+        const result = await sosService.declineMission(
+            id,
+            agentId,
+            reason || "Unable to respond",
+            req.user
+        );
+
+        res.json({
+            success: true,
+            message: "Mission declined successfully and alert reverted for re-dispatch",
+            data: result,
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+const acknowledgeMission = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { agentId } = req.body || {};
+        const result = await sosService.acknowledgeMission(id, agentId, req.user);
+
+        res.json({
+            success: true,
+            message: "Mission acknowledged successfully",
+            data: result,
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+const triggerAutoDispatch = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await sosService.evaluateAndAutoDispatch(id);
+
+        if (!result) {
+            return res.status(400).json({
+                success: false,
+                message: "Auto-dispatch could not find any available matching responders",
+            });
+        }
+
+        res.json({
+            success: true,
+            message: "Auto-dispatch executed successfully",
+            data: result,
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+const getCandidateAgents = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const alert = await sosService.getAlert(id);
+        if (!alert) {
+            return res.status(404).json({ success: false, message: "Alert not found" });
+        }
+        const candidates = await sosService.findCandidateAgents(alert);
+
+        res.json({
+            success: true,
+            data: candidates,
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+const getAlertTimeline = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await sosService.getAlertTimeline(id);
+
+        res.json({
+            success: true,
+            data: result,
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
 module.exports = {
     listAlerts,
+    listAssignedAlerts,
     getAlert,
+    getAlertTimeline,
     createAlert,
     dispatchAgent,
+    declineMission,
+    acknowledgeMission,
+    triggerAutoDispatch,
+    getCandidateAgents,
     updateStatus,
     addMedia,
-    deleteAlert
+    deleteAlert,
 };

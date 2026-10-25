@@ -1,6 +1,5 @@
-const { PrismaClient } = require("@prisma/client");
-
-const prisma = new PrismaClient();
+const prisma = require("../config/prisma");
+const locationService = require("./location.service");
 
 // ==========================
 // Get all reports
@@ -59,6 +58,7 @@ exports.getSummary = async () => {
         totalOrganizations,
         totalUsers,
         allAlerts,
+        districtsList,
     ] = await Promise.all([
         prisma.sOSAlert.count(),
         prisma.sOSAlert.count({ where: { status: "RESOLVED" } }),
@@ -81,6 +81,7 @@ exports.getSummary = async () => {
             take: 500,
             orderBy: { createdAt: "desc" },
         }).catch(() => []),
+        locationService.getDistrictsByProvince().catch(() => []),
     ]);
 
     // 2. Calculate Resolution Rate
@@ -180,23 +181,86 @@ exports.getSummary = async () => {
         ];
     }
 
-    // 7. District Response Times
-    const districts = [
-        { district: 'Daun Penh', baseAvg: 6.8 },
-        { district: 'Chamkarmon', baseAvg: 7.2 },
-        { district: 'Tuol Kork', baseAvg: 8.6 },
-        { district: 'Meanchey', baseAvg: 8.9 },
-        { district: 'Prampir Makara', baseAvg: 9.4 },
-        { district: 'Sen Sok', baseAvg: 10.1 },
-    ];
+    // 7. District Response Times (Dynamic from Location Service / Database & Live Alerts)
+    const districtMap = new Map();
 
-    const districtResponseTimes = districts.map(d => {
-        const distAlerts = allAlerts.filter(a => (a.district || '').toLowerCase().includes(d.district.toLowerCase()));
+    (districtsList || []).forEach(d => {
+        const key = (d.name || '').trim().toLowerCase();
+        if (key) {
+            districtMap.set(key, {
+                district: d.name,
+                districtKm: d.nameKm || d.name,
+                province: d.province?.name || '',
+                alerts: [],
+            });
+        }
+    });
+
+    allAlerts.forEach(alert => {
+        if (!alert.district) return;
+        const rawDist = alert.district.trim();
+        const distKey = rawDist.toLowerCase();
+
+        let matchedKey = null;
+        for (const [k, v] of districtMap.entries()) {
+            const vKm = (v.districtKm || '').trim().toLowerCase();
+            if (
+                k === distKey ||
+                (vKm && vKm === distKey) ||
+                distKey.includes(k) ||
+                k.includes(distKey) ||
+                (vKm && distKey.includes(vKm))
+            ) {
+                matchedKey = k;
+                break;
+            }
+        }
+
+        if (matchedKey) {
+            districtMap.get(matchedKey).alerts.push(alert);
+        } else {
+            districtMap.set(distKey, {
+                district: rawDist,
+                districtKm: rawDist,
+                province: '',
+                alerts: [alert],
+            });
+        }
+    });
+
+    const districtResponseTimes = Array.from(districtMap.values()).map(d => {
+        const distAlerts = d.alerts;
+        const resolved = distAlerts.filter(a => a.status === 'RESOLVED' && (a.resolvedAt || a.updatedAt));
+
+        let avgTime = 0;
+        if (resolved.length > 0) {
+            const totalMinutes = resolved.reduce((acc, a) => {
+                const end = new Date(a.resolvedAt || a.updatedAt).getTime();
+                const start = new Date(a.createdAt).getTime();
+                const diffMin = Math.max(1, (end - start) / (1000 * 60));
+                const cappedMin = diffMin > 60 ? (avgResponseTime || 12.5) : diffMin;
+                return acc + cappedMin;
+            }, 0);
+            avgTime = Math.round((totalMinutes / resolved.length) * 10) / 10;
+        } else if (distAlerts.length > 0) {
+            avgTime = avgResponseTime || 8.5;
+        } else {
+            avgTime = 0;
+        }
+
         return {
             district: d.district,
-            avgTime: d.baseAvg,
+            districtKm: d.districtKm,
+            avgTime,
             count: distAlerts.length,
         };
+    });
+
+    // Sort: districts with highest incident volume first, then longest response time, then alphabetical
+    districtResponseTimes.sort((a, b) => {
+        if (b.count !== a.count) return b.count - a.count;
+        if (b.avgTime !== a.avgTime) return b.avgTime - a.avgTime;
+        return a.district.localeCompare(b.district);
     });
 
     return {

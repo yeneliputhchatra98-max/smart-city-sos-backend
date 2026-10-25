@@ -3,6 +3,38 @@ const { emitBroadcastAlert } = require("../socket");
 
 const prisma = new PrismaClient();
 
+const EMERGENCY_AUDIENCE_MAP = {
+    FIRE: ["FIRE", "ALL_CITIZENS"],
+    FLOOD: ["RESCUE_AGENTS", "ALL_CITIZENS"],
+    STORM: ["ALL_CITIZENS", "RESCUE_AGENTS"],
+    TRAFFIC: ["POLICE", "ALL_CITIZENS"],
+    SECURITY: ["POLICE", "ALL_CITIZENS"],
+    MEDICAL_CRISIS: ["MEDICAL", "ALL_CITIZENS"],
+    GENERAL_ANNOUNCEMENT: ["ALL_CITIZENS"],
+};
+
+const DEFAULT_AUDIENCE_BY_TYPE = {
+    FIRE: "FIRE",
+    FLOOD: "RESCUE_AGENTS",
+    STORM: "ALL_CITIZENS",
+    TRAFFIC: "POLICE",
+    SECURITY: "POLICE",
+    MEDICAL_CRISIS: "MEDICAL",
+    GENERAL_ANNOUNCEMENT: "ALL_CITIZENS",
+};
+
+const VALID_AUDIENCES = [
+    "ALL_CITIZENS",
+    "POLICE",
+    "FIRE",
+    "MEDICAL",
+    "RESCUE_AGENTS",
+];
+
+function getDefaultAudience(type) {
+    return DEFAULT_AUDIENCE_BY_TYPE[type] || "ALL_CITIZENS";
+}
+
 
 // ==========================
 // Get Broadcast Options / Metadata
@@ -25,6 +57,8 @@ exports.getBroadcastOptions = async () => {
             { value: "MEDICAL", label: "Emergency Medics", labelKm: "ក្រុមគ្រូពេទ្យសង្គ្រោះ" },
             { value: "RESCUE_AGENTS", label: "Rescue Agents", labelKm: "ភ្នាក់ងារសង្គ្រោះ" }
         ],
+        audienceMapping: EMERGENCY_AUDIENCE_MAP,
+        defaultAudience: DEFAULT_AUDIENCE_BY_TYPE,
         levels: [
             { value: "INFO", label: "Information", labelKm: "ព័ត៌មាន", color: "blue" },
             { value: "WARNING", label: "Warning", labelKm: "ការព្រមាន", color: "amber" },
@@ -163,10 +197,17 @@ exports.createBroadcast = async (data, user) => {
         normType = "SECURITY";
     }
 
-    // Normalize audience to Prisma AudienceType: ALL_CITIZENS | RESCUE_AGENTS
-    let normAudience = (targetAudience || "ALL_CITIZENS").toUpperCase();
-    if (normAudience !== "ALL_CITIZENS") {
-        normAudience = "RESCUE_AGENTS";
+    // Audience is suggested by type, but never forcibly restricted.
+    const rawAudience =
+        typeof targetAudience === "string"
+            ? targetAudience.trim().toUpperCase()
+            : "";
+
+    const normAudience =
+        rawAudience || getDefaultAudience(normType);
+
+    if (!VALID_AUDIENCES.includes(normAudience)) {
+        throw new Error("Invalid target audience");
     }
 
     const broadcast = await prisma.broadcast.create({
@@ -227,10 +268,19 @@ exports.updateBroadcast = async (id, data) => {
         else if (normType === "OTHER") normType = "GENERAL_ANNOUNCEMENT";
         updateData.type = normType;
     }
-    if (updateData.targetAudience) {
-        let normAud = updateData.targetAudience.toUpperCase();
-        if (normAud !== "ALL_CITIZENS") normAud = "RESCUE_AGENTS";
-        updateData.targetAudience = normAud;
+    if (updateData.targetAudience !== undefined) {
+        if (typeof updateData.targetAudience !== "string") {
+            throw new Error("Invalid target audience");
+        }
+
+        const normAudience =
+            updateData.targetAudience.trim().toUpperCase();
+
+        if (!VALID_AUDIENCES.includes(normAudience)) {
+            throw new Error("Invalid target audience");
+        }
+
+        updateData.targetAudience = normAudience;
     }
 
     return await prisma.broadcast.update({

@@ -105,11 +105,11 @@ const getIO = () => {
 };
 
 /**
- * Emit a new SOS alert to all operator clients in the "operators" room.
+ * Emit a new SOS alert to all operator clients.
  */
 const emitNewAlert = (alert) => {
     try {
-        getIO().to("operators").emit("new_emergency", alert);
+        getIO().emit("new_emergency", alert);
         logger.info(`📡 Broadcasted new_emergency: ${alert.id}`);
     } catch (e) {
         logger.warn(`Socket emit failed (new_emergency): ${e.message}`);
@@ -121,9 +121,17 @@ const emitNewAlert = (alert) => {
  */
 const emitStatusUpdated = (alert) => {
     try {
-        getIO().to("operators").emit("status_updated", alert);
-        // Also notify anyone watching that specific alert room
-        getIO().to(`alert:${alert.id}`).emit("status_updated", alert);
+        const activeIo = getIO();
+        activeIo.emit("status_updated", alert);
+        if (alert?.id) {
+            activeIo.to(`alert:${alert.id}`).emit("status_updated", alert);
+        }
+        if (alert?.assignedAgentId) {
+            activeIo.to(`agent:${alert.assignedAgentId}`).emit("status_updated", alert);
+        }
+        if (alert?.assignedAgent?.userId) {
+            activeIo.to(`user:${alert.assignedAgent.userId}`).emit("status_updated", alert);
+        }
         logger.info(`📡 Broadcasted status_updated: ${alert.id} → ${alert.status}`);
     } catch (e) {
         logger.warn(`Socket emit failed (status_updated): ${e.message}`);
@@ -135,7 +143,7 @@ const emitStatusUpdated = (alert) => {
  */
 const emitAlertDeleted = (id) => {
     try {
-        getIO().to("operators").emit("alert_deleted", { id });
+        getIO().emit("alert_deleted", { id });
         logger.info(`📡 Broadcasted alert_deleted: ${id}`);
     } catch (e) {
         logger.warn(`Socket emit failed (alert_deleted): ${e.message}`);
@@ -184,8 +192,15 @@ const emitVehicleCountsChanged = (counts) => {
 const emitDispatchAgent = (data) => {
     try {
         const activeIo = getIO();
-        activeIo.to("operators").emit("agent:dispatched", data);
         activeIo.emit("agent:dispatched", data);
+        if (data?.agent?.id) {
+            activeIo.to(`agent:${data.agent.id}`).emit("agent:assigned", data);
+            activeIo.to(`agent:${data.agent.id}`).emit("agent:dispatched", data);
+        }
+        if (data?.agent?.userId) {
+            activeIo.to(`user:${data.agent.userId}`).emit("agent:assigned", data);
+            activeIo.to(`user:${data.agent.userId}`).emit("agent:dispatched", data);
+        }
         if (data?.alert?.id) {
             activeIo.to(`alert:${data.alert.id}`).emit("agent:dispatched", data);
         }
@@ -201,11 +216,10 @@ const emitDispatchAgent = (data) => {
 const emitAgentStatusUpdate = (agent) => {
     try {
         const activeIo = getIO();
-        activeIo.to("operators").emit("agent:status:updated", agent);
         activeIo.emit("agent:status:updated", agent);
 
         if (agent?.lat !== undefined && agent?.lng !== undefined && agent?.lat !== null && agent?.lng !== null) {
-            activeIo.to("operators").emit("agent_location_updated", {
+            activeIo.emit("agent_location_updated", {
                 agentId: agent.id,
                 lat: agent.lat,
                 lng: agent.lng,
@@ -224,7 +238,6 @@ const emitAgentStatusUpdate = (agent) => {
 const emitAlertResolved = (alert) => {
     try {
         const activeIo = getIO();
-        activeIo.to("operators").emit("alert:resolved", alert);
         activeIo.emit("alert:resolved", alert);
         if (alert?.id) {
             activeIo.to(`alert:${alert.id}`).emit("alert:resolved", alert);
@@ -232,6 +245,66 @@ const emitAlertResolved = (alert) => {
         logger.info(`📡 Broadcasted alert:resolved for Alert ${alert?.id}`);
     } catch (e) {
         logger.warn(`Socket emit failed (alert:resolved): ${e.message}`);
+    }
+};
+
+const emitMissionDeclined = (payload) => {
+    try {
+        const activeIo = getIO();
+        activeIo.emit("mission:declined", payload);
+    } catch (e) {
+        logger.warn(`Socket emit failed (mission:declined): ${e.message}`);
+    }
+};
+
+const emitMissionAcknowledged = (payload) => {
+    try {
+        const activeIo = getIO();
+        activeIo.emit("mission:acknowledged", payload);
+        if (payload?.alert?.id) {
+            activeIo.to(`alert:${payload.alert.id}`).emit("mission:acknowledged", payload);
+        }
+    } catch (e) {
+        logger.warn(`Socket emit failed (mission:acknowledged): ${e.message}`);
+    }
+};
+
+const emitMissionRerouted = (payload) => {
+    try {
+        const activeIo = getIO();
+        activeIo.emit("mission:rerouted", payload);
+        if (payload?.alert?.id) {
+            activeIo.to(`alert:${payload.alert.id}`).emit("mission:rerouted", payload);
+        }
+    } catch (e) {
+        logger.warn(`Socket emit failed (mission:rerouted): ${e.message}`);
+    }
+};
+
+const emitDispatchEscalation = (payload) => {
+    try {
+        const activeIo = getIO();
+        activeIo.emit("dispatch:escalated", payload);
+    } catch (e) {
+        logger.warn(`Socket emit failed (dispatch:escalated): ${e.message}`);
+    }
+};
+
+const emitAutoDispatchSuccess = (payload) => {
+    try {
+        const activeIo = getIO();
+        activeIo.emit("auto_dispatch:success", payload);
+    } catch (e) {
+        logger.warn(`Socket emit failed (auto_dispatch:success): ${e.message}`);
+    }
+};
+
+const emitAutoDispatchFailed = (payload) => {
+    try {
+        const activeIo = getIO();
+        activeIo.emit("auto_dispatch:failed", payload);
+    } catch (e) {
+        logger.warn(`Socket emit failed (auto_dispatch:failed): ${e.message}`);
     }
 };
 
@@ -247,4 +320,11 @@ module.exports = {
     emitDispatchAgent,
     emitAgentStatusUpdate,
     emitAlertResolved,
+    emitMissionDeclined,
+    emitMissionAcknowledged,
+    emitMissionRerouted,
+    emitDispatchEscalation,
+    emitAutoDispatchSuccess,
+    emitAutoDispatchFailed,
 };
+

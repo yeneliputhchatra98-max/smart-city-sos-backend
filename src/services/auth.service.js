@@ -77,7 +77,9 @@ const sanitizeUser = (user) => {
     return {
         ...rest,
         role: role?.name || null,          // ✅ "ADMIN"
-        roleId: role?.id ?? user.roleId ?? null,   // ✅ 1
+        roleId: role?.id ?? user.roleId ?? null,
+        agentProfile: user.agentProfile || null,
+        agentId: user.agentProfile?.id || null,
     };
 };
 
@@ -144,7 +146,7 @@ const createSession = async ({ userId, tabId = null, userAgent = null, ipAddress
     // Sync legacy refreshToken table (best-effort — never throw)
     await prisma.refreshToken.create({
         data: { token: refreshToken, userId, expiresAt },
-    }).catch(() => {});
+    }).catch(() => { });
 
     return {
         sessionId: session.id,
@@ -249,7 +251,7 @@ const login = async (email, password, ipAddress = null, userAgent = null, tabId 
 
         const user = await prisma.user.findUnique({
             where: { email: emailClean },
-            include: { role: true },
+            include: { role: true, agentProfile: true },
         });
 
         checkUserForLogin(user, { requireEmailVerified: true });
@@ -344,7 +346,7 @@ const refreshAccessToken = async (refreshToken, tabId = null) => {
         await prisma.refreshToken.updateMany({
             where: { token: refreshToken },
             data: { revokedAt: new Date() },
-        }).catch(() => {});
+        }).catch(() => { });
 
         // ✅ BUG 1 FIX: createSession FIRST so sessionId is available for the JWT
         const activeTabId = tabId || session?.tabId || null;
@@ -396,7 +398,7 @@ const logout = async (token, refreshToken = null, tabId = null) => {
             await prisma.refreshToken.updateMany({
                 where: { token: refreshToken, revokedAt: null },
                 data: { revokedAt: new Date() },
-            }).catch(() => {});
+            }).catch(() => { });
         } else if (token) {
             // ✅ Fallback: Revoke strictly by the specific sessionId embedded in this JWT token
             try {
@@ -634,11 +636,35 @@ const forgotPassword = async (email) => {
         const rawToken = await generateResetToken(user.id);
         const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${rawToken}`;
 
-        await sendPasswordResetEmail(user.email, resetUrl);
+        console.log(`\n======================================================`);
+        console.log(`🔐 [PASSWORD RESET LINK GENERATED]`);
+        console.log(`👤 User: ${user.email} (${user.fullName})`);
+        console.log(`🔗 Link: ${resetUrl}`);
+        console.log(`======================================================\n`);
 
-        logger.info(`Password reset email sent to ${user.email}`);
+        let emailSent = false;
+        let emailError = null;
+        try {
+            await sendPasswordResetEmail(user.email, resetUrl);
+            emailSent = true;
+            logger.info(`Password reset email sent to ${user.email}`);
+        } catch (mailErr) {
+            emailError = mailErr.message;
+            logger.error(`Failed to send password reset email to ${user.email}: ${mailErr.message}`);
+            console.error(`❌ [SMTP ERROR] Failed to send email via Gmail (${user.email}): ${mailErr.message}`);
+            if (mailErr.message && mailErr.message.includes("550")) {
+                console.error(`⚠️ [GMAIL 550 LIMIT]: Google has locked this Gmail account from sending emails today.`);
+                console.error(`👉 In development, use this reset URL directly: ${resetUrl}`);
+            }
+        }
+
         return {
             message: "If the email exists, a reset link will be sent.",
+            ...(process.env.NODE_ENV !== "production" ? {
+                devResetUrl: resetUrl,
+                emailSent,
+                emailError: emailError ? `Gmail SMTP: ${emailError}` : null,
+            } : {}),
         };
     } catch (error) {
         logger.error(`Forgot password error: ${error.message}`);
@@ -696,7 +722,7 @@ const resetPassword = async (token, newPassword) => {
         await prisma.refreshToken.updateMany({
             where: { userId: user.id, revokedAt: null },
             data: { revokedAt: new Date() },
-        }).catch(() => {});
+        }).catch(() => { });
 
         logger.info(`Password reset successful for ${user.email}`);
         return { message: "Password updated successfully" };
@@ -748,7 +774,7 @@ const changePassword = async (userId, oldPassword, newPassword) => {
         await prisma.refreshToken.updateMany({
             where: { userId, revokedAt: null },
             data: { revokedAt: new Date() },
-        }).catch(() => {});
+        }).catch(() => { });
 
         logger.info(`Password changed successfully for ${user.email}`);
         return { message: "Password updated successfully" };

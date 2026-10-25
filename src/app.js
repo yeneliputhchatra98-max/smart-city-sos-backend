@@ -9,7 +9,7 @@ const path = require("path");
 const fs = require("fs");
 
 // --- Load Environment ---
-require("dotenv").config();
+require("dotenv").config({ path: require("path").resolve(__dirname, "../.env") });
 
 // --- Utils ---
 const logger = require("./utils/logger");

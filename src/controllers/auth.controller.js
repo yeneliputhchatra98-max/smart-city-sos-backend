@@ -439,11 +439,11 @@ const forgotPassword = async (req, res, next) => {
             throw new AppError("Valid email required", 400, "INVALID_EMAIL");
         }
 
-        await authService.forgotPassword(email);
+        const result = await authService.forgotPassword(email);
 
         logger.info(`Password reset requested for: ${email}`);
 
-        return sendSuccess(res, {}, "If the email exists, a reset link will be sent");
+        return sendSuccess(res, result || {}, "If the email exists, a reset link will be sent");
     } catch (error) {
         logger.error(`Forgot password error: ${error.message}`);
         return sendSuccess(res, {}, "If the email exists, a reset link will be sent");

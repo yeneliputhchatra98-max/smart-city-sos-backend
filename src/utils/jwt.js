@@ -67,6 +67,10 @@ const generateToken = (user) => {
             type: TOKEN_TYPES.ACCESS
         };
 
+        if (user.agentId) payload.agentId = user.agentId;
+        else if (user.agentProfile?.id) payload.agentId = user.agentProfile.id;
+        else if (user.agent?.id) payload.agentId = user.agent.id;
+
         if (user.fullName)  payload.fullName  = user.fullName;
         // ✅ Embed sessionId so middleware can verify session is not revoked
         if (user.sessionId) payload.sessionId = user.sessionId;

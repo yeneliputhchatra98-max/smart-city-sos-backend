@@ -23,7 +23,7 @@ const {
 router.get(
     "/",
     verifyToken,
-    checkRole(["ADMIN", "OPERATOR"]),
+    checkRole(["ADMIN", "OPERATOR", "AGENT", "CITIZEN", "ORG_MANAGER"]),
     organizationController.getAllOrgs
 );
 
@@ -62,7 +62,7 @@ router.delete(
 router.get(
     "/:id",
     verifyToken,
-    checkRole(["ADMIN"]),
+    checkRole(["ADMIN", "OPERATOR", "AGENT", "CITIZEN", "ORG_MANAGER"]),
     organizationController.getOrgById
 );
 

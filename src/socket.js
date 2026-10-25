@@ -69,7 +69,7 @@ const initSocket = (server) => {
         }
     });
 
-    io.on("connection", (socket) => {
+    io.on("connection", async (socket) => {
         const userId = socket.user?.id ?? "anonymous";
         const role = socket.user?.role ?? "PUBLIC";
         const tabId = socket.tabId || "none";
@@ -78,9 +78,36 @@ const initSocket = (server) => {
         );
 
         socket.join("operators");
+        if (socket.user?.id) {
+            socket.join(`user:${socket.user.id}`);
+            try {
+                const prismaClient = require("./config/prisma");
+                const agent = await prismaClient.agent.findFirst({
+                    where: { userId: socket.user.id },
+                    select: { id: true },
+                });
+                if (agent) {
+                    socket.join(`agent:${agent.id}`);
+                    socket.user.agentId = agent.id;
+                    logger.info(`Socket ${socket.id} auto-joined agent room: agent:${agent.id}`);
+                }
+            } catch {
+                // Non-blocking
+            }
+        }
+        if (socket.user?.agentId) {
+            socket.join(`agent:${socket.user.agentId}`);
+        }
         if (socket.tabId) {
             socket.join(`tab:${socket.tabId}`);
         }
+
+        socket.on("join_agent", (agentId) => {
+            if (agentId) {
+                socket.join(`agent:${agentId}`);
+                logger.info(`Socket ${socket.id} joined agent room: agent:${agentId}`);
+            }
+        });
 
         socket.on("join_alert", (alertId) => {
             socket.join(`alert:${alertId}`);
@@ -126,8 +153,13 @@ const getIO = () => {
 const emitDispatchAgent = (data) => {
     try {
         const activeIo = getIO();
-        activeIo.to("operators").emit("agent:dispatched", data);
         activeIo.emit("agent:dispatched", data);
+        if (data?.agent?.id) {
+            activeIo.to(`agent:${data.agent.id}`).emit("agent:assigned", data);
+        }
+        if (data?.agent?.userId) {
+            activeIo.to(`user:${data.agent.userId}`).emit("agent:assigned", data);
+        }
 
         if (data?.alert?.id) {
             activeIo.to(`alert:${data.alert.id}`).emit("agent:dispatched", data);
@@ -149,11 +181,10 @@ const emitDispatchAgent = (data) => {
 const emitAgentStatusUpdate = (agent) => {
     try {
         const activeIo = getIO();
-        activeIo.to("operators").emit("agent:status:updated", agent);
         activeIo.emit("agent:status:updated", agent);
 
         if (agent?.lat !== undefined && agent?.lng !== undefined && agent?.lat !== null && agent?.lng !== null) {
-            activeIo.to("operators").emit("agent_location_updated", {
+            activeIo.emit("agent_location_updated", {
                 agentId: agent.id,
                 lat: agent.lat,
                 lng: agent.lng,
@@ -172,7 +203,6 @@ const emitAgentStatusUpdate = (agent) => {
 const emitAlertResolved = (alert) => {
     try {
         const activeIo = getIO();
-        activeIo.to("operators").emit("alert:resolved", alert);
         activeIo.emit("alert:resolved", alert);
         if (alert?.id) {
             activeIo.to(`alert:${alert.id}`).emit("alert:resolved", alert);
@@ -185,8 +215,8 @@ const emitAlertResolved = (alert) => {
 
 const emitNewAlert = (alert) => {
     try {
-        getIO().to("operators").emit("new_emergency", alert);
         getIO().emit("new_emergency", alert);
+        logger.info(`📡 Broadcasted new_emergency: ${alert?.id || 'N/A'}`);
     } catch (e) {
         logger.warn(`Socket emit failed (new_emergency): ${e.message}`);
     }
@@ -194,8 +224,18 @@ const emitNewAlert = (alert) => {
 
 const emitStatusUpdated = (alert) => {
     try {
-        getIO().to("operators").emit("status_updated", alert);
-        getIO().to(`alert:${alert.id}`).emit("status_updated", alert);
+        const activeIo = getIO();
+        activeIo.emit("status_updated", alert);
+        if (alert?.id) {
+            activeIo.to(`alert:${alert.id}`).emit("status_updated", alert);
+        }
+        if (alert?.assignedAgentId) {
+            activeIo.to(`agent:${alert.assignedAgentId}`).emit("status_updated", alert);
+        }
+        if (alert?.assignedAgent?.userId) {
+            activeIo.to(`user:${alert.assignedAgent.userId}`).emit("status_updated", alert);
+        }
+        logger.info(`📡 Broadcasted status_updated for Alert ${alert?.id} → ${alert?.status}`);
     } catch (e) {
         logger.warn(`Socket emit failed (status_updated): ${e.message}`);
     }
@@ -203,7 +243,7 @@ const emitStatusUpdated = (alert) => {
 
 const emitAlertDeleted = (id) => {
     try {
-        getIO().to("operators").emit("alert_deleted", { id });
+        getIO().emit("alert_deleted", { id });
     } catch (e) {
         logger.warn(`Socket emit failed (alert_deleted): ${e.message}`);
     }
@@ -241,6 +281,84 @@ const emitAuditLogCreated = (log) => {
     }
 };
 
+const emitMissionDeclined = (payload) => {
+    try {
+        const activeIo = getIO();
+        activeIo.emit("mission:declined", payload);
+        logger.info(
+            `📡 Broadcasted mission:declined for SOS Alert #${payload?.alert?.id} by Agent ${payload?.agent?.name || 'Agent'}`
+        );
+    } catch (e) {
+        logger.warn(`Socket emit failed (mission:declined): ${e.message}`);
+    }
+};
+
+const emitMissionAcknowledged = (payload) => {
+    try {
+        const activeIo = getIO();
+        activeIo.emit("mission:acknowledged", payload);
+        if (payload?.alert?.id) {
+            activeIo.to(`alert:${payload.alert.id}`).emit("mission:acknowledged", payload);
+        }
+        logger.info(
+            `📡 Broadcasted mission:acknowledged for Alert ${payload?.alert?.id} by Agent ${payload?.agent?.name || 'Agent'}`
+        );
+    } catch (e) {
+        logger.warn(`Socket emit failed (mission:acknowledged): ${e.message}`);
+    }
+};
+
+const emitMissionRerouted = (payload) => {
+    try {
+        const activeIo = getIO();
+        activeIo.emit("mission:rerouted", payload);
+        if (payload?.alert?.id) {
+            activeIo.to(`alert:${payload.alert.id}`).emit("mission:rerouted", payload);
+        }
+        logger.info(
+            `📡 Broadcasted mission:rerouted for Alert ${payload?.alert?.id} from Agent ${payload?.prevAgent?.name || 'Prev'} to Agent ${payload?.newAgent?.name || 'New'}`
+        );
+    } catch (e) {
+        logger.warn(`Socket emit failed (mission:rerouted): ${e.message}`);
+    }
+};
+
+const emitDispatchEscalation = (payload) => {
+    try {
+        const activeIo = getIO();
+        activeIo.emit("dispatch:escalated", payload);
+        logger.info(
+            `🚨 Broadcasted dispatch:escalated for SOS Alert #${payload?.alert?.id} (Reason: ${payload?.reason})`
+        );
+    } catch (e) {
+        logger.warn(`Socket emit failed (dispatch:escalated): ${e.message}`);
+    }
+};
+
+const emitAutoDispatchSuccess = (payload) => {
+    try {
+        const activeIo = getIO();
+        activeIo.emit("auto_dispatch:success", payload);
+        logger.info(
+            `📡 Broadcasted auto_dispatch:success for Alert ${payload?.alert?.id} -> Agent ${payload?.agent?.name}`
+        );
+    } catch (e) {
+        logger.warn(`Socket emit failed (auto_dispatch:success): ${e.message}`);
+    }
+};
+
+const emitAutoDispatchFailed = (payload) => {
+    try {
+        const activeIo = getIO();
+        activeIo.emit("auto_dispatch:failed", payload);
+        logger.info(
+            `⚠️ Broadcasted auto_dispatch:failed for Alert ${payload?.alertId}: ${payload?.reason}`
+        );
+    } catch (e) {
+        logger.warn(`Socket emit failed (auto_dispatch:failed): ${e.message}`);
+    }
+};
+
 module.exports = {
     initSocket,
     getIO,
@@ -254,4 +372,11 @@ module.exports = {
     emitVehicleUpdated,
     emitVehicleCountsChanged,
     emitAuditLogCreated,
+    emitMissionDeclined,
+    emitMissionAcknowledged,
+    emitMissionRerouted,
+    emitDispatchEscalation,
+    emitAutoDispatchSuccess,
+    emitAutoDispatchFailed,
 };
+

@@ -2,6 +2,8 @@ const path = require("path");
 const fs = require("fs");
 const { PrismaClient } = require("@prisma/client");
 const { getLocationFromGPS } = require("./location.service");
+const { getSettings } = require("./setting.service");
+const logger = require("../utils/logger");
 const {
     emitNewAlert,
     emitStatusUpdated,
@@ -9,9 +11,19 @@ const {
     emitDispatchAgent,
     emitAgentStatusUpdate,
     emitAlertResolved,
+    emitMissionDeclined,
+    emitMissionAcknowledged,
+    emitMissionRerouted,
+    emitDispatchEscalation,
+    emitAutoDispatchSuccess,
+    emitAutoDispatchFailed,
 } = require("../socket");
 
 const prisma = new PrismaClient();
+
+// In-memory registry for active mission timers: alertId -> { timerId, agentId, expiresAt, timeoutSeconds }
+const activeMissionTimers = new Map();
+
 
 /**
  * 1. EMERGENCY_TO_ORG
@@ -33,8 +45,8 @@ const EMERGENCY_TO_ORG = Object.freeze({
     POLICE: "POLICE",
     ACCIDENT: "POLICE",
     CRIME: "POLICE",
-    FLOOD: "DISASTER",
-    DISASTER: "DISASTER",
+    FLOOD: "FIRE",
+    DISASTER: "FIRE",
 });
 
 /**
@@ -395,8 +407,40 @@ const createAlert = async (body, files = [], user = null) => {
             },
         });
 
+        // ── Audit Log: Citizen Reported (Traceability Step 1) ──
+        try {
+            const locDesc = [alert.district, alert.province].filter(Boolean).join(", ") || "Phnom Penh";
+            const stationDesc = assignment.assignedStationName || assignment.assignedOrganizationName || "Central Dispatch";
+            const distDesc = assignment.distance ? ` (~${assignment.distance.toFixed(1)}km away)` : "";
+            await prisma.auditLog.create({
+                data: {
+                    time: new Date().toLocaleTimeString("en-US", { hour12: false }),
+                    event: `🚨 CITIZEN REPORTED: SOS #${alert.id} (${alert.type}) reported by ${alert.citizenName} (${alert.phone}) at ${locDesc}. Initial routing: Station: ${stationDesc}${distDesc}.`,
+                    userId: user?.id || null,
+                    userName: alert.citizenName || user?.fullName || "Citizen App",
+                },
+            });
+        } catch (_) {}
+
         // Broadcast Realtime Event
         emitNewAlert(alert);
+
+        // STAGE 2: Auto-Dispatch Engine (Check Settings)
+        try {
+            const settings = await getSettings();
+            const isAutoDispatch = String(settings?.autoDispatch).toLowerCase() === "true";
+            if (isAutoDispatch) {
+                setImmediate(async () => {
+                    try {
+                        await evaluateAndAutoDispatch(alert.id);
+                    } catch (err) {
+                        logger.error(`evaluateAndAutoDispatch async error: ${err.message}`);
+                    }
+                });
+            }
+        } catch (settingErr) {
+            logger.warn(`Auto-dispatch check warning: ${settingErr.message}`);
+        }
 
         return {
             ...alert,
@@ -417,7 +461,7 @@ const createAlert = async (body, files = [], user = null) => {
  * @param {Object} [adminUser=null] - Dispatching admin/operator user object
  * @returns {Promise<{alert: Object, agent: Object}>} Updated alert and agent objects
  */
-const dispatchAgent = async (alertId, agentId, adminUser = null) => {
+const dispatchAgent = async (alertId, agentId, adminUser = null, dispatchReason = null) => {
     try {
         if (!alertId || !agentId) {
             throw new Error("Both alertId and agentId are required for dispatch");
@@ -462,7 +506,7 @@ const dispatchAgent = async (alertId, agentId, adminUser = null) => {
         const updatedAgent = await prisma.agent.update({
             where: { id: agentId },
             data: {
-                status: "EN_ROUTE",
+                status: "ON_DUTY",
                 lastUpdated: new Date(),
             },
             include: { organization: true, station: true, assignedVehicle: true },
@@ -480,7 +524,8 @@ const dispatchAgent = async (alertId, agentId, adminUser = null) => {
         const updatedAlert = await prisma.sOSAlert.update({
             where: { id: alertId },
             data: {
-                status: "EN_ROUTE",
+                status: "ASSIGNED",
+                assignedAt: new Date(),
                 assignedAgentId: updatedAgent.id,
                 assignedAgentName: updatedAgent.name,
                 assignedOrganizationId: alert.assignedOrganizationId || updatedAgent.organizationId,
@@ -495,25 +540,42 @@ const dispatchAgent = async (alertId, agentId, adminUser = null) => {
             },
         });
 
-        // Audit Log
+        // ── Audit Log: Dispatched (Traceability Step 2) ──
         try {
+            const isAuto = adminUser?.username === "AUTO_DISPATCH" || adminUser?.fullName === "System Auto-Dispatch";
+            const isFallback = adminUser?.username === "AUTO_FALLBACK" || adminUser?.fullName === "System Fallback Engine";
+            const actorName = isAuto ? "System Auto-Dispatch Engine" : (isFallback ? "System Fallback Engine" : (adminUser?.fullName || adminUser?.username || "Admin Dispatcher"));
+            const rationaleText = dispatchReason || (isAuto ? "Auto-matched nearest responder by type & distance" : (isFallback ? "Fallback auto-reroute after timeout" : "Manual dispatch by command operator"));
+
             await prisma.auditLog.create({
                 data: {
                     time: new Date().toLocaleTimeString("en-US", { hour12: false }),
-                    event: `Agent ${updatedAgent.name} dispatched to SOS #${alertId}`,
+                    event: `⚡ DISPATCHED: SOS #${alertId} assigned to Agent ${updatedAgent.name} (${updatedAgent.type || 'Responder'}). Dispatched by: ${actorName}. Rationale: "${rationaleText}".`,
                     userId: adminUser?.id || null,
-                    userName: adminUser?.fullName || adminUser?.username || "Admin Dispatcher",
+                    userName: actorName,
                 },
             });
         } catch {
             // Non-blocking
         }
 
+        // Start Mission Timeout Timer (Default 45 seconds or from settings)
+        let timeoutSec = 45;
+        try {
+            const settings = await getSettings();
+            if (settings?.sosTimeout) {
+                const parsed = parseInt(settings.sosTimeout, 10);
+                if (!isNaN(parsed) && parsed >= 10) timeoutSec = parsed;
+            }
+        } catch {}
+        startMissionTimeout(alertId, agentId, timeoutSec);
+
         // Emit Socket events
         emitDispatchAgent({
             alert: updatedAlert,
             agent: updatedAgent,
             dispatchedAt: new Date().toISOString(),
+            timeoutSeconds: timeoutSec,
         });
         emitStatusUpdated(updatedAlert);
         emitAgentStatusUpdate(updatedAgent);
@@ -521,6 +583,7 @@ const dispatchAgent = async (alertId, agentId, adminUser = null) => {
         return {
             alert: updatedAlert,
             agent: updatedAgent,
+            timeoutSeconds: timeoutSec,
         };
     } catch (error) {
         throw new Error(`dispatchAgent error: ${error.message}`);
@@ -608,8 +671,8 @@ const getAvailableAgents = async (filters = {}) => {
                 POLICE: ["POLICE"],
                 ACCIDENT: ["POLICE", "MEDICAL"],
                 CRIME: ["POLICE"],
-                FLOOD: ["DISASTER", "FIRE"],
-                DISASTER: ["DISASTER", "FIRE"],
+                FLOOD: ["FIRE"],
+                DISASTER: ["FIRE", "POLICE"],
             };
             const mappedTypes = TYPE_MAPPING[upperType] || [upperType];
             if (mappedTypes.length === 1) {
@@ -637,6 +700,57 @@ const getAvailableAgents = async (filters = {}) => {
 };
 
 // ─── Existing SOS Handlers (Maintained for full system compatibility) ──────────
+
+/**
+ * Get alerts assigned to a specific responder (agent)
+ */
+const getAssignedAlerts = async (agentId, options = {}) => {
+    try {
+        if (!agentId) throw new Error("Agent ID is required");
+        const { status = "active", page = 1, limit = 20 } = options;
+        const pageNum = Math.max(1, parseInt(page) || 1);
+        const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20));
+        const skip = (pageNum - 1) * limitNum;
+
+        let statusCondition = undefined;
+        if (status === "active") {
+            statusCondition = { in: ["ASSIGNED", "EN_ROUTE", "ARRIVED"] };
+        } else if (status === "history" || status === "completed") {
+            statusCondition = { in: ["RESOLVED", "SPAM"] };
+        } else if (status && status !== "all") {
+            statusCondition = String(status).toUpperCase();
+        }
+
+        const where = {
+            assignedAgentId: agentId,
+            ...(statusCondition ? { status: statusCondition } : {}),
+        };
+
+        const [alerts, total] = await Promise.all([
+            prisma.sOSAlert.findMany({
+                where,
+                include: { assignedAgent: true, assignedOrganization: true, assignedStation: true },
+                orderBy: { createdAt: "desc" },
+                skip,
+                take: limitNum,
+            }),
+            prisma.sOSAlert.count({ where }),
+        ]);
+
+        return {
+            alerts,
+            pagination: {
+                total,
+                page: pageNum,
+                limit: limitNum,
+                totalPages: Math.ceil(total / limitNum),
+            },
+        };
+    } catch (error) {
+        throw new Error(`getAssignedAlerts error: ${error.message}`);
+    }
+};
+
 const listAlerts = async (page = 1, limit = 10, filters = {}) => {
     try {
         const pageNum = Math.max(1, parseInt(page) || 1);
@@ -698,7 +812,7 @@ const getAlert = async (id) => {
     }
 };
 
-const updateStatus = async (id, body) => {
+const updateStatus = async (id, body, user = null) => {
     try {
         const { status, assignedAgentId, assignedAgentName } = body;
         const normalizedStatus = status ? status.toUpperCase() : undefined;
@@ -709,10 +823,44 @@ const updateStatus = async (id, body) => {
         });
         if (!existingAlert) throw new Error("Alert not found");
 
+        // IDOR & transition validation for updateStatus
+        if (user && String(user.role).toUpperCase() === "AGENT") {
+            if (existingAlert.assignedAgentId !== user.agentId) {
+                const err = new Error("Forbidden: You can only update incidents assigned to you");
+                err.statusCode = 403;
+                throw err;
+            }
+
+            // Allowed transitions for responder:
+            // ASSIGNED -> EN_ROUTE
+            // EN_ROUTE -> ARRIVED
+            // ARRIVED -> RESOLVED
+            const currentStatus = existingAlert.status;
+            const targetStatus = normalizedStatus;
+
+            const allowedTransitions = {
+                ASSIGNED: ["EN_ROUTE", "ARRIVED", "RESOLVED"],
+                EN_ROUTE: ["ARRIVED", "RESOLVED"],
+                ARRIVED: ["RESOLVED"],
+            };
+
+            if (targetStatus && targetStatus !== currentStatus) {
+                const validNext = allowedTransitions[currentStatus] || [];
+                if (!validNext.includes(targetStatus)) {
+                    const err = new Error(`Invalid status transition from ${currentStatus} to ${targetStatus}. Allowed: ${validNext.join(", ") || "None"}`);
+                    err.statusCode = 400;
+                    throw err;
+                }
+            }
+        }
+  
+
         const updateData = {};
         if (normalizedStatus) {
             updateData.status = normalizedStatus;
-            updateData.resolvedAt = normalizedStatus === "RESOLVED" ? new Date() : null;
+            if (normalizedStatus === "RESOLVED") updateData.resolvedAt = new Date();
+            if (normalizedStatus === "ARRIVED") updateData.arrivedAt = new Date();
+            if (normalizedStatus === "EN_ROUTE" && !existingAlert.assignedAt) updateData.assignedAt = new Date();
         }
         if (assignedAgentId !== undefined) {
             updateData.assignedAgentId = assignedAgentId || null;
@@ -726,7 +874,7 @@ const updateStatus = async (id, body) => {
         const isFreeingAgent =
             normalizedStatus === "RESOLVED" ||
             normalizedStatus === "SPAM" ||
-            (normalizedStatus === "PENDING" && !assignedAgentId) ||
+            normalizedStatus === "PENDING" ||
             (assignedAgentId === null && existingAlert.assignedAgentId);
 
         if (isFreeingAgent && existingAlert.assignedAgentId) {
@@ -750,19 +898,57 @@ const updateStatus = async (id, body) => {
             if (freedAgent) {
                 emitAgentStatusUpdate(freedAgent);
             }
+            clearMissionTimeout(id);
         }
 
+        
+        if (existingAlert.assignedAgentId && normalizedStatus) {
+            let nextAgentStatus = null;
+            if (normalizedStatus === "EN_ROUTE") nextAgentStatus = "EN_ROUTE";
+            else if (normalizedStatus === "ARRIVED") nextAgentStatus = "ON_SCENE";
+            else if (normalizedStatus === "RESOLVED") nextAgentStatus = "AVAILABLE";
+
+            if (nextAgentStatus) {
+                await prisma.agent.update({
+                    where: { id: existingAlert.assignedAgentId },
+                    data: { status: nextAgentStatus, lastUpdated: new Date() },
+                }).catch(() => {});
+            }
+        }
+  
         const alert = await prisma.sOSAlert.update({
             where: { id },
             data: updateData,
             include: { assignedAgent: true, assignedOrganization: true, assignedStation: true },
         });
+
+        // ── Audit Log: Status Change (Traceability) ──
+        try {
+            const actorName = user?.fullName || user?.username || "Operator Dispatcher";
+            let eventText = `🔄 STATUS UPDATED: SOS #${id} status changed from ${existingAlert.status} to ${alert.status} by ${actorName}.`;
+            if (alert.status === "RESOLVED") {
+                eventText = `🏁 MISSION RESOLVED: SOS #${id} marked as RESOLVED by ${actorName}. Mission successfully completed.`;
+            } else if (alert.status === "SPAM") {
+                eventText = `🚫 MARKED AS SPAM: SOS #${id} marked as SPAM/FALSE ALARM by ${actorName}.`;
+            }
+            await prisma.auditLog.create({
+                data: {
+                    time: new Date().toLocaleTimeString("en-US", { hour12: false }),
+                    event: eventText,
+                    userId: user?.id || null,
+                    userName: actorName,
+                },
+            });
+        } catch (_) {}
+
         emitStatusUpdated(alert);
         if (alert.status === "RESOLVED") {
+            clearMissionTimeout(id);
             emitAlertResolved(alert);
         }
         return alert;
     } catch (error) {
+        if (error.statusCode) throw error;
         throw new Error(`updateStatus error: ${error.message}`);
     }
 };
@@ -789,6 +975,7 @@ const addMedia = async (id, files = []) => {
 
 const deleteAlert = async (id) => {
     try {
+        clearMissionTimeout(id);
         const alert = await prisma.sOSAlert.findUnique({
             where: { id },
             include: { assignedAgent: { include: { assignedVehicle: true } } },
@@ -831,6 +1018,782 @@ const deleteAlert = async (id) => {
     }
 };
 
+/**
+ * 14. declineMission (Fallback Mechanism)
+ * Agent / Operator declines a mission. Reverts alert status to PENDING and clears assignedAgentId,
+ * restores agent status to AVAILABLE, logs audit record, and alerts operators for re-dispatch.
+ */
+const declineMission = async (alertId, agentId = null, reason = "Unable to respond", user = null) => {
+    try {
+        const alert = await prisma.sOSAlert.findUnique({
+            where: { id: alertId },
+            include: { assignedOrganization: true, assignedStation: true },
+        });
+        if (!alert) throw new Error(`Alert not found: ${alertId}`);
+
+        // Identify target agent
+        let targetAgentId = agentId || alert.assignedAgentId;
+        if (!targetAgentId && user?.id) {
+            const agentProfile = await prisma.agent.findFirst({
+                where: { userId: user.id },
+            }).catch(() => null);
+            targetAgentId = agentProfile?.id;
+        }
+
+        let updatedAgent = null;
+        if (targetAgentId) {
+            const agent = await prisma.agent.findUnique({
+                where: { id: targetAgentId },
+                include: { assignedVehicle: true, organization: true, station: true },
+            }).catch(() => null);
+
+            if (agent) {
+                // Restore agent to AVAILABLE
+                updatedAgent = await prisma.agent.update({
+                    where: { id: agent.id },
+                    data: {
+                        status: "AVAILABLE",
+                        lastUpdated: new Date(),
+                    },
+                    include: { organization: true, station: true, assignedVehicle: true },
+                }).catch(() => null);
+
+                // Free vehicle back to AVAILABLE
+                if (agent.assignedVehicle?.id) {
+                    await prisma.vehicle.update({
+                        where: { id: agent.assignedVehicle.id },
+                        data: { status: "AVAILABLE" },
+                    }).catch(() => {});
+                }
+
+                if (updatedAgent) {
+                    emitAgentStatusUpdate(updatedAgent);
+                }
+            }
+        }
+
+        // Revert Alert status to PENDING, remove assigned agent
+        const updatedAlert = await prisma.sOSAlert.update({
+            where: { id: alertId },
+            data: {
+                status: "PENDING",
+                assignedAgentId: null,
+                assignedAgentName: null,
+            },
+            include: {
+                assignedOrganization: true,
+                assignedStation: true,
+            },
+        });
+
+        // Clear fallback timeout timer
+        clearMissionTimeout(alertId);
+
+        // Record Audit Log for Traceability
+        const actorName = user?.fullName || updatedAgent?.name || "Agent Responder";
+        try {
+            await prisma.auditLog.create({
+                data: {
+                    time: new Date().toLocaleTimeString("en-US", { hour12: false }),
+                    event: `⚠️ MISSION DECLINED: ${actorName} declined SOS #${alertId}. Reason: "${reason}". Status reverted to PENDING for re-dispatch.`,
+                    userId: user?.id || null,
+                    userName: actorName,
+                },
+            });
+        } catch {
+            // Non-blocking
+        }
+
+        // Broadcast realtime socket events
+        emitStatusUpdated(updatedAlert);
+        emitMissionDeclined({
+            alert: updatedAlert,
+            agent: updatedAgent || { name: actorName },
+            reason,
+            time: new Date().toISOString(),
+        });
+
+        // Check if Auto-Routing is enabled to immediately dispatch Candidate #2
+        try {
+            const settings = await getSettings();
+            const isAutoRouting = String(settings?.autoRouting).toLowerCase() === "true";
+            if (isAutoRouting) {
+                const fallbackCandidates = await findCandidateAgents(alert, [targetAgentId]);
+                if (fallbackCandidates.length > 0) {
+                    const nextAgent = fallbackCandidates[0];
+                    logger.info(`Auto-routing SOS #${alertId} to next candidate ${nextAgent.name} after decline`);
+                    setImmediate(async () => {
+                        try {
+                            const reDispatched = await dispatchAgent(
+                                alert.id,
+                                nextAgent.id,
+                                { fullName: "Auto-Routing Engine", username: "AUTO_ROUTING", id: null }
+                            );
+                            emitMissionRerouted({
+                                alert: reDispatched.alert,
+                                prevAgent: updatedAgent || { name: actorName, id: targetAgentId },
+                                newAgent: reDispatched.agent,
+                                reason: `DECLINED: ${reason}`,
+                                time: new Date().toISOString(),
+                            });
+                        } catch (e) {
+                            logger.warn(`Auto-routing fallback error: ${e.message}`);
+                        }
+                    });
+                }
+            }
+        } catch (routeErr) {
+            logger.warn(`Auto-routing check error: ${routeErr.message}`);
+        }
+
+        return {
+            success: true,
+            alert: updatedAlert,
+            agent: updatedAgent,
+            reason,
+        };
+    } catch (error) {
+        throw new Error(`declineMission error: ${error.message}`);
+    }
+};
+
+/**
+ * 15. startMissionTimeout & clearMissionTimeout
+ * Countdown timer for unacknowledged missions.
+ */
+const startMissionTimeout = (alertId, agentId, timeoutSeconds = 45) => {
+    clearMissionTimeout(alertId);
+
+    const expiresAt = Date.now() + timeoutSeconds * 1000;
+    const timerId = setTimeout(async () => {
+        try {
+            await handleMissionTimeout(alertId, agentId);
+        } catch (err) {
+            logger.error(`Error in handleMissionTimeout for Alert ${alertId}: ${err.message}`);
+        } finally {
+            activeMissionTimers.delete(alertId);
+        }
+    }, timeoutSeconds * 1000);
+
+    activeMissionTimers.set(alertId, {
+        timerId,
+        agentId,
+        expiresAt,
+        timeoutSeconds,
+    });
+};
+
+const clearMissionTimeout = (alertId) => {
+    if (activeMissionTimers.has(alertId)) {
+        const item = activeMissionTimers.get(alertId);
+        if (item.timerId) clearTimeout(item.timerId);
+        activeMissionTimers.delete(alertId);
+    }
+};
+
+/**
+ * 16. findCandidateAgents
+ * Find and rank available candidate agents by emergency type and GPS distance
+ */
+const findCandidateAgents = async (alert, excludeAgentIds = []) => {
+    try {
+        const alertLat = Number(alert.lat);
+        const alertLng = Number(alert.lng);
+        const hasValidCoords = !isNaN(alertLat) && !isNaN(alertLng);
+
+        // Fetch available agents matching the emergency type
+        const availableAgents = await getAvailableAgents({
+            type: alert.type,
+            status: "AVAILABLE",
+        });
+
+        const candidates = availableAgents.filter(
+            (a) => !excludeAgentIds.includes(a.id)
+        );
+
+        // Rank by distance
+        const ranked = candidates.map((agent) => {
+            let lat = agent.lat;
+            let lng = agent.lng;
+            // Fallback to station coordinates
+            if ((lat === null || lat === undefined || isNaN(Number(lat))) && agent.station) {
+                lat = agent.station.lat;
+                lng = agent.station.lng;
+            }
+            // Fallback to org coordinates
+            if ((lat === null || lat === undefined || isNaN(Number(lat))) && agent.organization) {
+                lat = agent.organization.gpsLat;
+                lng = agent.organization.gpsLng;
+            }
+
+            let distanceKm = 999;
+            const parsedLat = Number(lat);
+            const parsedLng = Number(lng);
+            if (hasValidCoords && !isNaN(parsedLat) && !isNaN(parsedLng)) {
+                try {
+                    distanceKm = calculateDistance(alertLat, alertLng, parsedLat, parsedLng);
+                } catch {
+                    distanceKm = 999;
+                }
+            }
+
+            const eta = estimateETA(distanceKm, 40);
+
+            return {
+                ...agent,
+                distanceKm,
+                eta,
+            };
+        });
+
+        // Sort ascending by distance
+        ranked.sort((a, b) => a.distanceKm - b.distanceKm);
+
+        return ranked;
+    } catch (err) {
+        logger.error(`findCandidateAgents error: ${err.message}`);
+        return [];
+    }
+};
+
+/**
+ * 17. evaluateAndAutoDispatch
+ * Automatically assign top matching candidate agent to a pending SOS alert
+ */
+const evaluateAndAutoDispatch = async (alertId) => {
+    try {
+        const alert = await prisma.sOSAlert.findUnique({
+            where: { id: alertId },
+            include: { assignedOrganization: true, assignedStation: true },
+        });
+
+        if (!alert || alert.status !== "PENDING") {
+            return null;
+        }
+
+        const candidates = await findCandidateAgents(alert);
+        if (candidates.length === 0) {
+            logger.warn(`Auto-dispatch: No available candidate agents found for SOS Alert #${alertId}`);
+            emitAutoDispatchFailed({
+                alertId,
+                type: alert.type,
+                reason: "No available matching responders found",
+            });
+            return null;
+        }
+
+        const topCandidate = candidates[0];
+        logger.info(
+            `🤖 Auto-dispatch: Assigning Agent ${topCandidate.name} (${topCandidate.type}, ${topCandidate.distanceKm}km, ETA ~${topCandidate.eta}m) to Alert #${alertId}`
+        );
+
+        // Dispatch agent with system user context and explicit rationale
+        const autoRationale = `AI Geo-dispatch: Auto-matched Rank #1 unit (${topCandidate.type}, ${topCandidate.distanceKm}km away, ETA ~${topCandidate.eta}m, Station: ${topCandidate.stationName || 'Nearest Command'})`;
+        const result = await dispatchAgent(
+            alert.id,
+            topCandidate.id,
+            { fullName: "System Auto-Dispatch Engine", username: "AUTO_DISPATCH", id: null },
+            autoRationale
+        );
+
+        emitAutoDispatchSuccess({
+            alert: result.alert,
+            agent: result.agent,
+            distanceKm: topCandidate.distanceKm,
+            eta: topCandidate.eta,
+            timeoutSeconds: 45,
+        });
+
+        return result;
+    } catch (error) {
+        logger.error(`evaluateAndAutoDispatch error for Alert ${alertId}: ${error.message}`);
+        return null;
+    }
+};
+
+/**
+ * 18. handleMissionTimeout
+ * Triggered when an assigned agent fails to respond within the countdown period
+ */
+const handleMissionTimeout = async (alertId, targetAgentId) => {
+    const alert = await prisma.sOSAlert.findUnique({
+        where: { id: alertId },
+        include: { assignedAgent: true, assignedOrganization: true, assignedStation: true },
+    });
+
+    if (!alert) return;
+
+    // If alert has already been resolved or reassigned, ignore
+    if (alert.status === "RESOLVED" || alert.status === "SPAM") return;
+    if (alert.assignedAgentId !== targetAgentId) return;
+
+    const timedOutAgent = alert.assignedAgent;
+    const agentName = timedOutAgent?.name || "Responder";
+
+    logger.warn(`⏱️ Mission timeout: Agent ${agentName} did not respond to SOS #${alertId} in time.`);
+
+    // 1. Free timed-out agent back to AVAILABLE
+    if (targetAgentId) {
+        await prisma.agent.update({
+            where: { id: targetAgentId },
+            data: { status: "AVAILABLE", lastUpdated: new Date() },
+        }).catch(() => {});
+
+        const updatedAgentRecord = await prisma.agent.findUnique({
+            where: { id: targetAgentId },
+            include: { organization: true, station: true, assignedVehicle: true },
+        }).catch(() => null);
+
+        if (updatedAgentRecord?.assignedVehicle?.id) {
+            await prisma.vehicle.update({
+                where: { id: updatedAgentRecord.assignedVehicle.id },
+                data: { status: "AVAILABLE" },
+            }).catch(() => {});
+        }
+        if (updatedAgentRecord) {
+            emitAgentStatusUpdate(updatedAgentRecord);
+        }
+    }
+
+    // 2. Log Audit Record
+    try {
+        await prisma.auditLog.create({
+            data: {
+                time: new Date().toLocaleTimeString("en-US", { hour12: false }),
+                event: `⏱️ DISPATCH TIMEOUT: Agent ${agentName} failed to acknowledge SOS #${alertId} within time limit. Initiating fallback re-route.`,
+                userId: null,
+                userName: "System Fallback Engine",
+            },
+        });
+    } catch {}
+
+    // 3. Search for fallback candidate #2 (excluding timed out agent)
+    const fallbackCandidates = await findCandidateAgents(alert, [targetAgentId]);
+
+    if (fallbackCandidates.length > 0) {
+        const nextAgent = fallbackCandidates[0];
+        logger.info(`🔄 Fallback Re-route: Re-dispatching SOS #${alertId} to Agent ${nextAgent.name}`);
+
+        const reDispatched = await dispatchAgent(
+            alert.id,
+            nextAgent.id,
+            { fullName: "System Fallback Engine", username: "AUTO_FALLBACK", id: null }
+        );
+
+        // Audit log for re-route
+        try {
+            await prisma.auditLog.create({
+                data: {
+                    time: new Date().toLocaleTimeString("en-US", { hour12: false }),
+                    event: `🔄 FALLBACK RE-ROUTE: SOS #${alertId} re-routed to Agent ${nextAgent.name} (Rank #2, ${nextAgent.distanceKm}km away) after Agent ${agentName} timed out.`,
+                    userId: null,
+                    userName: "System Fallback Engine",
+                },
+            });
+        } catch {}
+
+        emitMissionRerouted({
+            alert: reDispatched.alert,
+            prevAgent: timedOutAgent || { name: agentName, id: targetAgentId },
+            newAgent: reDispatched.agent,
+            reason: "TIMEOUT_NO_RESPONSE",
+            time: new Date().toISOString(),
+        });
+    } else {
+        // No other agent available: Revert alert to PENDING and escalate to Operators
+        const revertedAlert = await prisma.sOSAlert.update({
+            where: { id: alertId },
+            data: {
+                status: "PENDING",
+                assignedAgentId: null,
+                assignedAgentName: null,
+            },
+            include: { assignedOrganization: true, assignedStation: true },
+        });
+
+        try {
+            await prisma.auditLog.create({
+                data: {
+                    time: new Date().toLocaleTimeString("en-US", { hour12: false }),
+                    event: `🚨 ESCALATION: Agent ${agentName} timed out on SOS #${alertId} and NO fallback responders are available. Alert reverted to PENDING for urgent operator dispatch.`,
+                    userId: null,
+                    userName: "System Fallback Engine",
+                },
+            });
+        } catch {}
+
+        emitStatusUpdated(revertedAlert);
+        emitDispatchEscalation({
+            alert: revertedAlert,
+            timedOutAgent: timedOutAgent || { name: agentName, id: targetAgentId },
+            reason: "TIMEOUT_NO_REPLACEMENT_AVAILABLE",
+            time: new Date().toISOString(),
+        });
+    }
+};
+
+/**
+ * 19. acknowledgeMission (Agent Accept / Acknowledge Mission)
+ * Agent confirms acceptance of the dispatched mission, clearing the timeout fallback timer.
+ */
+const acknowledgeMission = async (alertId, agentId = null, user = null) => {
+    try {
+        const alert = await prisma.sOSAlert.findUnique({
+            where: { id: alertId },
+            include: { assignedAgent: true, assignedOrganization: true, assignedStation: true },
+        });
+        if (!alert) throw new Error(`Alert not found: ${alertId}`);
+
+        // Clear fallback timeout timer
+        clearMissionTimeout(alertId);
+
+        let targetAgentId = agentId || alert.assignedAgentId;
+        if (!targetAgentId && user?.id) {
+            const agentProfile = await prisma.agent.findFirst({
+                where: { userId: user.id },
+            }).catch(() => null);
+            targetAgentId = agentProfile?.id;
+        }
+
+        const agent = targetAgentId ? await prisma.agent.findUnique({
+            where: { id: targetAgentId },
+            include: { organization: true, station: true, assignedVehicle: true },
+        }) : alert.assignedAgent;
+
+        const actorName = user?.fullName || agent?.name || "Responder";
+
+        // Audit Log
+        try {
+            await prisma.auditLog.create({
+                data: {
+                    time: new Date().toLocaleTimeString("en-US", { hour12: false }),
+                    event: `✅ MISSION ACKNOWLEDGED: ${actorName} accepted SOS #${alertId} and confirmed en-route.`,
+                    userId: user?.id || null,
+                    userName: actorName,
+                },
+            });
+        } catch {}
+
+        emitMissionAcknowledged({
+            alert,
+            agent,
+            time: new Date().toISOString(),
+        });
+
+        return {
+            success: true,
+            alert,
+            agent,
+            acknowledgedAt: new Date().toISOString(),
+        };
+    } catch (error) {
+        throw new Error(`acknowledgeMission error: ${error.message}`);
+    }
+};
+
+/**
+ * 20. getAlertTimeline
+ * Complete Life-Cycle Audit Trail & Traceability Timeline for SOS Alert
+ * Answers: Who dispatched, when, why, and what fallbacks occurred.
+ */
+const getAlertTimeline = async (alertId) => {
+    try {
+        const alert = await prisma.sOSAlert.findUnique({
+            where: { id: alertId },
+            include: {
+                assignedAgent: {
+                    include: {
+                        station: true,
+                        organization: true,
+                        assignedVehicle: true,
+                    },
+                },
+                assignedOrganization: true,
+                assignedStation: true,
+            },
+        });
+
+        if (!alert) {
+            throw new Error(`Alert #${alertId} not found`);
+        }
+
+        // Fetch all audit logs referencing this alert ID
+        const logs = await prisma.auditLog.findMany({
+            where: {
+                event: {
+                    contains: alertId,
+                },
+            },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        role: true,
+                        badgeId: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: "asc",
+            },
+        });
+
+        const timeline = [];
+
+        const categorizeEvent = (eventStr = "") => {
+            const str = eventStr.toUpperCase();
+            if (str.includes("REPORTED") || str.includes("CREATED") || str.includes("CITIZEN REPORTED")) {
+                return {
+                    type: "REPORTED",
+                    titleKh: "ពលរដ្ឋបានរាយការណ៍",
+                    titleEn: "Citizen Reported",
+                    icon: "alert-circle",
+                    color: "red",
+                    stepIndex: 1,
+                };
+            }
+            if (str.includes("TIMEOUT")) {
+                return {
+                    type: "TIMEOUT",
+                    titleKh: "ផុតកំណត់ ៤៥វិនាទី (Timeout)",
+                    titleEn: "Dispatch Timeout",
+                    icon: "clock",
+                    color: "amber",
+                    stepIndex: 2,
+                };
+            }
+            if (str.includes("FALLBACK RE-ROUTE") || str.includes("REROUTED") || str.includes("RE-ROUTED")) {
+                return {
+                    type: "REROUTED",
+                    titleKh: "ផ្ទេរបេសកកម្មស្វ័យប្រវត្តិ (Fallback Re-route)",
+                    titleEn: "Fallback Re-route",
+                    icon: "refresh-cw",
+                    color: "purple",
+                    stepIndex: 2,
+                };
+            }
+            if (str.includes("ESCALATION")) {
+                return {
+                    type: "ESCALATED",
+                    titleKh: "បញ្ជូនដំណឹងបន្ទាន់ទៅកាន់ Dispatcher",
+                    titleEn: "Dispatch Escalation",
+                    icon: "alert-triangle",
+                    color: "red",
+                    stepIndex: 2,
+                };
+            }
+            if (str.includes("DECLINED")) {
+                return {
+                    type: "DECLINED",
+                    titleKh: "ភ្នាក់ងារបានបដិសេធ (Declined)",
+                    titleEn: "Mission Declined",
+                    icon: "x-circle",
+                    color: "amber",
+                    stepIndex: 2,
+                };
+            }
+            if (str.includes("AUTO-DISPATCH") || str.includes("AUTO-ASSIGN")) {
+                return {
+                    type: "AUTO_DISPATCH",
+                    titleKh: "ប្រព័ន្ធចាត់តាំងស្វ័យប្រវត្តិ (AI Auto-Dispatch)",
+                    titleEn: "System Auto-Dispatch",
+                    icon: "zap",
+                    color: "emerald",
+                    stepIndex: 2,
+                };
+            }
+            if (str.includes("DISPATCHED") || str.includes("DISPATCH")) {
+                return {
+                    type: "DISPATCHED",
+                    titleKh: "ចាត់តាំងភ្នាក់ងារ (Dispatched)",
+                    titleEn: "Agent Dispatched",
+                    icon: "send",
+                    color: "blue",
+                    stepIndex: 2,
+                };
+            }
+            if (str.includes("ACKNOWLEDGED") || str.includes("ACCEPTED")) {
+                return {
+                    type: "ACKNOWLEDGED",
+                    titleKh: "ភ្នាក់ងារបានទទួលបេសកកម្ម",
+                    titleEn: "Mission Acknowledged",
+                    icon: "check-circle",
+                    color: "emerald",
+                    stepIndex: 3,
+                };
+            }
+            if (str.includes("ON_SCENE") || str.includes("ON SCENE") || str.includes("ARRIVED")) {
+                return {
+                    type: "ON_SCENE",
+                    titleKh: "បានទៅដល់កន្លែងកើតហេតុ (On Scene)",
+                    titleEn: "Arrived On Scene",
+                    icon: "map-pin",
+                    color: "blue",
+                    stepIndex: 4,
+                };
+            }
+            if (str.includes("RESOLVED")) {
+                return {
+                    type: "RESOLVED",
+                    titleKh: "បានដោះស្រាយចប់សព្វគ្រប់",
+                    titleEn: "Mission Resolved",
+                    icon: "check-circle-2",
+                    color: "teal",
+                    stepIndex: 5,
+                };
+            }
+            if (str.includes("SPAM")) {
+                return {
+                    type: "SPAM",
+                    titleKh: "សម្គាល់ជា Spam / ក្លែងក្លាយ",
+                    titleEn: "Marked as Spam",
+                    icon: "ban",
+                    color: "gray",
+                    stepIndex: 5,
+                };
+            }
+            return {
+                type: "GENERAL",
+                titleKh: "បច្ចុប្បន្នភាពស្ថានភាព",
+                titleEn: "Status Update",
+                icon: "info",
+                color: "blue",
+                stepIndex: 3,
+            };
+        };
+
+        logs.forEach((log) => {
+            const cat = categorizeEvent(log.event);
+            timeline.push({
+                id: log.id,
+                timestamp: log.createdAt,
+                time: log.time,
+                type: cat.type,
+                titleKh: cat.titleKh,
+                titleEn: cat.titleEn,
+                icon: cat.icon,
+                color: cat.color,
+                stepIndex: cat.stepIndex,
+                actor: {
+                    name: log.userName || log.user?.fullName || "System",
+                    role: (typeof log.user?.role === "object" ? log.user?.role?.name : log.user?.role) || "SYSTEM",
+                    badgeId: log.user?.badgeId || null,
+                },
+                event: log.event,
+            });
+        });
+
+        // If no audit logs exist (e.g. legacy alerts), synthesize baseline timeline:
+        if (timeline.length === 0) {
+            timeline.push({
+                id: `legacy-create-${alert.id}`,
+                timestamp: alert.createdAt,
+                time: new Date(alert.createdAt).toLocaleTimeString("en-US", { hour12: false }),
+                type: "REPORTED",
+                titleKh: "ពលរដ្ឋបានរាយការណ៍",
+                titleEn: "Citizen Reported",
+                icon: "alert-circle",
+                color: "red",
+                stepIndex: 1,
+                actor: { name: alert.citizenName, role: "CITIZEN", badgeId: null },
+                event: `SOS reported by ${alert.citizenName} (${alert.phone}) at ${alert.district}, ${alert.province}.`,
+            });
+
+            if (alert.assignedAgentId) {
+                timeline.push({
+                    id: `legacy-dispatch-${alert.id}`,
+                    timestamp: alert.updatedAt,
+                    time: new Date(alert.updatedAt).toLocaleTimeString("en-US", { hour12: false }),
+                    type: "DISPATCHED",
+                    titleKh: "ចាត់តាំងភ្នាក់ងារ (Dispatched)",
+                    titleEn: "Agent Dispatched",
+                    icon: "send",
+                    color: "blue",
+                    stepIndex: 2,
+                    actor: { name: "Dispatcher / System", role: "OPERATOR", badgeId: null },
+                    event: `Dispatched to Agent ${alert.assignedAgentName || alert.assignedAgent?.name || "Responder"}.`,
+                });
+            }
+
+            if (alert.status === "RESOLVED") {
+                const resTime = alert.resolvedAt || alert.updatedAt;
+                timeline.push({
+                    id: `legacy-resolved-${alert.id}`,
+                    timestamp: resTime,
+                    time: new Date(resTime).toLocaleTimeString("en-US", { hour12: false }),
+                    type: "RESOLVED",
+                    titleKh: "បានដោះស្រាយចប់សព្វគ្រប់",
+                    titleEn: "Mission Resolved",
+                    icon: "check-circle-2",
+                    color: "teal",
+                    stepIndex: 5,
+                    actor: { name: "Command Center", role: "OPERATOR", badgeId: null },
+                    event: `Mission resolved and closed.`,
+                });
+            }
+        }
+
+        // Calculate Response & Performance Metrics
+        const reportLog = timeline.find((t) => t.type === "REPORTED");
+        const dispatchLog = timeline.find((t) => t.type === "DISPATCHED" || t.type === "AUTO_DISPATCH");
+        const ackLog = timeline.find((t) => t.type === "ACKNOWLEDGED");
+        const resolveLog = timeline.find((t) => t.type === "RESOLVED");
+
+        const reportedAt = reportLog ? new Date(reportLog.timestamp) : new Date(alert.createdAt);
+        const dispatchedAt = dispatchLog ? new Date(dispatchLog.timestamp) : null;
+        const acknowledgedAt = ackLog ? new Date(ackLog.timestamp) : null;
+        const resolvedAt = resolveLog ? new Date(resolveLog.timestamp) : (alert.resolvedAt ? new Date(alert.resolvedAt) : null);
+
+        const dispatchDelaySeconds = (dispatchedAt && reportedAt)
+            ? Math.max(0, Math.round((dispatchedAt.getTime() - reportedAt.getTime()) / 1000))
+            : null;
+
+        const acceptanceDelaySeconds = (acknowledgedAt && dispatchedAt)
+            ? Math.max(0, Math.round((acknowledgedAt.getTime() - dispatchedAt.getTime()) / 1000))
+            : null;
+
+        const totalDurationSeconds = (resolvedAt && reportedAt)
+            ? Math.max(0, Math.round((resolvedAt.getTime() - reportedAt.getTime()) / 1000))
+            : null;
+
+        let dispatchedBy = "N/A";
+        let dispatchReason = "Standard emergency assignment";
+        if (dispatchLog) {
+            dispatchedBy = dispatchLog.actor?.name || "System";
+            const match = dispatchLog.event.match(/Rationale:\s*"([^"]+)"/i) || dispatchLog.event.match(/Reason:\s*"([^"]+)"/i);
+            if (match && match[1]) {
+                dispatchReason = match[1];
+            } else if (dispatchLog.type === "AUTO_DISPATCH") {
+                dispatchReason = "Auto-assigned nearest matching unit by algorithm";
+            }
+        }
+
+        const metrics = {
+            reportedAt: reportedAt.toISOString(),
+            dispatchedAt: dispatchedAt ? dispatchedAt.toISOString() : null,
+            acknowledgedAt: acknowledgedAt ? acknowledgedAt.toISOString() : null,
+            resolvedAt: resolvedAt ? resolvedAt.toISOString() : null,
+            dispatchedBy,
+            dispatchReason,
+            dispatchDelaySeconds,
+            acceptanceDelaySeconds,
+            totalDurationSeconds,
+            hasTimeoutOccurred: timeline.some((t) => t.type === "TIMEOUT"),
+            hasFallbackRerouted: timeline.some((t) => t.type === "REROUTED"),
+            hasDeclined: timeline.some((t) => t.type === "DECLINED"),
+        };
+
+        return {
+            alert,
+            timeline,
+            metrics,
+        };
+    } catch (error) {
+        throw new Error(`getAlertTimeline error: ${error.message}`);
+    }
+};
+
 module.exports = {
     EMERGENCY_TO_ORG,
     calculateDistance,
@@ -838,11 +1801,19 @@ module.exports = {
     autoAssignOrganizationAndStation,
     createAlert,
     dispatchAgent,
+    declineMission,
+    acknowledgeMission,
+    findCandidateAgents,
+    evaluateAndAutoDispatch,
+    startMissionTimeout,
+    clearMissionTimeout,
     updateAgentStatus,
     getAvailableAgents,
     listAlerts,
     getAlert,
+    getAlertTimeline,
     updateStatus,
     addMedia,
     deleteAlert,
+    getAssignedAlerts,
 };

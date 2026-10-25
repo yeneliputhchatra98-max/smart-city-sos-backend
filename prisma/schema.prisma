@@ -42,10 +42,6 @@ enum OrganizationType {
   POLICE
   FIRE
   MEDICAL
-  ACCIDENT
-  CRIME
-  FLOOD
-  DISASTER
 }
 
 // ─── Emergency Incident Type ───────────────────────
@@ -62,7 +58,9 @@ enum EmergencyType {
 
 enum SOSStatus {
   PENDING
+  ASSIGNED
   EN_ROUTE
+  ARRIVED
   RESOLVED
   SPAM
 }
@@ -118,6 +116,9 @@ enum BroadcastStatus {
 enum AudienceType {
   ALL_CITIZENS
   RESCUE_AGENTS
+  POLICE
+  FIRE
+  MEDICAL
 }
 
 enum OfficerStatus {
@@ -489,6 +490,8 @@ model SOSAlert {
 
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
+  assignedAt DateTime?
+  arrivedAt  DateTime?
   resolvedAt DateTime?
 
   @@index([assignedOrganizationId])
