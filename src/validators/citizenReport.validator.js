@@ -108,11 +108,11 @@ exports.createCitizenReportSchema = Joi.object({
         }),
 
     mediaUrls: Joi.array()
-        .items(Joi.string().uri())
+        .items(Joi.string())
         .allow(null)
         .messages({
             "array.base": "Media URLs must be an array",
-            "string.uri": "Invalid media URL",
+            "string.base": "Invalid media URL",
         }),
 }).unknown(false);
 

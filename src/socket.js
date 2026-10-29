@@ -359,6 +359,18 @@ const emitAutoDispatchFailed = (payload) => {
     }
 };
 
+const emitCitizenReportUpdated = (report) => {
+    try {
+        const activeIo = getIO();
+        activeIo.emit("citizen_report:updated", report);
+        logger.info(
+            `📡 Broadcasted citizen_report:updated for Report #${report?.id} -> ${report?.status}`
+        );
+    } catch (e) {
+        logger.warn(`Socket emit failed (citizen_report:updated): ${e.message}`);
+    }
+};
+
 module.exports = {
     initSocket,
     getIO,
@@ -378,5 +390,6 @@ module.exports = {
     emitDispatchEscalation,
     emitAutoDispatchSuccess,
     emitAutoDispatchFailed,
+    emitCitizenReportUpdated,
 };
 

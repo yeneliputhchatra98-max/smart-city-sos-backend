@@ -6,10 +6,22 @@ const citizenReportService = require("../services/citizenReport.service");
 
 exports.createCitizenReport = async (req, res) => {
     try {
-        const report =
-            await citizenReportService.createCitizenReport(
-                req.body
-            );
+        const fileUrls = Array.isArray(req.files)
+            ? req.files.map((file) => {
+                const folder = file.mimetype?.startsWith("video/") ? "videos" : "images";
+                return `/uploads/${folder}/${file.filename}`;
+            })
+            : [];
+
+        const bodyMedia = Array.isArray(req.body.mediaUrls) ? req.body.mediaUrls : [];
+        const mergedMedia = [...bodyMedia, ...fileUrls];
+
+        const reportData = {
+            ...req.body,
+            mediaUrls: mergedMedia.length > 0 ? mergedMedia : null,
+        };
+
+        const report = await citizenReportService.createCitizenReport(reportData);
 
         return res.status(201).json({
             success: true,

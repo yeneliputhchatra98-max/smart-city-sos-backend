@@ -1,4 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
+const { invalidateMaintenanceCache } = require('../middleware/maintenance.middleware');
 
 const prisma = new PrismaClient();
 
@@ -25,7 +26,16 @@ const DEFAULT_SETTINGS = {
 
   // Security & Backup
   mfaRequiredForAdmin: 'true',
+  mfaScope: 'ADMIN_ONLY',
   sessionTimeoutMins: '30',
+  sessionWarning: 'true',
+  singleSessionOnly: 'false',
+  maxFailedLogins: '5',
+  lockoutDuration: '15',
+  passwordRotation: '90',
+  passwordComplexity: 'true',
+  auditLoggingEnabled: 'true',
+  ipRestriction: 'false',
   automatedBackups: 'true',
   backupTime: '02:00 AM',
 };
@@ -77,11 +87,38 @@ const updateSettings = async (updates, updatedByUserId = null) => {
     });
   }
 
+  invalidateMaintenanceCache();
+
   return await getSettings();
+};
+
+const revokeAllSessions = async (currentSessionId = null, revokedByUserId = null) => {
+  const whereClause = {
+    revokedAt: null,
+  };
+  if (currentSessionId) {
+    whereClause.id = { not: currentSessionId };
+  }
+
+  const result = await prisma.session.updateMany({
+    where: whereClause,
+    data: {
+      revokedAt: new Date(),
+    },
+  });
+
+  // Also invalidate legacy refresh tokens for non-current sessions
+  await prisma.refreshToken.updateMany({
+    where: { revokedAt: null },
+    data: { revokedAt: new Date() },
+  }).catch(() => {});
+
+  return result.count;
 };
 
 module.exports = {
   DEFAULT_SETTINGS,
   getSettings,
   updateSettings,
+  revokeAllSessions,
 };

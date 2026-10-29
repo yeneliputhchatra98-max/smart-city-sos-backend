@@ -3,6 +3,7 @@ const fs = require("fs");
 const { PrismaClient } = require("@prisma/client");
 const { getLocationFromGPS } = require("./location.service");
 const { getSettings } = require("./setting.service");
+const smsService = require("./sms.service");
 const logger = require("../utils/logger");
 const {
     emitNewAlert,
@@ -17,6 +18,7 @@ const {
     emitDispatchEscalation,
     emitAutoDispatchSuccess,
     emitAutoDispatchFailed,
+    emitCitizenReportUpdated,
 } = require("../socket");
 
 const prisma = new PrismaClient();
@@ -380,6 +382,42 @@ const createAlert = async (body, files = [], user = null) => {
         // STAGE 1: Auto-assign Organization & Station
         const assignment = await autoAssignOrganizationAndStation(type, parsedLat, parsedLng);
 
+        // Check for duplicate escalation from citizen report
+        const escalatedMatch = (reportText || "").match(/\[Escalated from Citizen Report #([a-f0-9\-]+)\]/i);
+        if (escalatedMatch && escalatedMatch[1]) {
+            const citizenReportId = escalatedMatch[1];
+            const existingAlert = await prisma.sOSAlert.findFirst({
+                where: {
+                    reportText: { contains: `[Escalated from Citizen Report #${citizenReportId}]` },
+                    status: { in: ["PENDING", "EN_ROUTE", "ARRIVED"] },
+                },
+                include: {
+                    assignedOrganization: true,
+                    assignedStation: true,
+                    assignedAgent: true,
+                },
+            });
+
+            if (existingAlert) {
+                logger.info(`ℹ️ Active SOS Alert #${existingAlert.id} already exists for Citizen Report #${citizenReportId}. Reusing existing alert.`);
+                return existingAlert;
+            }
+        }
+
+        // Determine alert priority (from payload or system settings)
+        let alertPriority = body.priority;
+        if (!alertPriority) {
+            try {
+                const settings = await getSettings();
+                alertPriority = settings?.defaultPriority || "HIGH";
+            } catch (_) {
+                alertPriority = "HIGH";
+            }
+        }
+        const validPriority = ["CRITICAL", "HIGH", "MEDIUM", "LOW"].includes(String(alertPriority).toUpperCase())
+            ? String(alertPriority).toUpperCase()
+            : "HIGH";
+
         // Create Alert
         const alert = await prisma.sOSAlert.create({
             data: {
@@ -390,10 +428,11 @@ const createAlert = async (body, files = [], user = null) => {
                 province,
                 lat: parsedLat,
                 lng: parsedLng,
-                reportText: reportText || "SOS Alert reported.",
+                reportText: (typeof reportText === "string" ? reportText : "SOS Alert reported.").slice(0, 190),
                 hasMedia: mediaUrls.length > 0,
                 mediaUrls: mediaUrls.length > 0 ? mediaUrls : null,
                 status: "PENDING",
+                priority: validPriority,
 
                 assignedOrganizationId: assignment.assignedOrganizationId,
                 assignedOrganizationName: assignment.assignedOrganizationName,
@@ -424,6 +463,15 @@ const createAlert = async (body, files = [], user = null) => {
 
         // Broadcast Realtime Event
         emitNewAlert(alert);
+
+        // Automated Citizen SMS (Respects System Settings: smsNotification)
+        setImmediate(async () => {
+            try {
+                await smsService.notifyAlertCreated(alert);
+            } catch (smsErr) {
+                logger.warn(`SMS Alert creation notification failed: ${smsErr.message}`);
+            }
+        });
 
         // STAGE 2: Auto-Dispatch Engine (Check Settings)
         try {
@@ -579,6 +627,15 @@ const dispatchAgent = async (alertId, agentId, adminUser = null, dispatchReason 
         });
         emitStatusUpdated(updatedAlert);
         emitAgentStatusUpdate(updatedAgent);
+
+        // Automated Dispatch SMS to Citizen & Responder (Respects System Settings: smsNotification)
+        setImmediate(async () => {
+            try {
+                await smsService.notifyAgentDispatched(updatedAlert, updatedAgent);
+            } catch (smsErr) {
+                logger.warn(`SMS Dispatch notification failed: ${smsErr.message}`);
+            }
+        });
 
         return {
             alert: updatedAlert,
@@ -756,14 +813,24 @@ const listAlerts = async (page = 1, limit = 10, filters = {}) => {
         const pageNum = Math.max(1, parseInt(page) || 1);
         const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
         const skip = (pageNum - 1) * limitNum;
-        const { search, type, status, stationId, agentId } = filters;
+        const { search, type, status, stationId, agentId, excludeEscalated, isEscalated } = filters;
 
-        const where = {
-            ...(type && type !== "all" ? { type: String(type).toUpperCase() } : {}),
-            ...(status && status !== "all" ? { status: String(status).toUpperCase() } : {}),
-            ...(stationId && stationId !== "all" ? { assignedStationId: stationId } : {}),
-            ...(agentId && agentId !== "all" ? { assignedAgentId: agentId } : {}),
-            ...(search ? {
+        const conditions = [];
+
+        if (type && type !== "all") {
+            conditions.push({ type: String(type).toUpperCase() });
+        }
+        if (status && status !== "all") {
+            conditions.push({ status: String(status).toUpperCase() });
+        }
+        if (stationId && stationId !== "all") {
+            conditions.push({ assignedStationId: stationId });
+        }
+        if (agentId && agentId !== "all") {
+            conditions.push({ assignedAgentId: agentId });
+        }
+        if (search) {
+            conditions.push({
                 OR: [
                     { citizenName: { contains: search } },
                     { phone: { contains: search } },
@@ -771,8 +838,26 @@ const listAlerts = async (page = 1, limit = 10, filters = {}) => {
                     { district: { contains: search } },
                     { province: { contains: search } },
                 ],
-            } : {}),
-        };
+            });
+        }
+        if (excludeEscalated) {
+            conditions.push({
+                NOT: [
+                    { reportText: { contains: "Escalated from Citizen Report" } },
+                    { reportText: { contains: "Citizen Report #" } },
+                ],
+            });
+        }
+        if (isEscalated) {
+            conditions.push({
+                OR: [
+                    { reportText: { contains: "Escalated from Citizen Report" } },
+                    { reportText: { contains: "Citizen Report #" } },
+                ],
+            });
+        }
+
+        const where = conditions.length > 0 ? { AND: conditions } : {};
 
         const [alerts, total] = await Promise.all([
             prisma.sOSAlert.findMany({
@@ -814,7 +899,7 @@ const getAlert = async (id) => {
 
 const updateStatus = async (id, body, user = null) => {
     try {
-        const { status, assignedAgentId, assignedAgentName } = body;
+        const { status, assignedAgentId, assignedAgentName, priority } = body;
         const normalizedStatus = status ? status.toUpperCase() : undefined;
 
         const existingAlert = await prisma.sOSAlert.findUnique({
@@ -867,6 +952,14 @@ const updateStatus = async (id, body, user = null) => {
         }
         if (assignedAgentName !== undefined) {
             updateData.assignedAgentName = assignedAgentName || null;
+        }
+        if (priority) {
+            const validPriority = ["CRITICAL", "HIGH", "MEDIUM", "LOW"].includes(String(priority).toUpperCase())
+                ? String(priority).toUpperCase()
+                : undefined;
+            if (validPriority) {
+                updateData.priority = validPriority;
+            }
         }
 
         // When alert is RESOLVED, SPAM, or reopened to PENDING without an agent:
@@ -945,7 +1038,83 @@ const updateStatus = async (id, body, user = null) => {
         if (alert.status === "RESOLVED") {
             clearMissionTimeout(id);
             emitAlertResolved(alert);
+
+            // Automated Citizen Resolution SMS (Respects System Settings: smsNotification)
+            setImmediate(async () => {
+                try {
+                    await smsService.notifyAlertResolved(alert);
+                } catch (smsErr) {
+                    logger.warn(`SMS Resolution notification failed: ${smsErr.message}`);
+                }
+            });
         }
+
+        // ── Auto-Sync Escalated Citizen Report if linked ──
+        if (alert.status === "RESOLVED" || alert.status === "SPAM") {
+            try {
+                const match = alert.reportText?.match(/\[Escalated from Citizen Report #([a-f0-9\-]+)\]/i);
+                if (match && match[1]) {
+                    const citizenReportId = match[1];
+                    const nextCitizenStatus = alert.status === "SPAM" ? "REJECTED" : "RESOLVED";
+
+                    const updatedCitizenReport = await prisma.citizenReport.update({
+                        where: { id: citizenReportId },
+                        data: { status: nextCitizenStatus },
+                    }).catch(() => null);
+
+                    if (updatedCitizenReport) {
+                        logger.info(`🔄 Auto-synced Citizen Report #${citizenReportId} to ${nextCitizenStatus} from SOS #${id}`);
+                        emitCitizenReportUpdated(updatedCitizenReport);
+                    }
+
+                    // ── Auto-resolve/sync all sibling SOS alerts for the same Citizen Report ──
+                    const siblingAlerts = await prisma.sOSAlert.findMany({
+                        where: {
+                            id: { not: id },
+                            reportText: { contains: `[Escalated from Citizen Report #${citizenReportId}]` },
+                            status: { in: ["PENDING", "EN_ROUTE", "ARRIVED"] },
+                        },
+                    });
+
+                    for (const sibling of siblingAlerts) {
+                        const updatedSibling = await prisma.sOSAlert.update({
+                            where: { id: sibling.id },
+                            data: {
+                                status: alert.status,
+                                resolvedAt: alert.status === "RESOLVED" ? new Date() : null,
+                            },
+                        });
+                        clearMissionTimeout(sibling.id);
+                        emitStatusUpdated(updatedSibling);
+                        if (alert.status === "RESOLVED") {
+                            emitAlertResolved(updatedSibling);
+                        }
+                        logger.info(`🔄 Auto-resolved duplicate sibling SOS #${sibling.id} for Citizen Report #${citizenReportId}`);
+                    }
+                }
+            } catch (err) {
+                logger.warn(`Failed to auto-sync Citizen Report from SOS #${id}: ${err.message}`);
+            }
+        } else if (existingAlert.status === "RESOLVED" && (alert.status === "PENDING" || alert.status === "EN_ROUTE" || alert.status === "ARRIVED")) {
+            try {
+                const match = alert.reportText?.match(/\[Escalated from Citizen Report #([a-f0-9\-]+)\]/i);
+                if (match && match[1]) {
+                    const citizenReportId = match[1];
+                    const updatedCitizenReport = await prisma.citizenReport.update({
+                        where: { id: citizenReportId },
+                        data: { status: "REVIEWING" },
+                    }).catch(() => null);
+
+                    if (updatedCitizenReport) {
+                        logger.info(`🔄 Reopened Citizen Report #${citizenReportId} to REVIEWING from SOS #${id}`);
+                        emitCitizenReportUpdated(updatedCitizenReport);
+                    }
+                }
+            } catch (err) {
+                logger.warn(`Failed to sync reopened Citizen Report from SOS #${id}: ${err.message}`);
+            }
+        }
+
         return alert;
     } catch (error) {
         if (error.statusCode) throw error;
@@ -1202,10 +1371,30 @@ const findCandidateAgents = async (alert, excludeAgentIds = []) => {
         const hasValidCoords = !isNaN(alertLat) && !isNaN(alertLng);
 
         // Fetch available agents matching the emergency type
-        const availableAgents = await getAvailableAgents({
+        let availableAgents = await getAvailableAgents({
             type: alert.type,
             status: "AVAILABLE",
         });
+
+        // Fallback: If no exact matching agent type is available on duty, fallback to any available responder units
+        if (availableAgents.length === 0) {
+            logger.info(`ℹ️ No exact ${alert.type} responder on duty. Falling back to any available active units.`);
+            availableAgents = await getAvailableAgents({
+                status: "AVAILABLE",
+            });
+        }
+
+        // Fallback 2: If still no unit is strictly AVAILABLE, fallback to any active on-duty units
+        if (availableAgents.length === 0) {
+            logger.info(`ℹ️ No units strictly AVAILABLE. Falling back to active on-duty units.`);
+            availableAgents = await prisma.agent.findMany({
+                where: {
+                    status: { in: ["AVAILABLE", "ON_DUTY", "EN_ROUTE"] },
+                },
+                include: { organization: true, station: true, assignedVehicle: true },
+                orderBy: { name: "asc" },
+            });
+        }
 
         const candidates = availableAgents.filter(
             (a) => !excludeAgentIds.includes(a.id)
@@ -1264,11 +1453,20 @@ const evaluateAndAutoDispatch = async (alertId) => {
     try {
         const alert = await prisma.sOSAlert.findUnique({
             where: { id: alertId },
-            include: { assignedOrganization: true, assignedStation: true },
+            include: { assignedOrganization: true, assignedStation: true, assignedAgent: true },
         });
 
-        if (!alert || alert.status !== "PENDING") {
+        if (!alert || alert.status === "RESOLVED" || alert.status === "SPAM") {
             return null;
+        }
+
+        // If alert was already assigned, return existing assignment
+        if (alert.assignedAgentId && alert.assignedAgent) {
+            return {
+                alert,
+                agent: alert.assignedAgent,
+                alreadyAssigned: true,
+            };
         }
 
         const candidates = await findCandidateAgents(alert);

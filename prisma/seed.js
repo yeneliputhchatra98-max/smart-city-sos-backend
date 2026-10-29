@@ -7,106 +7,106 @@ const prisma = new PrismaClient();
 // ==========================================
 
 const provinces = [
-    {
-        name: "Banteay Meanchey",
-        nameKm: "បន្ទាយមានជ័យ",
-    },
-    {
-        name: "Battambang",
-        nameKm: "បាត់ដំបង",
-    },
-    {
-        name: "Kampong Cham",
-        nameKm: "កំពង់ចាម",
-    },
-    {
-        name: "Kampong Chhnang",
-        nameKm: "កំពង់ឆ្នាំង",
-    },
-    {
-        name: "Kampong Speu",
-        nameKm: "កំពង់ស្ពឺ",
-    },
-    {
-        name: "Kampong Thom",
-        nameKm: "កំពង់ធំ",
-    },
-    {
-        name: "Kampot",
-        nameKm: "កំពត",
-    },
-    {
-        name: "Kandal",
-        nameKm: "កណ្ដាល",
-    },
-    {
-        name: "Kep",
-        nameKm: "កែប",
-    },
-    {
-        name: "Koh Kong",
-        nameKm: "កោះកុង",
-    },
-    {
-        name: "Kratie",
-        nameKm: "ក្រចេះ",
-    },
-    {
-        name: "Mondulkiri",
-        nameKm: "មណ្ឌលគិរី",
-    },
-    {
-        name: "Oddar Meanchey",
-        nameKm: "ឧត្តរមានជ័យ",
-    },
-    {
-        name: "Pailin",
-        nameKm: "ប៉ៃលិន",
-    },
-    {
-        name: "Phnom Penh",
-        nameKm: "ភ្នំពេញ",
-    },
-    {
-        name: "Preah Sihanouk",
-        nameKm: "ព្រះសីហនុ",
-    },
-    {
-        name: "Preah Vihear",
-        nameKm: "ព្រះវិហារ",
-    },
-    {
-        name: "Pursat",
-        nameKm: "ពោធិ៍សាត់",
-    },
-    {
-        name: "Prey Veng",
-        nameKm: "ព្រៃវែង",
-    },
-    {
-        name: "Ratanakiri",
-        nameKm: "រតនគិរី",
-    },
+    // {
+    //     name: "Banteay Meanchey",
+    //     nameKm: "បន្ទាយមានជ័យ",
+    // },
+    // {
+    //     name: "Battambang",
+    //     nameKm: "បាត់ដំបង",
+    // },
+    // {
+    //     name: "Kampong Cham",
+    //     nameKm: "កំពង់ចាម",
+    // },
+    // {
+    //     name: "Kampong Chhnang",
+    //     nameKm: "កំពង់ឆ្នាំង",
+    // },
+    // {
+    //     name: "Kampong Speu",
+    //     nameKm: "កំពង់ស្ពឺ",
+    // },
+    // {
+    //     name: "Kampong Thom",
+    //     nameKm: "កំពង់ធំ",
+    // },
+    // {
+    //     name: "Kampot",
+    //     nameKm: "កំពត",
+    // },
+    // {
+    //     name: "Kandal",
+    //     nameKm: "កណ្ដាល",
+    // },
+    // {
+    //     name: "Kep",
+    //     nameKm: "កែប",
+    // },
+    // {
+    //     name: "Koh Kong",
+    //     nameKm: "កោះកុង",
+    // },
+    // {
+    //     name: "Kratie",
+    //     nameKm: "ក្រចេះ",
+    // },
+    // {
+    //     name: "Mondulkiri",
+    //     nameKm: "មណ្ឌលគិរី",
+    // },
+    // {
+    //     name: "Oddar Meanchey",
+    //     nameKm: "ឧត្តរមានជ័យ",
+    // },
+    // {
+    //     name: "Pailin",
+    //     nameKm: "ប៉ៃលិន",
+    // },
+    // {
+    //     name: "Phnom Penh",
+    //     nameKm: "ភ្នំពេញ",
+    // },
+    // {
+    //     name: "Preah Sihanouk",
+    //     nameKm: "ព្រះសីហនុ",
+    // },
+    // {
+    //     name: "Preah Vihear",
+    //     nameKm: "ព្រះវិហារ",
+    // },
+    // {
+    //     name: "Pursat",
+    //     nameKm: "ពោធិ៍សាត់",
+    // },
+    // {
+    //     name: "Prey Veng",
+    //     nameKm: "ព្រៃវែង",
+    // },
+    // {
+    //     name: "Ratanakiri",
+    //     nameKm: "រតនគិរី",
+    // },
     {
         name: "Siem Reap",
         nameKm: "សៀមរាប",
     },
-    {
-        name: "Stung Treng",
-        nameKm: "ស្ទឹងត្រែង",
-    },
-    {
-        name: "Svay Rieng",
-        nameKm: "ស្វាយរៀង",
-    },
-    {
-        name: "Takeo",
-        nameKm: "តាកែវ",
-    },
-    {
-        name: "Tboung Khmum",
-        nameKm: "ត្បូងឃ្មុំ",
-    },
+    // {
+    //     name: "Stung Treng",
+    //     nameKm: "ស្ទឹងត្រែង",
+    // },
+    // {
+    //     name: "Svay Rieng",
+    //     nameKm: "ស្វាយរៀង",
+    // },
+    // {
+    //     name: "Takeo",
+    //     nameKm: "តាកែវ",
+    // },
+    // {
+    //     name: "Tboung Khmum",
+    //     nameKm: "ត្បូងឃ្មុំ",
+    // },
 ];
 
 // ==========================================

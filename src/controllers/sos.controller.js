@@ -32,7 +32,7 @@ const listAlerts = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
-        const { search, type, status, stationId, agentId } = req.query;
+        const { search, type, status, stationId, agentId, excludeEscalated, isEscalated } = req.query;
 
         const result = await sosService.listAlerts(page, limit, {
             search,
@@ -40,6 +40,8 @@ const listAlerts = async (req, res) => {
             status,
             stationId,
             agentId,
+            excludeEscalated: excludeEscalated === 'true' || excludeEscalated === true,
+            isEscalated: isEscalated === 'true' || isEscalated === true,
         });
 
         res.json({

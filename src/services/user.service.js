@@ -80,7 +80,7 @@ exports.getAllUsers = async ({ page = 1, limit = 20, role, unassignedOnly = fals
     if (all) {
         const data = await prisma.user.findMany({
             where,
-            include: { role: true, organization: true, agentProfile: true },
+            include: { role: true, organization: true, agentProfile: { include: { organization: true, station: true } } },
             orderBy: { createdAt: "desc" },
         });
         return { data, total: data.length, page: 1, limit: data.length };
@@ -91,7 +91,7 @@ exports.getAllUsers = async ({ page = 1, limit = 20, role, unassignedOnly = fals
     const [data, total] = await Promise.all([
         prisma.user.findMany({
             where,
-            include: { role: true, organization: true, agentProfile: true },
+            include: { role: true, organization: true, agentProfile: { include: { organization: true, station: true } } },
             orderBy: { createdAt: "desc" },
             skip,
             take: limit,
@@ -107,13 +107,15 @@ exports.getAllUsers = async ({ page = 1, limit = 20, role, unassignedOnly = fals
 exports.getAgentCandidateUsers = async ({ unassignedOnly = false } = {}) => {
     const where = {
         deletedAt: null,
-        role: {
-            name: "AGENT",
-        },
     };
 
     if (unassignedOnly) {
         where.agentProfile = null;
+    } else {
+        where.OR = [
+            { role: { name: "AGENT" } },
+            { agentProfile: null }
+        ];
     }
 
     return await prisma.user.findMany({
@@ -153,12 +155,10 @@ exports.createUser = async (body, file = null) => {
     if (!d.email) fail("Email is required");
     if (!d.fullName) fail("fullName is required");
 
-    // ✅ Disallow creating User with Role = AGENT from User Management
+    // ✅ Validate roleId if provided
     if (d.roleId) {
         const targetRole = await prisma.role.findUnique({ where: { id: d.roleId } });
-        if (targetRole && (targetRole.name === "AGENT" || targetRole.id === 3)) {
-            fail("Cannot create user with Role 'AGENT' from User Management. Agents must be created through Agent Management.", 400);
-        }
+        if (!targetRole) fail("Invalid roleId", 400);
     }
 
     // ✅ Handle file upload
@@ -206,23 +206,10 @@ exports.updateUser = async (id, body, file = null) => {
     normalizeNullable(d);
     await transformCommon(d);
 
-    const isAgent = Boolean(existing.agentProfile) || existing.role?.name === "AGENT" || existing.roleId === 3;
-
-    if (isAgent) {
-        // If agent user, reject modifying roleId or strip it if unchanged
-        if (d.roleId !== undefined && d.roleId !== existing.roleId) {
-            fail("Cannot change role of an Agent user. Role is managed exclusively by Agent Management.", 400);
-        }
-        // Always strip roleId so it cannot be altered for Agent
-        delete d.roleId;
-    } else {
-        // Non-agent user: do not allow changing role to AGENT from User Management
-        if (d.roleId) {
-            const targetRole = await prisma.role.findUnique({ where: { id: d.roleId } });
-            if (targetRole && (targetRole.name === "AGENT" || targetRole.id === 3)) {
-                fail("Cannot assign role 'AGENT' from User Management. Agents must be created through Agent Management.", 400);
-            }
-        }
+    // ✅ Validate roleId if provided
+    if (d.roleId) {
+        const targetRole = await prisma.role.findUnique({ where: { id: d.roleId } });
+        if (!targetRole) fail("Invalid roleId", 400);
     }
 
     // ✅ Handle file upload
@@ -249,7 +236,7 @@ exports.updateUser = async (id, body, file = null) => {
         const updatedUser = await tx.user.update({
             where: { id },
             data: d,
-            include: { role: true, organization: true, agentProfile: true },
+            include: { role: true, organization: true, agentProfile: { include: { organization: true, station: true } } },
         });
 
         // Keep Agent profile fields in sync with User updates
@@ -297,6 +284,23 @@ exports.deleteUser = async (id) => {
             data: { revokedAt: new Date() },
         }),
     ]);
+
+    // ✅ Sync: If this user is linked to an Agent profile, also delete the Agent profile
+    try {
+        const linkedAgent = await prisma.agent.findUnique({ where: { userId: id } });
+        if (linkedAgent) {
+            await prisma.agent.delete({ where: { id: linkedAgent.id } });
+            if (linkedAgent.organizationId || linkedAgent.stationId) {
+                const { recalculateVehicleCounts } = require("./vehicle.service");
+                await recalculateVehicleCounts({
+                    organizationId: linkedAgent.organizationId,
+                    stationId: linkedAgent.stationId,
+                });
+            }
+        }
+    } catch (err) {
+        console.warn(`Could not sync delete linked agent for user ${id}:`, err);
+    }
 
     // ✅ លុប avatar file ក្រោយ transaction ជោគជ័យ
     if (existing.avatar && existing.avatar !== DEFAULT_AVATAR) {

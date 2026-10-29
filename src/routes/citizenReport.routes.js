@@ -8,12 +8,43 @@ const {
     updateCitizenReportStatusSchema,
 } = require("../validators/citizenReport.validator");
 
+const { upload } = require("../middleware/upload.middleware");
+const { optionalAuth } = require("../middleware/auth.middleware");
+const { checkMaintenanceMode } = require("../middleware/maintenance.middleware");
+
 // =====================================
 // Validation Middleware
 // =====================================
 
 const validate = (schema) => (req, res, next) => {
-    const { error } = schema.validate(req.body, {
+    const dataToValidate = { ...req.body };
+
+    // Coerce numeric lat/lng from multipart form-data
+    if (dataToValidate.lat !== undefined && dataToValidate.lat !== "") {
+        const parsed = Number(dataToValidate.lat);
+        if (!isNaN(parsed)) dataToValidate.lat = parsed;
+    }
+    if (dataToValidate.lng !== undefined && dataToValidate.lng !== "") {
+        const parsed = Number(dataToValidate.lng);
+        if (!isNaN(parsed)) dataToValidate.lng = parsed;
+    }
+
+    // Coerce mediaUrls from form-data if sent as JSON string or comma-separated
+    if (typeof dataToValidate.mediaUrls === "string" && dataToValidate.mediaUrls.trim() !== "") {
+        try {
+            const parsed = JSON.parse(dataToValidate.mediaUrls);
+            dataToValidate.mediaUrls = Array.isArray(parsed) ? parsed : [dataToValidate.mediaUrls];
+        } catch {
+            dataToValidate.mediaUrls = dataToValidate.mediaUrls
+                .split(/[\n,]/)
+                .map((s) => s.trim())
+                .filter(Boolean);
+        }
+    } else if (dataToValidate.mediaUrls === "" || dataToValidate.mediaUrls === undefined) {
+        delete dataToValidate.mediaUrls;
+    }
+
+    const { error, value } = schema.validate(dataToValidate, {
         abortEarly: false,
     });
 
@@ -28,6 +59,7 @@ const validate = (schema) => (req, res, next) => {
         });
     }
 
+    req.body = value;
     next();
 };
 
@@ -35,9 +67,12 @@ const validate = (schema) => (req, res, next) => {
 // Citizen Report Routes
 // =====================================
 
-// Create Citizen Report
+// Create Citizen Report (supports JSON and multipart upload)
 router.post(
     "/",
+    optionalAuth,
+    checkMaintenanceMode,
+    upload.array("media", 5),
     validate(createCitizenReportSchema),
     citizenReportController.createCitizenReport
 );

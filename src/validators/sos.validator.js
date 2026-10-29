@@ -58,13 +58,19 @@ const createSosSchema = Joi.object({
         .default(false),
 
     mediaUrls: Joi.array()
-        .items(Joi.string().uri())
-        .optional(),
+        .items(Joi.string().allow(""))
+        .optional()
+        .allow(null),
 
     status: Joi.string()
         .valid("PENDING", "ASSIGNED", "EN_ROUTE", "ARRIVED", "RESOLVED", "SPAM")
         .optional()
         .default("PENDING"),
+
+    priority: Joi.string()
+        .valid("CRITICAL", "HIGH", "MEDIUM", "LOW")
+        .optional()
+        .allow(null, ""),
 });
 
 const updateStatusSchema = Joi.object({
@@ -76,6 +82,11 @@ const updateStatusSchema = Joi.object({
         .allow(null, ""),
 
     assignedAgentName: Joi.string()
+        .allow(null, ""),
+
+    priority: Joi.string()
+        .valid("CRITICAL", "HIGH", "MEDIUM", "LOW")
+        .optional()
         .allow(null, "")
 });
 

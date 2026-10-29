@@ -32,6 +32,9 @@ const toAppError = (error, fallback = {}) => {
     if (error.code === "ACCOUNT_DELETED") {
         return new AppError(error.message, 403, "ACCOUNT_DELETED");
     }
+    if (error.code === "ACCOUNT_LOCKED") {
+        return new AppError(error.message, 423, "ACCOUNT_LOCKED");
+    }
     if (error.code === "ACCOUNT_BLOCKED") {
         return new AppError(error.message, 403, "ACCOUNT_BLOCKED");
     }

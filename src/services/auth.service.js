@@ -239,6 +239,60 @@ const register = async (data) => {
     }
 };
 
+
+// ==================== SECURITY & SESSION POLICIES ====================
+const userLockouts = new Map(); // userId -> { lockUntil: number, attempts: number }
+
+const getSecuritySettings = async () => {
+    try {
+        const rows = await prisma.systemSetting.findMany({
+            where: {
+                key: {
+                    in: [
+                        'maxFailedLogins',
+                        'lockoutDuration',
+                        'singleSessionOnly',
+                        'passwordRotation',
+                        'passwordComplexity',
+                    ]
+                }
+            }
+        });
+        const map = {};
+        rows.forEach(r => { map[r.key] = r.value; });
+        return {
+            maxFailedLogins: parseInt(map.maxFailedLogins, 10) || 5,
+            lockoutDuration: parseInt(map.lockoutDuration, 10) || 15,
+            singleSessionOnly: String(map.singleSessionOnly).toLowerCase() === 'true',
+            passwordRotation: parseInt(map.passwordRotation, 10) || 90,
+            passwordComplexity: String(map.passwordComplexity).toLowerCase() === 'true',
+        };
+    } catch {
+        return {
+            maxFailedLogins: 5,
+            lockoutDuration: 15,
+            singleSessionOnly: false,
+            passwordRotation: 90,
+            passwordComplexity: true,
+        };
+    }
+};
+
+const checkLockout = (userId) => {
+    const lock = userLockouts.get(userId);
+    if (!lock) return { isLocked: false };
+    if (lock.lockUntil > Date.now()) {
+        const remainingMinutes = Math.max(1, Math.ceil((lock.lockUntil - Date.now()) / 60000));
+        return { isLocked: true, remainingMinutes };
+    }
+    userLockouts.delete(userId);
+    return { isLocked: false };
+};
+
+const clearLockout = (userId) => {
+    userLockouts.delete(userId);
+};
+
 // ==================== LOGIN ====================
 
 const login = async (email, password, ipAddress = null, userAgent = null, tabId = null) => {
@@ -256,12 +310,85 @@ const login = async (email, password, ipAddress = null, userAgent = null, tabId 
 
         checkUserForLogin(user, { requireEmailVerified: true });
 
-        const checkPassword = await bcrypt.compare(password, user.password).catch(() => false);
-        if (!checkPassword) {
-            throw new Error("Invalid credentials");
+        const secSettings = await getSecuritySettings();
+
+        // 1. Check if user is temporarily locked out
+        const lockInfo = checkLockout(user.id);
+        if (lockInfo.isLocked) {
+            const err = new Error(`Account temporarily locked due to excessive failed attempts. Please try again in ${lockInfo.remainingMinutes} minute(s).`);
+            err.status = 423;
+            err.code = "ACCOUNT_LOCKED";
+            throw err;
         }
 
-        // ✅ BUG 1 FIX: createSession FIRST so sessionId is available for the JWT
+        // 2. Validate password & track brute-force attempts
+        const checkPassword = await bcrypt.compare(password, user.password).catch(() => false);
+        if (!checkPassword) {
+            const attempts = (user.failedLoginAttempts || 0) + 1;
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { failedLoginAttempts: attempts },
+            }).catch(() => {});
+
+            if (attempts >= secSettings.maxFailedLogins) {
+                if (secSettings.lockoutDuration >= 9999) {
+                    await prisma.user.update({
+                        where: { id: user.id },
+                        data: { status: "BLOCKED" },
+                    }).catch(() => {});
+                    const err = new Error("Account has been locked due to excessive failed logins. Contact an administrator to unlock.");
+                    err.status = 403;
+                    err.code = "ACCOUNT_BLOCKED";
+                    throw err;
+                } else {
+                    const lockUntil = Date.now() + secSettings.lockoutDuration * 60 * 1000;
+                    userLockouts.set(user.id, { lockUntil, attempts });
+                    const err = new Error(`Account locked for ${secSettings.lockoutDuration} minutes due to ${attempts} failed attempts.`);
+                    err.status = 423;
+                    err.code = "ACCOUNT_LOCKED";
+                    throw err;
+                }
+            }
+
+            const remaining = secSettings.maxFailedLogins - attempts;
+            const err = new Error(`Invalid credentials. ${remaining} attempt(s) remaining before account lockout.`);
+            err.status = 401;
+            err.code = "INVALID_CREDENTIALS";
+            throw err;
+        }
+
+        // 3. Reset failed login attempts on valid login
+        if (user.failedLoginAttempts > 0) {
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { failedLoginAttempts: 0 },
+            }).catch(() => {});
+        }
+        clearLockout(user.id);
+
+        // 4. Check password rotation policy
+        let passwordExpired = false;
+        if (secSettings.passwordRotation > 0 && user.lastPasswordChange) {
+            const daysSinceChange = (Date.now() - new Date(user.lastPasswordChange).getTime()) / (1000 * 60 * 60 * 24);
+            if (daysSinceChange > secSettings.passwordRotation) {
+                passwordExpired = true;
+            }
+        }
+
+        // 5. Enforce Single Active Session policy if enabled
+        if (secSettings.singleSessionOnly) {
+            await prisma.session.updateMany({
+                where: { userId: user.id, revokedAt: null },
+                data: { revokedAt: new Date() },
+            });
+            await prisma.refreshToken.updateMany({
+                where: { userId: user.id, revokedAt: null },
+                data: { revokedAt: new Date() },
+            }).catch(() => {});
+            logger.info(`Single session policy enforced: Revoked other sessions for ${user.email}`);
+        }
+
+        // 6. Create session & issue token
         const session = await createSession({
             userId: user.id,
             tabId,
@@ -279,6 +406,9 @@ const login = async (email, password, ipAddress = null, userAgent = null, tabId 
         });
 
         const safeUser = sanitizeUser(user);
+        if (safeUser) {
+            safeUser.passwordExpired = passwordExpired;
+        }
 
         logger.info(`User logged in: ${user.email} from ${ipAddress || "unknown"} (tabId: ${tabId || "none"}, sessionId: ${session.sessionId})`);
 
@@ -289,6 +419,7 @@ const login = async (email, password, ipAddress = null, userAgent = null, tabId 
             sessionId: session.sessionId,
             tabId: session.tabId,
             expiresIn: "24h",
+            passwordExpired,
         };
     } catch (error) {
         logger.error(`Login error: ${error.message}`);
@@ -786,6 +917,9 @@ const changePassword = async (userId, oldPassword, newPassword) => {
 
 // ==================== VERIFY EMAIL ====================
 
+// Cache recently verified tokens (60s) to prevent duplicate request race conditions / React StrictMode errors
+const recentlyVerifiedTokens = new Map();
+
 const verifyEmail = async (rawToken) => {
     try {
         if (!rawToken || typeof rawToken !== "string") {
@@ -794,6 +928,17 @@ const verifyEmail = async (rawToken) => {
 
         const token = rawToken.trim();
         const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+
+        // ✅ If token was recently verified (e.g. duplicate request in development or page refresh)
+        if (recentlyVerifiedTokens.has(tokenHash)) {
+            const cached = recentlyVerifiedTokens.get(tokenHash);
+            return {
+                userId: cached.userId,
+                email: cached.email,
+                emailVerified: true,
+                alreadyVerified: true,
+            };
+        }
 
         const verificationToken = await prisma.emailVerificationToken.findUnique({
             where: { tokenHash },
@@ -834,6 +979,16 @@ const verifyEmail = async (rawToken) => {
                 where: { id: verificationToken.id },
             }),
         ]);
+
+        // Cache recently verified token hash for 60 seconds
+        recentlyVerifiedTokens.set(tokenHash, {
+            userId: user.id,
+            email: user.email,
+            verifiedAt: Date.now(),
+        });
+        setTimeout(() => {
+            recentlyVerifiedTokens.delete(tokenHash);
+        }, 60 * 1000);
 
         logger.info(`Email verified: ${user.email}`);
 
@@ -929,6 +1084,19 @@ const googleLogin = async (idToken, ipAddress = null, userAgent = null, tabId = 
 
         checkUserForOAuth(user);
 
+        const secSettings = await getSecuritySettings();
+        if (secSettings.singleSessionOnly) {
+            await prisma.session.updateMany({
+                where: { userId: user.id, revokedAt: null },
+                data: { revokedAt: new Date() },
+            });
+            await prisma.refreshToken.updateMany({
+                where: { userId: user.id, revokedAt: null },
+                data: { revokedAt: new Date() },
+            }).catch(() => {});
+            logger.info(`Single session policy enforced: Revoked other sessions for Google user ${user.email}`);
+        }
+
         // ✅ BUG 1 FIX: createSession FIRST so sessionId is available for the JWT
         const session = await createSession({
             userId: user.id,
@@ -968,6 +1136,8 @@ const googleLogin = async (idToken, ipAddress = null, userAgent = null, tabId = 
 // ==================== EXPORT ====================
 
 module.exports = {
+    clearLockout,
+    checkLockout,
     // Authentication
     register,
     login,

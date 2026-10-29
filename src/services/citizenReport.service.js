@@ -1,4 +1,5 @@
 const { PrismaClient } = require("@prisma/client");
+const { emitCitizenReportUpdated, emitStatusUpdated, emitAlertResolved } = require("../socket");
 
 const prisma = new PrismaClient();
 
@@ -121,8 +122,43 @@ exports.getCitizenReports = async (query = {}) => {
         }),
     ]);
 
+    // ── Enrich with linked SOS Alert ID & assigned unit if available ──
+    const reportIds = reports.map((r) => r.id);
+    let alertMap = {};
+    if (reportIds.length > 0) {
+        try {
+            const matchedAlerts = await prisma.sOSAlert.findMany({
+                where: {
+                    OR: reportIds.map((id) => ({ reportText: { contains: id } })),
+                },
+                select: {
+                    id: true,
+                    status: true,
+                    reportText: true,
+                    assignedAgentId: true,
+                    assignedAgentName: true,
+                },
+                orderBy: { createdAt: "desc" },
+            });
+            matchedAlerts.forEach((a) => {
+                for (const rid of reportIds) {
+                    if (a.reportText && a.reportText.includes(rid) && !alertMap[rid]) {
+                        alertMap[rid] = a;
+                    }
+                }
+            });
+        } catch (_) {}
+    }
+
+    const enrichedReports = reports.map((r) => ({
+        ...r,
+        sosAlertId: alertMap[r.id]?.id || null,
+        sosAlertStatus: alertMap[r.id]?.status || null,
+        assignedAgentName: alertMap[r.id]?.assignedAgentName || null,
+    }));
+
     return {
-        reports,
+        reports: enrichedReports,
         pagination: {
             page: pageNum,
             limit: limitNum,
@@ -147,7 +183,21 @@ exports.getCitizenReportById = async (id) => {
         throw new Error("Citizen report not found");
     }
 
-    return report;
+    let linkedAlert = null;
+    try {
+        linkedAlert = await prisma.sOSAlert.findFirst({
+            where: { reportText: { contains: id } },
+            orderBy: { createdAt: "desc" },
+            select: { id: true, status: true, assignedAgentId: true, assignedAgentName: true },
+        });
+    } catch (_) {}
+
+    return {
+        ...report,
+        sosAlertId: linkedAlert?.id || null,
+        sosAlertStatus: linkedAlert?.status || null,
+        assignedAgentName: linkedAlert?.assignedAgentName || null,
+    };
 };
 
 // =====================================
@@ -178,6 +228,39 @@ exports.updateCitizenReportStatus = async (id, status) => {
             },
         });
 
+    if (emitCitizenReportUpdated) {
+        emitCitizenReportUpdated(updatedReport);
+    }
+
+    // Auto-resolve or reject any linked SOS Alerts
+    if (normalizedStatus === "RESOLVED" || normalizedStatus === "REJECTED") {
+        try {
+            const nextAlertStatus = normalizedStatus === "REJECTED" ? "SPAM" : "RESOLVED";
+            const linkedAlerts = await prisma.sOSAlert.findMany({
+                where: {
+                    reportText: { contains: `[Escalated from Citizen Report #${id}]` },
+                    status: { in: ["PENDING", "EN_ROUTE", "ARRIVED"] },
+                },
+            });
+
+            for (const alert of linkedAlerts) {
+                const updatedAlert = await prisma.sOSAlert.update({
+                    where: { id: alert.id },
+                    data: {
+                        status: nextAlertStatus,
+                        resolvedAt: nextAlertStatus === "RESOLVED" ? new Date() : null,
+                    },
+                });
+                if (emitStatusUpdated) emitStatusUpdated(updatedAlert);
+                if (nextAlertStatus === "RESOLVED" && emitAlertResolved) {
+                    emitAlertResolved(updatedAlert);
+                }
+            }
+        } catch (err) {
+            console.error(`Failed to cascade resolve SOS alerts for Citizen Report #${id}:`, err);
+        }
+    }
+
     return updatedReport;
 };
 
@@ -202,6 +285,28 @@ exports.deleteCitizenReport = async (id) => {
             id,
         },
     });
+
+    // Cleanup lingering pending SOS alerts for this deleted report
+    try {
+        const linkedAlerts = await prisma.sOSAlert.findMany({
+            where: {
+                reportText: { contains: `[Escalated from Citizen Report #${id}]` },
+                status: { in: ["PENDING", "EN_ROUTE", "ARRIVED"] },
+            },
+        });
+        for (const alert of linkedAlerts) {
+            const updatedAlert = await prisma.sOSAlert.update({
+                where: { id: alert.id },
+                data: {
+                    status: "SPAM",
+                    resolvedAt: new Date(),
+                },
+            });
+            if (emitStatusUpdated) emitStatusUpdated(updatedAlert);
+        }
+    } catch (err) {
+        console.error(`Failed to cleanup SOS alerts on delete for Citizen Report #${id}:`, err);
+    }
 
     return {
         message: "Citizen report deleted successfully",

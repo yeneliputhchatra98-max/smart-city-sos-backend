@@ -118,10 +118,7 @@ const verifyToken = async (req, res, next) => {
             });
         }
 
-        // ✅ BUG 2 FIX: Verify the specific session is still active.
-        //   sessionId is embedded in the JWT by login/refresh — if it's present,
-        //   we check that the Session row has not been revoked or expired.
-        //   This makes logout take effect immediately without waiting for JWT expiry.
+        // ✅ Verify the specific session is still active
         if (decoded.sessionId) {
             const session = await prisma.session.findUnique({
                 where: { id: decoded.sessionId },
@@ -152,6 +149,37 @@ const verifyToken = async (req, res, next) => {
                 });
             }
         }
+
+        // ✅ Geo-Fencing Policy Check
+        try {
+            const ipSetting = await prisma.systemSetting.findUnique({
+                where: { key: "ipRestriction" },
+            });
+            if (ipSetting && String(ipSetting.value).toLowerCase() === "true") {
+                const ipStr = String(clientIP || "");
+                const isLocal =
+                    !ipStr ||
+                    ipStr === "127.0.0.1" ||
+                    ipStr === "::1" ||
+                    ipStr.includes("127.0.0.1") ||
+                    ipStr.startsWith("10.") ||
+                    ipStr.startsWith("192.168.") ||
+                    ipStr.startsWith("172.");
+
+                const cfCountry = req.headers["cf-ipcountry"];
+                const isCambodia = cfCountry
+                    ? String(cfCountry).toUpperCase() === "KH"
+                    : true; // Default allow in direct dev/intranet connections
+
+                if (!isLocal && !isCambodia) {
+                    return res.status(403).json({
+                        success: false,
+                        message: "Geo-Fencing Policy: Console access is restricted to authorized Cambodian networks.",
+                        code: "GEO_RESTRICTED",
+                    });
+                }
+            }
+        } catch (_) {}
 
         // ✅ Pick fields — មិនដាក់ password/deletedAt
         req.user = {
@@ -255,6 +283,8 @@ const optionalAuth = async (req, res, next) => {
                 role: user.role ? user.role.name : null,
                 roleId: user.roleId,
                 organizationId: user.organizationId,
+                sessionId: decoded.sessionId || null,
+                tabId: decoded.tabId || null,
             };
             req.token = token;
         }

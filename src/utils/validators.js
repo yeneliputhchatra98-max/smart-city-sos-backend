@@ -3,18 +3,19 @@ const validateEmail = (email) => {
     return re.test(email);
 };
 
+const validatePassword = (password, strict = false) => {
+    if (!password || typeof password !== "string") return false;
 
-const validatePassword = (password) => {
-    // At least 8 characters,
-    // 1 uppercase,
-    // 1 lowercase,
-    // 1 number
+    if (!strict) {
+        // At least 8 characters, 1 uppercase, 1 lowercase, 1 number
+        const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+        return re.test(password);
+    }
 
-    const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-
-    return re.test(password);
+    // Strict complexity: min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special character
+    const strictRe = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+    return strictRe.test(password);
 };
-
 
 const validatePhone = (phone) => {
     if (!phone) return false;
@@ -28,7 +29,6 @@ const validatePhone = (phone) => {
 
     return re.test(cleanedPhone);
 };
-
 
 module.exports = {
     validateEmail,

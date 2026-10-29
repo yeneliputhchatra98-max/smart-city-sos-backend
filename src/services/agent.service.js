@@ -158,10 +158,18 @@ const createAgent = async (data) => {
             throw error;
         }
 
-        if (targetUser.role?.name && targetUser.role.name !== "AGENT") {
-            const error = new Error("Selected user account must have Role = AGENT");
-            error.status = 400;
-            throw error;
+        // ✅ Auto-promote user to Role = AGENT (roleId = 3) if not already
+        const agentRole = await prisma.role.findUnique({ where: { name: "AGENT" } });
+        const agentRoleId = agentRole ? agentRole.id : 3;
+
+        if (targetUser.roleId !== agentRoleId) {
+            await prisma.user.update({
+                where: { id: targetUser.id },
+                data: {
+                    roleId: agentRoleId,
+                    organizationId: cleanData.organizationId || targetUser.organizationId,
+                },
+            });
         }
 
         const existingAgent = await prisma.agent.findUnique({
@@ -216,10 +224,18 @@ const updateAgent = async (id, data) => {
             throw error;
         }
 
-        if (targetUser.role?.name && targetUser.role.name !== "AGENT") {
-            const error = new Error("Selected user account must have Role = AGENT");
-            error.status = 400;
-            throw error;
+        // ✅ Auto-promote user to Role = AGENT (roleId = 3) if not already
+        const agentRole = await prisma.role.findUnique({ where: { name: "AGENT" } });
+        const agentRoleId = agentRole ? agentRole.id : 3;
+
+        if (targetUser.roleId !== agentRoleId) {
+            await prisma.user.update({
+                where: { id: targetUser.id },
+                data: {
+                    roleId: agentRoleId,
+                    organizationId: cleanData.organizationId || targetUser.organizationId,
+                },
+            });
         }
 
         const existingAgent = await prisma.agent.findFirst({
@@ -302,14 +318,30 @@ const updateAgentStatus = async (id, status) => {
 const deleteAgent = async (id) => {
     const agent = await prisma.agent.findUnique({
         where: { id },
-        select: { organizationId: true, stationId: true },
+        select: { organizationId: true, stationId: true, userId: true },
     });
+
+    if (!agent) {
+        const error = new Error("Agent not found");
+        error.status = 404;
+        throw error;
+    }
 
     const deleted = await prisma.agent.delete({
         where: { id },
     });
 
-    if (agent) {
+    // ✅ Sync: When an agent is deleted, automatically delete/soft-delete their linked user account in User Management
+    if (agent.userId) {
+        try {
+            const { deleteUser } = require("./user.service");
+            await deleteUser(agent.userId);
+        } catch (err) {
+            console.warn(`Could not delete linked user ${agent.userId} for agent ${id}:`, err);
+        }
+    }
+
+    if (agent.organizationId || agent.stationId) {
         try {
             const { recalculateVehicleCounts } = require("./vehicle.service");
             await recalculateVehicleCounts({

@@ -54,6 +54,42 @@ exports.updateSettings = async (req, res) => {
   }
 };
 
+// POST /api/settings/revoke-all-sessions
+exports.revokeAllSessions = async (req, res) => {
+  try {
+    const currentSessionId = req.user?.sessionId || null;
+    const currentUserId = req.user?.id || null;
+
+    const count = await settingService.revokeAllSessions(
+      currentSessionId,
+      currentUserId
+    );
+
+    // Write audit log
+    try {
+      const { writeAuditLog } = require('../services/audit.service');
+      await writeAuditLog({
+        event: `Emergency Revoke: Terminated ${count} active user session(s)`,
+        userName: req.user?.fullName || req.user?.email || 'Administrator',
+        userId: currentUserId,
+        ipAddress: req.ip || null,
+      });
+    } catch (_) {}
+
+    return res.status(200).json({
+      success: true,
+      data: { revokedCount: count },
+      message: `Successfully terminated ${count} active user session(s).`,
+    });
+  } catch (error) {
+    console.error('Revoke all sessions error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to revoke active sessions',
+    });
+  }
+};
+
 // GET /api/settings/backups
 exports.getBackups = async (req, res) => {
   try {

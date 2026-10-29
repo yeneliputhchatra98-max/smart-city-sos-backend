@@ -12,6 +12,8 @@ const {
     validateRequest
 } = require("../middleware/validator");
 
+const { checkMaintenanceMode } = require("../middleware/maintenance.middleware");
+
 const {
     createSosSchema,
     updateStatusSchema,
@@ -90,6 +92,17 @@ router.get(
 router.post(
     "/",
     optionalAuth,
+    checkMaintenanceMode,
+    upload.array("media", 5),
+    validateRequest(createSosSchema),
+    createAlert
+);
+
+// Public SOS route alias
+router.post(
+    "/public",
+    optionalAuth,
+    checkMaintenanceMode,
     upload.array("media", 5),
     validateRequest(createSosSchema),
     createAlert

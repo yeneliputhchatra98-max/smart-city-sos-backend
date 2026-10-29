@@ -63,13 +63,11 @@ const createUserSchema = Joi.object({
     roleId: Joi.number()
         .integer()
         .positive()
-        .invalid(3)
         .optional()
         .allow(null)
         .messages({
             "number.base": "roleId must be a number",
             "number.integer": "roleId must be an integer",
-            "any.invalid": "Cannot create user with Role AGENT from User Management. Agents must be created through Agent Management.",
         }),
 
     organizationId: Joi.string()

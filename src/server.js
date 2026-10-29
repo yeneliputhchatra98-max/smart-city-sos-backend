@@ -85,6 +85,17 @@ const startServer = async () => {
         }
 
         // ===============================
+        // Start Database Backup & Retention Scheduler
+        // ===============================
+        try {
+            const backupService = require("./services/backup.service");
+            backupService.startBackupScheduler();
+            logger.info("Automated database backup & retention scheduler initialized");
+        } catch (backupSchedErr) {
+            logger.warn(`Failed to start backup scheduler: ${backupSchedErr.message}`);
+        }
+
+        // ===============================
         // Start Listening
         // ===============================
         server.listen(PORT, HOST, () => {

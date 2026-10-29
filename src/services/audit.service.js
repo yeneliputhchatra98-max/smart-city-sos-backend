@@ -240,6 +240,13 @@ exports.writeAuditLog = async ({
     ipAddress
 }) => {
     try {
+        const auditToggle = await prisma.systemSetting.findUnique({
+            where: { key: "auditLoggingEnabled" }
+        }).catch(() => null);
+        if (auditToggle && String(auditToggle.value).toLowerCase() === "false") {
+            const isCritical = /Security|Emergency|Lockout|Revoke/i.test(event || "");
+            if (!isCritical) return null;
+        }
         const log = await prisma.auditLog.create({
             data: {
                 time:
