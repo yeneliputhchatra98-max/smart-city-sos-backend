@@ -17,7 +17,8 @@ exports.getBroadcastOptions = async (req, res, next) => {
 // Get All (Paginated + Filtered)
 exports.getAllBroadcasts = async (req, res, next) => {
     try {
-        const result = await broadcastService.getAllBroadcasts(req.query);
+        // ✅ [P0 Security Fix] បញ្ជូន req.user ដើម្បី Filter តាម Audience Type (Citizens មើលបានតែ ALL_CITIZENS)
+        const result = await broadcastService.getAllBroadcasts(req.query, req.user);
 
         res.status(200).json({
             success: true,

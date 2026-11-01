@@ -5853,3 +5853,6 @@ The column `emergency_sos.sos_alerts.assignedAt` does not exist in the current d
 2026-10-29 14:15:34 [ERROR] Login error: Please verify your email before logging in.
 2026-10-29 14:16:19 [ERROR] Verify email error: Invalid verification token
 2026-10-29 14:16:19 [ERROR] Verify email error: Invalid verification token
+2026-10-30 18:40:18 [ERROR] Failed to start server: Can't reach database server at `localhost:3306`
+
+Please make sure your database server is running at `localhost:3306`.

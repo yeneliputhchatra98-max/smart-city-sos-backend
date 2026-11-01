@@ -1,4 +1,4 @@
-const path = require("path");
+﻿const path = require("path");
 const fs = require("fs");
 const { PrismaClient } = require("@prisma/client");
 const { getLocationFromGPS } = require("./location.service");
@@ -433,6 +433,8 @@ const createAlert = async (body, files = [], user = null) => {
                 mediaUrls: mediaUrls.length > 0 ? mediaUrls : null,
                 status: "PENDING",
                 priority: validPriority,
+                // ✅ [Mobile Integration Fix] ភ្ជាប់ userId របស់ពលរដ្ឋដែលបាន Login ទៅកាន់ SOS Alert
+                userId: user?.id || null,
 
                 assignedOrganizationId: assignment.assignedOrganizationId,
                 assignedOrganizationName: assignment.assignedOrganizationName,
@@ -761,6 +763,63 @@ const getAvailableAgents = async (filters = {}) => {
 /**
  * Get alerts assigned to a specific responder (agent)
  */
+/**
+ * ✅ [Mobile Integration Fix] 4b. getMyAlerts
+ * ទាញយកប្រវត្តិ SOS Alert ផ្ទាល់ខ្លួនរបស់ពលរដ្ឋ ដោយច្រោះតាម userId (ឬលេខទូរស័ព្ទ/ឈ្មោះដែលផ្ទៀងផ្ទាត់រួច)
+ * ការពារដាច់ខាតមិនឱ្យលេចធ្លាយទិន្នន័យពលរដ្ឋផ្សេង (IDOR Protection)
+ */
+const getMyAlerts = async (user, options = {}) => {
+    try {
+        if (!user || !user.id) {
+            const err = new Error("Authentication required");
+            err.statusCode = 401;
+            throw err;
+        }
+
+        const { page = 1, limit = 20, status } = options;
+        const pageNum = Math.max(1, parseInt(page) || 1);
+        const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20));
+        const skip = (pageNum - 1) * limitNum;
+
+        // ✅ [P0 Security Fix] កំណត់សិទ្ធិភាពជាម្ចាស់យ៉ាងម៉ឺងម៉ាត់ (Strict Ownership) តាមរយៈ userId តែមួយគត់
+        // លុបចោល fullName និង phone fallback ដើម្បីទប់ស្កាត់ Identity Collision រវាងគណនីផ្សេងគ្នា
+        const where = {
+            userId: user.id,
+            ...(status && status !== "all" ? { status: String(status).toUpperCase() } : {})
+        };
+
+        const [alerts, total] = await Promise.all([
+            prisma.sOSAlert.findMany({
+                where,
+                include: {
+                    assignedAgent: {
+                        include: { assignedVehicle: true }
+                    },
+                    assignedOrganization: true,
+                    assignedStation: true
+                },
+                orderBy: { createdAt: "desc" },
+                skip,
+                take: limitNum,
+            }),
+            prisma.sOSAlert.count({ where }),
+        ]);
+
+        return {
+            alerts,
+            pagination: {
+                total,
+                page: pageNum,
+                limit: limitNum,
+                totalPages: Math.ceil(total / limitNum),
+            },
+        };
+    } catch (error) {
+        if (error.statusCode) throw error;
+        throw new Error(`getMyAlerts error: ${error.message}`);
+    }
+};
+
 const getAssignedAlerts = async (agentId, options = {}) => {
     try {
         if (!agentId) throw new Error("Agent ID is required");
@@ -884,15 +943,44 @@ const listAlerts = async (page = 1, limit = 10, filters = {}) => {
     }
 };
 
-const getAlert = async (id) => {
+/**
+ * ✅ [P0 Security Fix] getAlert - ផ្ទៀងផ្ទាត់សិទ្ធិចូលមើល SOS Detail (IDOR Protection)
+ * - ADMIN / OPERATOR: មើលបានគ្រប់ Alert
+ * - AGENT / RESPONDER: មើលបានតែ Alert ដែលបានចាត់តាំងឱ្យខ្លួន
+ * - CITIZEN: មើលបានតែ Alert ផ្ទាល់ខ្លួនរបស់ខ្លួន
+ */
+const getAlert = async (id, user = null) => {
     try {
         const alert = await prisma.sOSAlert.findUnique({
             where: { id },
             include: { assignedAgent: true, assignedOrganization: true, assignedStation: true },
         });
-        if (!alert) throw new Error("Alert not found");
+        if (!alert) {
+            const err = new Error("Alert not found");
+            err.statusCode = 404;
+            throw err;
+        }
+
+        if (user) {
+            const role = String(user.role || "").toUpperCase();
+            const isPrivileged = role === "ADMIN" || role === "OPERATOR";
+            if (!isPrivileged) {
+                if (role === "CITIZEN" && alert.userId !== user.id) {
+                    const err = new Error("Forbidden: You do not have permission to view this alert");
+                    err.statusCode = 403;
+                    throw err;
+                }
+                if ((role === "AGENT" || role === "RESPONDER") && alert.assignedAgentId !== user.agentId) {
+                    const err = new Error("Forbidden: This alert is not assigned to you");
+                    err.statusCode = 403;
+                    throw err;
+                }
+            }
+        }
+
         return alert;
     } catch (error) {
+        if (error.statusCode) throw error;
         throw new Error(`getAlert error: ${error.message}`);
     }
 };
@@ -908,8 +996,9 @@ const updateStatus = async (id, body, user = null) => {
         });
         if (!existingAlert) throw new Error("Alert not found");
 
-        // IDOR & transition validation for updateStatus
-        if (user && String(user.role).toUpperCase() === "AGENT") {
+        // ✅ [P0 Security Fix] IDOR & transition validation for updateStatus (Support both AGENT and RESPONDER)
+        const userRole = String(user?.role || "").toUpperCase();
+        if (user && (userRole === "AGENT" || userRole === "RESPONDER")) {
             if (existingAlert.assignedAgentId !== user.agentId) {
                 const err = new Error("Forbidden: You can only update incidents assigned to you");
                 err.statusCode = 403;
@@ -1122,10 +1211,30 @@ const updateStatus = async (id, body, user = null) => {
     }
 };
 
-const addMedia = async (id, files = []) => {
+const addMedia = async (id, files = [], user = null) => {
     try {
         const alert = await prisma.sOSAlert.findUnique({ where: { id } });
         if (!alert) throw new Error("Alert not found");
+
+        // ✅ [P0 Security Fix] ការពារសុវត្ថិភាព (IDOR):
+        // CITIZEN: អាច Upload រូបភាពបានតែលើ Alert ផ្ទាល់ខ្លួន (userId)
+        // AGENT / RESPONDER: អាច Upload រូបភាពបានតែលើ Alert ដែលចាត់តាំងឱ្យខ្លួន (assignedAgentId)
+        if (user) {
+            const role = String(user.role || "").toUpperCase();
+            const isPrivileged = role === "ADMIN" || role === "OPERATOR";
+            if (!isPrivileged) {
+                if (role === "CITIZEN" && alert.userId !== user.id) {
+                    const err = new Error("Forbidden: You can only upload evidence to your own SOS alert");
+                    err.statusCode = 403;
+                    throw err;
+                }
+                if ((role === "AGENT" || role === "RESPONDER") && alert.assignedAgentId !== user.agentId) {
+                    const err = new Error("Forbidden: You can only upload evidence to missions assigned to you");
+                    err.statusCode = 403;
+                    throw err;
+                }
+            }
+        }
         const oldMedia = alert.mediaUrls || [];
         const newMedia = files.map(fileToUrl);
         const updatedMedia = [...oldMedia, ...newMedia];
@@ -1199,6 +1308,16 @@ const declineMission = async (alertId, agentId = null, reason = "Unable to respo
             include: { assignedOrganization: true, assignedStation: true },
         });
         if (!alert) throw new Error(`Alert not found: ${alertId}`);
+
+        // ✅ [P0 Security Fix] ផ្ទៀងផ្ទាត់សិទ្ធិ: បើជា Responder ត្រូវតែជា Alert ដែលចាត់តាំងឱ្យខ្លួន
+        const callerRole = String(user?.role || "").toUpperCase();
+        if (user && (callerRole === "AGENT" || callerRole === "RESPONDER")) {
+            if (alert.assignedAgentId !== user.agentId) {
+                const err = new Error("Forbidden: You can only decline missions assigned to you");
+                err.statusCode = 403;
+                throw err;
+            }
+        }
 
         // Identify target agent
         let targetAgentId = agentId || alert.assignedAgentId;
@@ -1642,6 +1761,16 @@ const acknowledgeMission = async (alertId, agentId = null, user = null) => {
         });
         if (!alert) throw new Error(`Alert not found: ${alertId}`);
 
+        // ✅ [P0 Security Fix] ផ្ទៀងផ្ទាត់សិទ្ធិ: បើជា Responder ត្រូវតែជា Alert ដែលចាត់តាំងឱ្យខ្លួន
+        const callerRole = String(user?.role || "").toUpperCase();
+        if (user && (callerRole === "AGENT" || callerRole === "RESPONDER")) {
+            if (alert.assignedAgentId !== user.agentId) {
+                const err = new Error("Forbidden: You can only acknowledge missions assigned to you");
+                err.statusCode = 403;
+                throw err;
+            }
+        }
+
         // Clear fallback timeout timer
         clearMissionTimeout(alertId);
 
@@ -2013,5 +2142,6 @@ module.exports = {
     updateStatus,
     addMedia,
     deleteAlert,
+    getMyAlerts,
     getAssignedAlerts,
 };

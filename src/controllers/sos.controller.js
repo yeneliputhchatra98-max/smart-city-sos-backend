@@ -1,16 +1,41 @@
-const sosService = require("../services/sos.service");
+﻿const sosService = require("../services/sos.service");
 const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 // sos.controller.js
 
+// =====================================
+// ✅ [Mobile Integration Fix] ទាញយកប្រវត្តិ SOS របស់ពលរដ្ឋផ្ទាល់ខ្លួន
+// កំណត់ឱ្យទាញយកបានតែ Alert ណាដែលជារបស់ User នោះប៉ុណ្ណោះ (ការពារ Data Leak)
+// =====================================
+const getMyAlerts = async (req, res) => {
+    try {
+        const { status, page, limit } = req.query;
+        const result = await sosService.getMyAlerts(req.user, { status, page, limit });
+        res.json({
+            success: true,
+            data: result.alerts,
+            pagination: result.pagination,
+        });
+    } catch (error) {
+        res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 const listAssignedAlerts = async (req, res) => {
     try {
-        const agentId = req.user?.agentId || req.query.agentId;
+        // ✅ [P0 Security Fix] ទប់ស្កាត់ Parameter Injection លើ agentId
+        // បើជា AGENT/RESPONDER ត្រូវបង្ខំឱ្យប្រើ req.user.agentId ពី JWT
+        const isPrivileged = req.user?.role === "ADMIN" || req.user?.role === "OPERATOR";
+        const agentId = isPrivileged ? (req.query.agentId || req.user?.agentId) : req.user?.agentId;
+
         if (!agentId) {
-            return res.status(400).json({
+            return res.status(403).json({
                 success: false,
-                message: "No responder agent profile associated with this account",
+                message: "Forbidden: No responder agent profile associated with this account",
             });
         }
         const { status, page, limit } = req.query;
@@ -54,6 +79,10 @@ const listAlerts = async (req, res) => {
     }
 };
 
+// =====================================
+// ✅ [P0 Security Fix] ទាញយកព័ត៌មានលម្អិត SOS Alert
+// បញ្ជូន req.user ទៅកាន់ Service ដើម្បីផ្ទៀងផ្ទាត់សិទ្ធិចូលមើល (IDOR Protection)
+// =====================================
 const getAlert = async (req, res) => {
     try {
         const alert = await sosService.getAlert(req.params.id, req.user);
@@ -136,7 +165,8 @@ const updateStatus = async (req, res) => {
 
 const addMedia = async (req, res) => {
     try {
-        const result = await sosService.addMedia(req.params.id, req.files);
+        // ✅ [P0 Security Fix] បញ្ជូន req.user ទៅកាន់ Service ដើម្បីផ្ទៀងផ្ទាត់សិទ្ធិកាន់កាប់ (IDOR Protection)
+        const result = await sosService.addMedia(req.params.id, req.files, req.user);
 
         res.json({
             success: true,
@@ -170,9 +200,13 @@ const declineMission = async (req, res) => {
     try {
         const { id } = req.params;
         const { reason, agentId } = req.body || {};
+        // ✅ [P0 Security Fix] Responder អាច decline បានតែ Mission របស់ខ្លួនឯងប៉ុណ្ណោះ
+        const isPrivileged = req.user?.role === "ADMIN" || req.user?.role === "OPERATOR";
+        const effectiveAgentId = isPrivileged ? (agentId || req.user?.agentId) : req.user?.agentId;
+
         const result = await sosService.declineMission(
             id,
-            agentId,
+            effectiveAgentId,
             reason || "Unable to respond",
             req.user
         );
@@ -194,7 +228,11 @@ const acknowledgeMission = async (req, res) => {
     try {
         const { id } = req.params;
         const { agentId } = req.body || {};
-        const result = await sosService.acknowledgeMission(id, agentId, req.user);
+        // ✅ [P0 Security Fix] Responder អាច accept បានតែ Mission របស់ខ្លួនឯងប៉ុណ្ណោះ
+        const isPrivileged = req.user?.role === "ADMIN" || req.user?.role === "OPERATOR";
+        const effectiveAgentId = isPrivileged ? (agentId || req.user?.agentId) : req.user?.agentId;
+
+        const result = await sosService.acknowledgeMission(id, effectiveAgentId, req.user);
 
         res.json({
             success: true,
@@ -274,6 +312,7 @@ const getAlertTimeline = async (req, res) => {
 
 module.exports = {
     listAlerts,
+    getMyAlerts,
     listAssignedAlerts,
     getAlert,
     getAlertTimeline,

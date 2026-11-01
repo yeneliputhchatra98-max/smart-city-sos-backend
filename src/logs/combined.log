@@ -7931,3 +7931,25 @@ The provided value for the column is too long for the column's type. Column: eve
 2026-10-29 16:25:42 [INFO] GET / - 304 - 13ms {"ip":"127.0.0.1","user":"10370112-f966-4061-9081-96dcf248125f","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36","referer":"http://localhost:3000/"}
 2026-10-29 16:25:42 [INFO] GET / - 304 - 16ms {"ip":"127.0.0.1","user":"10370112-f966-4061-9081-96dcf248125f","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36","referer":"http://localhost:3000/"}
 2026-10-29 16:25:42 [INFO] GET / - 304 - 13ms {"ip":"127.0.0.1","user":"10370112-f966-4061-9081-96dcf248125f","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36","referer":"http://localhost:3000/"}
+2026-10-29 16:36:37 [INFO] User logged out (refreshToken: provided, tabId: tab_1793250479706_xv5xs38x)
+2026-10-29 16:36:37 [INFO] POST /logout - 200 - 94ms {"ip":"127.0.0.1","user":"10370112-f966-4061-9081-96dcf248125f","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36","referer":"http://localhost:3000/"}
+2026-10-29 16:36:37 [INFO] POST /logout - 200 - 63ms {"ip":"127.0.0.1","user":"10370112-f966-4061-9081-96dcf248125f","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36","referer":"http://localhost:3000/"}
+2026-10-29 16:36:37 [INFO] 🔌 Socket disconnected: On7Kx9iLv43S2ZrlAAAT (reason: client namespace disconnect)
+2026-10-29 16:36:39 [INFO] GET / - 304 - 11ms {"ip":"127.0.0.1","user":"anonymous","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36","referer":"http://localhost:3000/"}
+2026-10-29 16:36:39 [INFO] GET / - 304 - 5ms {"ip":"127.0.0.1","user":"anonymous","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36","referer":"http://localhost:3000/"}
+2026-10-29 16:36:43 [INFO] User logged out (refreshToken: provided, tabId: tab_1793258218517_fvtybeh0)
+2026-10-29 16:36:43 [INFO] POST /logout - 200 - 17ms {"ip":"127.0.0.1","user":"8cefed7e-b892-43e3-942d-d6816772022e","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36","referer":"http://localhost:3000/"}
+2026-10-29 16:36:43 [INFO] POST /logout - 200 - 7ms {"ip":"127.0.0.1","user":"8cefed7e-b892-43e3-942d-d6816772022e","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36","referer":"http://localhost:3000/"}
+2026-10-29 16:36:43 [INFO] 🔌 Socket disconnected: AsjkxrAcvXu-P3ynAAAD (reason: client namespace disconnect)
+2026-10-29 16:36:44 [INFO] GET / - 304 - 7ms {"ip":"127.0.0.1","user":"anonymous","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36","referer":"http://localhost:3000/"}
+2026-10-29 16:36:44 [INFO] GET / - 304 - 17ms {"ip":"127.0.0.1","user":"anonymous","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36","referer":"http://localhost:3000/"}
+2026-10-29 16:36:52 [INFO] Received SIGINT, starting graceful shutdown...
+2026-10-29 16:36:52 [INFO] HTTP server closed
+2026-10-29 16:36:52 [INFO] Database connections closed
+2026-10-30 18:40:14 [INFO] 📚 Swagger docs available at /api-docs
+2026-10-30 18:40:14 [INFO] Initializing database connection...
+2026-10-30 18:40:18 [ERROR] Failed to start server: Can't reach database server at `localhost:3306`
+
+Please make sure your database server is running at `localhost:3306`.
+2026-10-30 18:45:26 [INFO] 📚 Swagger docs available at /api-docs
+2026-10-30 18:45:26 [INFO] Initializing database connection...

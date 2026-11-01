@@ -1,4 +1,4 @@
-const { Server } = require("socket.io");
+﻿const { Server } = require("socket.io");
 const jwt = require("jsonwebtoken");
 const logger = require("../utils/logger");
 
@@ -61,27 +61,91 @@ const initSocket = (server) => {
         logger.info(`🔌 Socket connected: ${socket.id} (userId=${userId}, role=${role}, tabId=${tabId})`);
 
         // ── Room assignment ──────────────────────────────────────────
-        // Join operators room to receive live SOS and agent GPS pushes
-        socket.join("operators");
+        // ✅ [P0 Security Fix & Mobile Integration] កម្រិតបន្ទប់ operators ឱ្យចូលបានតែ ADMIN និង OPERATOR
+        // ព្រមទាំងភ្ជាប់បន្ទប់ផ្ទាល់ខ្លួន user:{id} និង agent:{agentId} ដោយស្វ័យប្រវត្តិតាម Token
+        const isOperatorOrAdmin = role === "ADMIN" || role === "OPERATOR";
+        if (isOperatorOrAdmin) {
+            socket.join("operators");
+            logger.info(`Socket ${socket.id} joined room: operators`);
+        }
+        if (socket.user && socket.user.id) {
+            socket.join(`user:${socket.user.id}`);
+        }
+        if (socket.user && socket.user.agentId) {
+            socket.join(`agent:${socket.user.agentId}`);
+        }
         if (socket.tabId) {
             socket.join(`tab:${socket.tabId}`);
         }
-        logger.info(`Socket ${socket.id} joined room: operators`);
-
+        
         // ── Client requests to join a specific alert room ────────────
-        socket.on("join_alert", (alertId) => {
-            socket.join(`alert:${alertId}`);
-            logger.info(`Socket ${socket.id} joined room: alert:${alertId}`);
+        // ✅ [P0 Security Fix] ផ្ទៀងផ្ទាត់សិទ្ធិមុននឹងអនុញ្ញាតឱ្យ Join បន្ទប់ Alert (IDOR Protection)
+        socket.on("join_alert", async (alertId) => {
+            try {
+                if (!alertId || typeof alertId !== "string") return;
+                const isPrivileged = role === "ADMIN" || role === "OPERATOR";
+                if (isPrivileged) {
+                    socket.join(`alert:${alertId}`);
+                    logger.info(`Staff socket ${socket.id} joined room: alert:${alertId}`);
+                    return;
+                }
+
+                const alert = await prisma.sOSAlert.findUnique({
+                    where: { id: alertId },
+                    select: { id: true, userId: true, assignedAgentId: true }
+                });
+                if (!alert) return;
+
+                const isOwner = socket.user?.id && alert.userId === socket.user.id;
+                const isAssigned = socket.user?.agentId && alert.assignedAgentId === socket.user.agentId;
+
+                if (isOwner || isAssigned) {
+                    socket.join(`alert:${alertId}`);
+                    logger.info(`Authorized socket ${socket.id} (${isOwner ? "Owner" : "Assigned Agent"}) joined room: alert:${alertId}`);
+                } else {
+                    logger.warn(`Unauthorized join_alert denied for socket ${socket.id} on alert ${alertId}`);
+                }
+            } catch (err) {
+                logger.error(`Error in join_alert: ${err.message}`);
+            }
         });
 
         socket.on("leave_alert", (alertId) => {
             socket.leave(`alert:${alertId}`);
         });
+        // ==============================================================
+        // ✅ [Mobile Integration Fix] Secure Room Listeners សម្រាប់ Mobile App
+        // អនុញ្ញាតឱ្យ Mobile App អាច Join បន្ទប់ Agent ឬ User បានដោយផ្ទៀងផ្ទាត់សិទ្ធិ និង Token ត្រឹមត្រូវ
+        // ==============================================================
+        socket.on("join_agent", (targetAgentId) => {
+            const isAuthorized = role === "ADMIN" || role === "OPERATOR" || (socket.user && socket.user.agentId === targetAgentId);
+            if (isAuthorized && targetAgentId) {
+                socket.join(`agent:${targetAgentId}`);
+                logger.info(`Socket ${socket.id} joined room: agent:${targetAgentId}`);
+            }
+        });
+
+        socket.on("join_user", (targetUserId) => {
+            const isAuthorized = role === "ADMIN" || role === "OPERATOR" || (socket.user && socket.user.id === targetUserId);
+            if (isAuthorized && targetUserId) {
+                socket.join(`user:${targetUserId}`);
+                logger.info(`Socket ${socket.id} joined room: user:${targetUserId}`);
+            }
+        });
 
         // ── Agent sends live GPS location update ─────────────────────
+        // ✅ [P0 Security Fix] ទប់ស្កាត់ GPS Spoofing ដោយផ្ទៀងផ្ទាត់ agentId ជាមួយ Token របស់ Responder
         socket.on("agent_location_update", (payload) => {
-            // payload: { agentId, lat, lng }
-            io.to("operators").emit("agent_location_updated", payload);
+            if (!payload || !socket.user) return;
+            const isPrivileged = role === "ADMIN" || role === "OPERATOR";
+            const verifiedAgentId = isPrivileged ? (payload.agentId || socket.user.agentId) : socket.user.agentId;
+
+            if (verifiedAgentId) {
+                io.to("operators").emit("agent_location_updated", {
+                    ...payload,
+                    agentId: verifiedAgentId
+                });
+            }
         });
 
         // ── Ping/pong for connection health check ─────────────────────

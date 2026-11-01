@@ -1,11 +1,12 @@
-const express = require("express");
+﻿const express = require("express");
 const router = express.Router();
 
 const broadcastController = require("../controllers/broadcast.controller");
 
 const {
     verifyToken,
-    checkRole
+    checkRole,
+    optionalAuth
 } = require("../middleware/auth.middleware");
 
 const {
@@ -21,9 +22,11 @@ const {
 // ==========================
 // Get All Broadcasts
 // ==========================
+// ✅ [Mobile Integration & Security Fix] ប្រើ optionalAuth ដើម្បីអនុញ្ញាតឱ្យសាធារណជនទូទៅអាចមើលឃើញ Broadcast ជាសាធារណៈ (ALL_CITIZENS) ដោយមិនបាច់ Login
+// និងភ្ជាប់ req.user ប្រសិនបើមាន Token ដើម្បីឱ្យ Controller/Service អាច Filter តាម Role (ALL_CITIZENS, RESCUE_AGENTS) បានត្រឹមត្រូវ
 router.get(
     "/",
-    verifyToken,
+    optionalAuth,
     broadcastController.getAllBroadcasts
 );
 

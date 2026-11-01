@@ -89,6 +89,15 @@ exports.updateAgent = async (req, res, next) => {
 // Update status and coordinates
 exports.updateAgentStatus = async (req, res, next) => {
     try {
+        // ✅ [P0 Security Fix] ទប់ស្កាត់ IDOR: Responder អាចកែបានតែ Status/GPS របស់ខ្លួនឯង
+        const isPrivileged = req.user?.role === "ADMIN" || req.user?.role === "OPERATOR";
+        if (!isPrivileged && req.user?.agentId !== req.params.id) {
+            return res.status(403).json({
+                success: false,
+                message: "Forbidden: You cannot modify another responder's status or coordinates",
+            });
+        }
+
         const { status, lat, lng } = req.body;
 
         if (!status && lat === undefined && lng === undefined) {

@@ -71,7 +71,7 @@ exports.getBroadcastOptions = async () => {
 // ==========================
 // Get All Broadcasts (Paginated + Filtered)
 // ==========================
-exports.getAllBroadcasts = async (filters = {}) => {
+exports.getAllBroadcasts = async (filters = {}, user = null) => {
     const {
         search,
         status,
@@ -113,6 +113,22 @@ exports.getAllBroadcasts = async (filters = {}) => {
             { message: { contains: s } },
             { sentByName: { contains: s } }
         ];
+    }
+
+    // ✅ [P0 Security Fix] កម្រិតសិទ្ធិមើល Broadcast តាម Target Audience:
+    // - Unauthenticated / CITIZEN: មើលបានតែ ALL_CITIZENS
+    // - AGENT / RESPONDER: មើលបាន ALL_CITIZENS, RESCUE_AGENTS និង Organization Type
+    // - ADMIN / OPERATOR: មើលបានទាំងអស់
+    const userRole = String(user?.role || "").toUpperCase();
+    const isStaff = userRole === "ADMIN" || userRole === "OPERATOR";
+    if (!isStaff) {
+        if (userRole === "AGENT" || userRole === "RESPONDER") {
+            const allowedAudiences = ["ALL_CITIZENS", "RESCUE_AGENTS"];
+            where.targetAudience = { in: allowedAudiences };
+        } else {
+            // Citizen or Anonymous
+            where.targetAudience = "ALL_CITIZENS";
+        }
     }
 
     // ── Query with pagination and aggregate stats ─────────────────────────

@@ -241,6 +241,8 @@ model User {
   emailVerificationTokens EmailVerificationToken[]
 
   agentProfile            Agent?
+  // ✅ [Mobile Integration Fix] ទំនាក់ទំនង SOS Alerts ផ្ទាល់ខ្លួនរបស់ User (សម្រាប់ទាញយកប្រវត្តិ និង IDOR Protection)
+  sosAlerts               SOSAlert[]
   emailVerified Boolean @default(false)
 
   // ✅ បន្ថែម soft delete
@@ -474,6 +476,10 @@ model SOSAlert {
   status      SOSStatus     @default(PENDING)
   priority    String?       @default("HIGH")
 
+  // ✅ [Mobile Integration & Security Fix] ភ្ជាប់ Owner (User) ទៅកាន់ SOS Alert សម្រាប់ Citizen History និង IDOR Protection
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
   // ✅ STAGE 1: Auto-Assign Organization
   assignedOrganizationId   String?
   assignedOrganization     Organization? @relation(fields: [assignedOrganizationId], references: [id], onDelete: SetNull)
@@ -495,6 +501,7 @@ model SOSAlert {
   arrivedAt  DateTime?
   resolvedAt DateTime?
 
+  @@index([userId]) // ✅ [Performance] Index សម្រាប់បង្កើនល្បឿន query ប្រវត្តិ alert របស់ Citizen (getMyAlerts)
   @@index([assignedOrganizationId])
   @@index([assignedStationId])
   @@index([assignedAgentId])
