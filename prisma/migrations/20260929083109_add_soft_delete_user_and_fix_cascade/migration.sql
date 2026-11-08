@@ -15,10 +15,19 @@ CREATE INDEX `users_status_idx` ON `users`(`status`);
 ALTER TABLE `role_permissions` ADD CONSTRAINT `role_permissions_roleId_fkey` FOREIGN KEY (`roleId`) REFERENCES `roles`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- RenameIndex
-ALTER TABLE `stations` RENAME INDEX `stations_organizationId_fkey` TO `stations_organizationId_idx`;
+ALTER TABLE `stations` DROP FOREIGN KEY `stations_organizationId_fkey`;
+ALTER TABLE `stations` DROP INDEX `stations_organizationId_fkey`;
+CREATE INDEX `stations_organizationId_idx` ON `stations`(`organizationId`);
+ALTER TABLE `stations` ADD CONSTRAINT `stations_organizationId_fkey` FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- RenameIndex
-ALTER TABLE `users` RENAME INDEX `users_organizationId_fkey` TO `users_organizationId_idx`;
+ALTER TABLE `users` DROP FOREIGN KEY `users_organizationId_fkey`;
+ALTER TABLE `users` DROP INDEX `users_organizationId_fkey`;
+CREATE INDEX `users_organizationId_idx` ON `users`(`organizationId`);
+ALTER TABLE `users` ADD CONSTRAINT `users_organizationId_fkey` FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- RenameIndex
-ALTER TABLE `users` RENAME INDEX `users_roleId_fkey` TO `users_roleId_idx`;
+ALTER TABLE `users` DROP FOREIGN KEY `users_roleId_fkey`;
+ALTER TABLE `users` DROP INDEX `users_roleId_fkey`;
+CREATE INDEX `users_roleId_idx` ON `users`(`roleId`);
+ALTER TABLE `users` ADD CONSTRAINT `users_roleId_fkey` FOREIGN KEY (`roleId`) REFERENCES `roles`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;

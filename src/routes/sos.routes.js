@@ -1,4 +1,4 @@
-﻿const express = require("express");
+const express = require("express");
 const { upload } = require("../middleware/upload.middleware");
 const router = express.Router();
 
@@ -45,7 +45,8 @@ router.get(
     verifyToken,
     checkRole([
         "ADMIN",
-        "OPERATOR"
+        "OPERATOR",
+        "AGENT"
     ]),
     listAlerts
 );
@@ -60,13 +61,13 @@ router.get(
     getMyAlerts
 );
 // ===============================
-// GET ASSIGNED ALERTS FOR RESPONDER
+// GET ASSIGNED ALERTS FOR AGENT
 // ===============================
-// ✅ [P0 Security Fix] អនុញ្ញាតឱ្យ AGENT និង RESPONDER ទាញយកបេសកកម្មដែលបានចាត់តាំង
+// ✅ [P0 Security Fix] អនុញ្ញាតឱ្យ AGENT ទាញយកបេសកកម្មដែលបានចាត់តាំង
 router.get(
     "/assigned",
     verifyToken,
-    checkRole(["ADMIN", "OPERATOR", "AGENT", "RESPONDER"]),
+    checkRole(["ADMIN", "OPERATOR", "AGENT"]),
     listAssignedAlerts
 );
 
@@ -131,8 +132,31 @@ router.patch(
     checkRole([
         "ADMIN",
         "OPERATOR",
-        "AGENT",
-        "RESPONDER"
+        "AGENT"
+    ]),
+    validateRequest(updateStatusSchema),
+    updateStatus
+);
+
+router.put(
+    "/:id/status",
+    verifyToken,
+    checkRole([
+        "ADMIN",
+        "OPERATOR",
+        "AGENT"
+    ]),
+    validateRequest(updateStatusSchema),
+    updateStatus
+);
+
+router.patch(
+    "/:id/status",
+    verifyToken,
+    checkRole([
+        "ADMIN",
+        "OPERATOR",
+        "AGENT"
     ]),
     validateRequest(updateStatusSchema),
     updateStatus
@@ -154,11 +178,11 @@ router.post(
 // DECLINE MISSION (Fallback)
 // Agent / Operator / Admin
 // ===============================
-// ✅ [P0 Security Fix] បន្ថែម Role RESPONDER ឱ្យអាចបដិសេធបេសកកម្មដែលបានចាត់តាំងឱ្យខ្លួនបាន
+// ✅ [P0 Security Fix] បន្ថែម Role AGENT ឱ្យអាចបដិសេធបេសកកម្មដែលបានចាត់តាំងឱ្យខ្លួនបាន
 router.post(
     "/:id/decline",
     verifyToken,
-    checkRole(["AGENT", "RESPONDER", "ADMIN", "OPERATOR"]),
+    checkRole(["AGENT", "ADMIN", "OPERATOR"]),
     declineMission
 );
 
@@ -166,11 +190,11 @@ router.post(
 // ACKNOWLEDGE MISSION (Agent Accept)
 // Agent / Operator / Admin
 // ===============================
-// ✅ [P0 Security Fix] បន្ថែម Role RESPONDER ឱ្យអាចទទួលយកបេសកកម្មដែលបានចាត់តាំងឱ្យខ្លួនបាន
+// ✅ [P0 Security Fix] បន្ថែម Role AGENT ឱ្យអាចទទួលយកបេសកកម្មដែលបានចាត់តាំងឱ្យខ្លួនបាន
 router.post(
     "/:id/acknowledge",
     verifyToken,
-    checkRole(["AGENT", "RESPONDER", "ADMIN", "OPERATOR"]),
+    checkRole(["AGENT", "ADMIN", "OPERATOR"]),
     acknowledgeMission
 );
 

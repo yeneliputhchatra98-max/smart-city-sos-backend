@@ -117,12 +117,12 @@ exports.getAllBroadcasts = async (filters = {}, user = null) => {
 
     // ✅ [P0 Security Fix] កម្រិតសិទ្ធិមើល Broadcast តាម Target Audience:
     // - Unauthenticated / CITIZEN: មើលបានតែ ALL_CITIZENS
-    // - AGENT / RESPONDER: មើលបាន ALL_CITIZENS, RESCUE_AGENTS និង Organization Type
+    // - AGENT: មើលបាន ALL_CITIZENS, RESCUE_AGENTS និង Organization Type
     // - ADMIN / OPERATOR: មើលបានទាំងអស់
     const userRole = String(user?.role || "").toUpperCase();
     const isStaff = userRole === "ADMIN" || userRole === "OPERATOR";
     if (!isStaff) {
-        if (userRole === "AGENT" || userRole === "RESPONDER") {
+        if (userRole === "AGENT") {
             const allowedAudiences = ["ALL_CITIZENS", "RESCUE_AGENTS"];
             where.targetAudience = { in: allowedAudiences };
         } else {

@@ -159,7 +159,6 @@ app.get("/favicon.ico", (req, res) => res.status(204).end());
 // --- API Routes ---
 app.use("/api/auth", require("./routes/auth.routes"));
 app.use("/api/users", require("./routes/user.routes"));
-app.use("/api/items", require("./routes/item.routes"));
 app.use("/api/sos", require("./routes/sos.routes"));
 app.use("/api/orgs", require("./routes/org.routes"));
 app.use("/api/stations", require("./routes/station.routes"));
@@ -174,6 +173,16 @@ app.use("/api/roles-permissions", require("./routes/permission.routes"));
 app.use("/api/reports", require("./routes/report.routes"));
 app.use("/api/locations", require("./routes/location.routes"));
 app.use("/api/citizen-reports", require("./routes/citizenReport.routes"));
+
+app.get(["/api", "/api/"], (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: "Smart City SOS API is running",
+        health: "/health",
+        ...(process.env.NODE_ENV !== "production" && { documentation: "/api-docs" })
+    });
+});
+
 // --- API Documentation (Swagger) ---
 if (process.env.NODE_ENV !== "production") {
     const swaggerUi = require("swagger-ui-express");

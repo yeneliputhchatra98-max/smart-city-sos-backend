@@ -946,7 +946,7 @@ const listAlerts = async (page = 1, limit = 10, filters = {}) => {
 /**
  * ✅ [P0 Security Fix] getAlert - ផ្ទៀងផ្ទាត់សិទ្ធិចូលមើល SOS Detail (IDOR Protection)
  * - ADMIN / OPERATOR: មើលបានគ្រប់ Alert
- * - AGENT / RESPONDER: មើលបានតែ Alert ដែលបានចាត់តាំងឱ្យខ្លួន
+ * - AGENT: មើលបានតែ Alert ដែលបានចាត់តាំងឱ្យខ្លួន
  * - CITIZEN: មើលបានតែ Alert ផ្ទាល់ខ្លួនរបស់ខ្លួន
  */
 const getAlert = async (id, user = null) => {
@@ -970,7 +970,7 @@ const getAlert = async (id, user = null) => {
                     err.statusCode = 403;
                     throw err;
                 }
-                if ((role === "AGENT" || role === "RESPONDER") && alert.assignedAgentId !== user.agentId) {
+                if (role === "AGENT" && alert.assignedAgentId !== user.agentId) {
                     const err = new Error("Forbidden: This alert is not assigned to you");
                     err.statusCode = 403;
                     throw err;
@@ -996,9 +996,9 @@ const updateStatus = async (id, body, user = null) => {
         });
         if (!existingAlert) throw new Error("Alert not found");
 
-        // ✅ [P0 Security Fix] IDOR & transition validation for updateStatus (Support both AGENT and RESPONDER)
+        // ✅ [P0 Security Fix] IDOR & transition validation for updateStatus (For AGENT)
         const userRole = String(user?.role || "").toUpperCase();
-        if (user && (userRole === "AGENT" || userRole === "RESPONDER")) {
+        if (user && userRole === "AGENT") {
             if (existingAlert.assignedAgentId !== user.agentId) {
                 const err = new Error("Forbidden: You can only update incidents assigned to you");
                 err.statusCode = 403;
@@ -1032,9 +1032,17 @@ const updateStatus = async (id, body, user = null) => {
         const updateData = {};
         if (normalizedStatus) {
             updateData.status = normalizedStatus;
-            if (normalizedStatus === "RESOLVED") updateData.resolvedAt = new Date();
-            if (normalizedStatus === "ARRIVED") updateData.arrivedAt = new Date();
-            if (normalizedStatus === "EN_ROUTE" && !existingAlert.assignedAt) updateData.assignedAt = new Date();
+            if (normalizedStatus === "RESOLVED") {
+                updateData.resolvedAt = existingAlert.resolvedAt || new Date();
+            } else if (["PENDING", "EN_ROUTE", "ARRIVED"].includes(normalizedStatus)) {
+                updateData.resolvedAt = null;
+            }
+            if (normalizedStatus === "ARRIVED") {
+                updateData.arrivedAt = existingAlert.arrivedAt || new Date();
+            }
+            if (normalizedStatus === "EN_ROUTE" && !existingAlert.assignedAt) {
+                updateData.assignedAt = new Date();
+            }
         }
         if (assignedAgentId !== undefined) {
             updateData.assignedAgentId = assignedAgentId || null;
@@ -1170,7 +1178,7 @@ const updateStatus = async (id, body, user = null) => {
                             where: { id: sibling.id },
                             data: {
                                 status: alert.status,
-                                resolvedAt: alert.status === "RESOLVED" ? new Date() : null,
+                                resolvedAt: alert.status === "RESOLVED" ? (sibling.resolvedAt || new Date()) : null,
                             },
                         });
                         clearMissionTimeout(sibling.id);
@@ -1218,7 +1226,7 @@ const addMedia = async (id, files = [], user = null) => {
 
         // ✅ [P0 Security Fix] ការពារសុវត្ថិភាព (IDOR):
         // CITIZEN: អាច Upload រូបភាពបានតែលើ Alert ផ្ទាល់ខ្លួន (userId)
-        // AGENT / RESPONDER: អាច Upload រូបភាពបានតែលើ Alert ដែលចាត់តាំងឱ្យខ្លួន (assignedAgentId)
+        // AGENT: អាច Upload រូបភាពបានតែលើ Alert ដែលចាត់តាំងឱ្យខ្លួន (assignedAgentId)
         if (user) {
             const role = String(user.role || "").toUpperCase();
             const isPrivileged = role === "ADMIN" || role === "OPERATOR";
@@ -1228,7 +1236,7 @@ const addMedia = async (id, files = [], user = null) => {
                     err.statusCode = 403;
                     throw err;
                 }
-                if ((role === "AGENT" || role === "RESPONDER") && alert.assignedAgentId !== user.agentId) {
+                if (role === "AGENT" && alert.assignedAgentId !== user.agentId) {
                     const err = new Error("Forbidden: You can only upload evidence to missions assigned to you");
                     err.statusCode = 403;
                     throw err;
@@ -1311,7 +1319,7 @@ const declineMission = async (alertId, agentId = null, reason = "Unable to respo
 
         // ✅ [P0 Security Fix] ផ្ទៀងផ្ទាត់សិទ្ធិ: បើជា Responder ត្រូវតែជា Alert ដែលចាត់តាំងឱ្យខ្លួន
         const callerRole = String(user?.role || "").toUpperCase();
-        if (user && (callerRole === "AGENT" || callerRole === "RESPONDER")) {
+        if (user && callerRole === "AGENT") {
             if (alert.assignedAgentId !== user.agentId) {
                 const err = new Error("Forbidden: You can only decline missions assigned to you");
                 err.statusCode = 403;
@@ -1763,7 +1771,7 @@ const acknowledgeMission = async (alertId, agentId = null, user = null) => {
 
         // ✅ [P0 Security Fix] ផ្ទៀងផ្ទាត់សិទ្ធិ: បើជា Responder ត្រូវតែជា Alert ដែលចាត់តាំងឱ្យខ្លួន
         const callerRole = String(user?.role || "").toUpperCase();
-        if (user && (callerRole === "AGENT" || callerRole === "RESPONDER")) {
+        if (user && callerRole === "AGENT") {
             if (alert.assignedAgentId !== user.agentId) {
                 const err = new Error("Forbidden: You can only acknowledge missions assigned to you");
                 err.statusCode = 403;

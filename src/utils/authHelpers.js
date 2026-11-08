@@ -55,10 +55,11 @@ const checkUserActive = (user) => {
 /**
  * ពិនិត្យ user សម្រាប់ login
  */
-const checkUserForLogin = (user, { requireEmailVerified = true } = {}) => {
+const checkUserForLogin = (user, { requireEmailVerified = false } = {}) => {
     checkUserActive(user);
 
-    if (requireEmailVerified && !user.emailVerified) {
+    const requireVerification = process.env.REQUIRE_EMAIL_VERIFICATION === "true";
+    if (requireVerification && !user.emailVerified) {
         const err = new Error("Please verify your email before logging in.");
         err.status = 403;
         err.code = "EMAIL_NOT_VERIFIED";

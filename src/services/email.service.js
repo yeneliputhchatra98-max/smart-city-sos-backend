@@ -1,23 +1,46 @@
 const nodemailer = require("nodemailer");
+const logger = require("../utils/logger");
 
-const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT),
-    secure: false,
+const getTransporter = () => {
+    if (!process.env.SMTP_HOST && !process.env.SMTP_USER) {
+        return null;
+    }
 
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    },
-});
+    if (process.env.SMTP_HOST === "smtp.gmail.com" || process.env.SMTP_SERVICE === "gmail") {
+        return nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS,
+            },
+        });
+    }
+
+    return nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT) || 587,
+        secure: process.env.SMTP_SECURE === "true",
+
+        auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+        },
+    });
+};
 
 const sendPasswordResetEmail = async (email, resetUrl) => {
-    await transporter.sendMail({
-        from: `"Smart City SOS Cambodia" <${process.env.SMTP_USER}>`,
-        to: email,
-        subject: "🔐 Reset Your Smart City SOS Password",
+    try {
+        const transporter = getTransporter();
+        if (!transporter) {
+            logger.warn(`SMTP_HOST not configured. Password reset email skipped for ${email}. Reset URL: ${resetUrl}`);
+            return;
+        }
+        await transporter.sendMail({
+            from: `"Smart City SOS Cambodia" <${process.env.SMTP_USER}>`,
+            to: email,
+            subject: "🔐 Reset Your Smart City SOS Password",
 
-        html: `
+            html: `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -248,14 +271,24 @@ const sendPasswordResetEmail = async (email, resetUrl) => {
 </body>
 </html>
         `,
-    });
+        });
+    } catch (error) {
+        logger.error(`Failed to send password reset email to ${email}: ${error.message}`);
+    }
 };
+
 const sendVerificationEmail = async (email, verifyUrl) => {
-    await transporter.sendMail({
-        from: `"Smart City SOS Cambodia" <${process.env.SMTP_USER}>`,
-        to: email,
-        subject: "📧 Verify Your Smart City SOS Cambodia Email",
-        html: `
+    try {
+        const transporter = getTransporter();
+        if (!transporter) {
+            logger.warn(`SMTP_HOST not configured. Verification email skipped for ${email}. Verify URL: ${verifyUrl}`);
+            return;
+        }
+        await transporter.sendMail({
+            from: `"Smart City SOS Cambodia" <${process.env.SMTP_USER}>`,
+            to: email,
+            subject: "📧 Verify Your Smart City SOS Cambodia Email",
+            html: `
             <h2>Verify your email</h2>
 
             <p>
@@ -280,8 +313,12 @@ const sendVerificationEmail = async (email, verifyUrl) => {
                 If you did not create this account, you can safely ignore this email.
             </p>
         `,
-    });
+        });
+    } catch (error) {
+        logger.error(`Failed to send verification email to ${email}: ${error.message}`);
+    }
 };
+
 module.exports = {
     sendPasswordResetEmail,
     sendVerificationEmail,

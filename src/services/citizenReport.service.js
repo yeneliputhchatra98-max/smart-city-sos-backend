@@ -248,7 +248,7 @@ exports.updateCitizenReportStatus = async (id, status) => {
                     where: { id: alert.id },
                     data: {
                         status: nextAlertStatus,
-                        resolvedAt: nextAlertStatus === "RESOLVED" ? new Date() : null,
+                        resolvedAt: nextAlertStatus === "RESOLVED" ? (alert.resolvedAt || new Date()) : null,
                     },
                 });
                 if (emitStatusUpdated) emitStatusUpdated(updatedAlert);

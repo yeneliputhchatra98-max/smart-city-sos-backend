@@ -76,7 +76,7 @@ const register = async (req, res, next) => {
             throw new AppError("Request body is required", 400, "EMPTY_BODY");
         }
 
-        const { fullName, username, email, password, phone, role, birthday, gender } = req.body;
+        const { fullName, username, email, password, phone, birthday, gender } = req.body;
 
         // Required fields
         const required = { fullName, username, email, password, phone };
@@ -519,7 +519,14 @@ const resendVerification = async (req, res, next) => {
 
         logger.info(`Verification email resent to: ${email}`);
 
-        return sendSuccess(res, { email: result.email }, "Verification email sent successfully");
+        return sendSuccess(
+            res,
+            {
+                email: result.email,
+                ...(result.verificationUrl && { verificationUrl: result.verificationUrl }),
+            },
+            result.message
+        );
     } catch (error) {
         logger.error(`Resend verification error: ${error.message}`);
         next(toAppError(error));

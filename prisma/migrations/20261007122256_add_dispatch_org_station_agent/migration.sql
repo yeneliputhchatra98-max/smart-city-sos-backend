@@ -102,4 +102,7 @@ ALTER TABLE `sos_alerts` ADD CONSTRAINT `sos_alerts_assignedStationId_fkey` FORE
 ALTER TABLE `sessions` ADD CONSTRAINT `sessions_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- RenameIndex
-ALTER TABLE `sos_alerts` RENAME INDEX `sos_alerts_assignedAgentId_fkey` TO `sos_alerts_assignedAgentId_idx`;
+ALTER TABLE `sos_alerts` DROP FOREIGN KEY `sos_alerts_assignedAgentId_fkey`;
+ALTER TABLE `sos_alerts` DROP INDEX `sos_alerts_assignedAgentId_fkey`;
+CREATE INDEX `sos_alerts_assignedAgentId_idx` ON `sos_alerts`(`assignedAgentId`);
+ALTER TABLE `sos_alerts` ADD CONSTRAINT `sos_alerts_assignedAgentId_fkey` FOREIGN KEY (`assignedAgentId`) REFERENCES `agents`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;

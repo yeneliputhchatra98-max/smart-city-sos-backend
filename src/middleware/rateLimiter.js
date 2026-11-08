@@ -13,7 +13,11 @@ const rateLimiter = (max, windowMs = 60 * 1000) => {
             timestamp: new Date().toISOString()
         },
         skip: (req) => {
-            // Skip rate limiting for health checks
+            // Match the global API limiter: development requests are unrestricted.
+            if (process.env.NODE_ENV === "development") {
+                return true;
+            }
+
             return req.path === "/health" || req.path === "/ping";
         }
     });

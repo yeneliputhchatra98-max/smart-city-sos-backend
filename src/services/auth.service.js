@@ -97,8 +97,12 @@ const createAndSendVerification = async (userId, email) => {
         data: { userId, tokenHash, expiresAt },
     });
 
-    const verifyUrl = `${process.env.FRONTEND_URL}/verify-email?token=${rawToken}`;
-    await sendVerificationEmail(email, verifyUrl);
+    const verifyUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email?token=${rawToken}`;
+    try {
+        await sendVerificationEmail(email, verifyUrl);
+    } catch (emailErr) {
+        logger.warn(`Verification email delivery failed for ${email}: ${emailErr.message}`);
+    }
 
     return rawToken;
 };
@@ -308,7 +312,8 @@ const login = async (email, password, ipAddress = null, userAgent = null, tabId 
             include: { role: true, agentProfile: true },
         });
 
-        checkUserForLogin(user, { requireEmailVerified: true });
+        const requireVerification = process.env.REQUIRE_EMAIL_VERIFICATION === "true";
+        checkUserForLogin(user, { requireEmailVerified: requireVerification });
 
         const secSettings = await getSecuritySettings();
 
@@ -1014,10 +1019,16 @@ const resendVerification = async (email) => {
 
         checkUserForVerification(user);
 
-        await createAndSendVerification(user.id, user.email);
+        const rawToken = await createAndSendVerification(user.id, user.email);
+        const result = { email: user.email, message: "Verification email sent" };
+
+        if (process.env.NODE_ENV === "development") {
+            result.verificationUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/verify-email?token=${rawToken}`;
+            result.message = "Verification link generated";
+        }
 
         logger.info(`Verification email resent to: ${user.email}`);
-        return { email: user.email, message: "Verification email sent" };
+        return result;
     } catch (error) {
         logger.error(`Resend verification error: ${error.message}`);
         throw error;

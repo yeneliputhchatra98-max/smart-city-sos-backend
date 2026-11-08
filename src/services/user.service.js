@@ -107,6 +107,10 @@ exports.getAllUsers = async ({ page = 1, limit = 20, role, unassignedOnly = fals
 exports.getAgentCandidateUsers = async ({ unassignedOnly = false } = {}) => {
     const where = {
         deletedAt: null,
+        // 🛡️ មិនយក User ដែលជា ADMIN (Admin មិនអាចភ្ជាប់ជា Field Agent បានទេ)
+        role: {
+            name: { not: "ADMIN" }
+        },
     };
 
     if (unassignedOnly) {

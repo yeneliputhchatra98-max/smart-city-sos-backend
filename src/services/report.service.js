@@ -85,26 +85,25 @@ exports.getSummary = async () => {
     ]);
 
     // 2. Calculate Resolution Rate
-    const resolutionRate = totalSOS > 0 
-        ? Math.round((resolvedSOS / totalSOS) * 1000) / 10 
-        : 94.5;
+    const resolutionRate = totalSOS > 0
+        ? Math.round((resolvedSOS / totalSOS) * 1000) / 10
+        : 0;
 
     // 3. Calculate Average Response Time in minutes
-    let avgResponseTime = 8.4;
+    let avgResponseTime = 0;
     const resolvedWithTimes = allAlerts.filter(a => a.status === "RESOLVED" && (a.resolvedAt || a.updatedAt));
     if (resolvedWithTimes.length > 0) {
         const totalMinutes = resolvedWithTimes.reduce((acc, a) => {
             const end = new Date(a.resolvedAt || a.updatedAt).getTime();
             const start = new Date(a.createdAt).getTime();
-            const diffMin = Math.max(1, (end - start) / (1000 * 60));
+            const diffMin = Math.max(0, (end - start) / (1000 * 60));
             return acc + diffMin;
         }, 0);
         avgResponseTime = Math.round((totalMinutes / resolvedWithTimes.length) * 10) / 10;
-        if (avgResponseTime > 60) avgResponseTime = 12.5; // Cap sensible outlier if unmanaged
     }
 
     // 4. Calculate Active / Dispatched Rate
-    let activeDispatchedRate = 18.0;
+    let activeDispatchedRate = 0;
     if (totalAgents > 0) {
         activeDispatchedRate = Math.round((onDutyAgents / totalAgents) * 1000) / 10;
     } else if (totalSOS > 0) {
@@ -126,26 +125,9 @@ exports.getSummary = async () => {
         }
     });
 
-    // Baseline mock distribution curve to blend when alerts count is low
-    const baselineHourly = [
-        { hour: '00:00', base: 4 },
-        { hour: '02:00', base: 3 },
-        { hour: '04:00', base: 2 },
-        { hour: '06:00', base: 7 },
-        { hour: '08:00', base: 18 },
-        { hour: '10:00', base: 22 },
-        { hour: '12:00', base: 24 },
-        { hour: '14:00', base: 28 },
-        { hour: '16:00', base: 31 },
-        { hour: '18:00', base: 29 },
-        { hour: '20:00', base: 27 },
-        { hour: '22:00', base: 15 },
-        { hour: '23:00', base: 12 },
-    ];
-
-    const hourlyIncidents = baselineHourly.map(item => ({
-        hour: item.hour,
-        incidents: totalSOS > 10 ? hourlyCounts[item.hour] : (item.base + (hourlyCounts[item.hour] || 0)),
+    const hourlyIncidents = hours.map(h => ({
+        hour: h,
+        incidents: hourlyCounts[h] || 0,
     }));
 
     // 6. Emergency Type Distribution
@@ -162,7 +144,7 @@ exports.getSummary = async () => {
     const totalTypeAlerts = allAlerts.length;
     let emergencyTypeDistribution = [];
 
-    if (totalTypeAlerts > 5) {
+    if (totalTypeAlerts > 0) {
         const medicalCount = typeCounts.MEDICAL;
         const fireCount = typeCounts.FIRE;
         const policeCount = typeCounts.POLICE + typeCounts.ACCIDENT + typeCounts.CRIME + typeCounts.FLOOD + typeCounts.DISASTER;
@@ -171,15 +153,16 @@ exports.getSummary = async () => {
         emergencyTypeDistribution = [
             { name: 'Medical', value: Math.round((medicalCount / sum) * 100), count: medicalCount, color: '#EF4444' },
             { name: 'Fire', value: Math.round((fireCount / sum) * 100), count: fireCount, color: '#F59E0B' },
-            { name: 'Police', value: 100 - (Math.round((medicalCount / sum) * 100) + Math.round((fireCount / sum) * 100)), count: policeCount, color: '#0B3C5D' },
+            { name: 'Police', value: Math.max(0, 100 - (Math.round((medicalCount / sum) * 100) + Math.round((fireCount / sum) * 100))), count: policeCount, color: '#0B3C5D' },
         ];
     } else {
         emergencyTypeDistribution = [
-            { name: 'Medical', value: 47, count: typeCounts.MEDICAL, color: '#EF4444' },
-            { name: 'Fire', value: 28, count: typeCounts.FIRE, color: '#F59E0B' },
-            { name: 'Police', value: 25, count: typeCounts.POLICE, color: '#0B3C5D' },
+            { name: 'Medical', value: 0, count: 0, color: '#EF4444' },
+            { name: 'Fire', value: 0, count: 0, color: '#F59E0B' },
+            { name: 'Police', value: 0, count: 0, color: '#0B3C5D' },
         ];
     }
+
 
     // 7. District Response Times (Dynamic from Location Service / Database & Live Alerts)
     const districtMap = new Map();
@@ -237,13 +220,10 @@ exports.getSummary = async () => {
             const totalMinutes = resolved.reduce((acc, a) => {
                 const end = new Date(a.resolvedAt || a.updatedAt).getTime();
                 const start = new Date(a.createdAt).getTime();
-                const diffMin = Math.max(1, (end - start) / (1000 * 60));
-                const cappedMin = diffMin > 60 ? (avgResponseTime || 12.5) : diffMin;
-                return acc + cappedMin;
+                const diffMin = Math.max(0, (end - start) / (1000 * 60));
+                return acc + diffMin;
             }, 0);
             avgTime = Math.round((totalMinutes / resolved.length) * 10) / 10;
-        } else if (distAlerts.length > 0) {
-            avgTime = avgResponseTime || 8.5;
         } else {
             avgTime = 0;
         }
@@ -272,7 +252,7 @@ exports.getSummary = async () => {
         totalOrganizations,
         totalUsers,
         kpi: {
-            totalSOS: totalSOS > 0 ? totalSOS : 248,
+            totalSOS,
             avgResponseTime,
             resolutionRate,
             activeDispatchedRate,
@@ -341,17 +321,9 @@ exports.exportPdf = async (id) => {
     }).catch(() => null);
 
     if (!report) {
-        // Return a mock fallback report object if not in DB
-        return {
-            id,
-            title: `Emergency_Report_${id}`,
-            reportType: "SUMMARY",
-            format: "PDF",
-            recordCount: 92,
-            resolvedCount: 86,
-            delayedCount: 6,
-            createdAt: new Date().toISOString(),
-        };
+        const error = new Error("Report not found");
+        error.statusCode = 404;
+        throw error;
     }
 
     return report;
@@ -366,16 +338,9 @@ exports.exportExcel = async (id) => {
     }).catch(() => null);
 
     if (!report) {
-        return {
-            id,
-            title: `Emergency_Report_${id}`,
-            reportType: "DETAIL",
-            format: "EXCEL",
-            recordCount: 156,
-            resolvedCount: 141,
-            delayedCount: 15,
-            createdAt: new Date().toISOString(),
-        };
+        const error = new Error("Report not found");
+        error.statusCode = 404;
+        throw error;
     }
 
     return report;

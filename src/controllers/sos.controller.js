@@ -28,7 +28,7 @@ const getMyAlerts = async (req, res) => {
 const listAssignedAlerts = async (req, res) => {
     try {
         // ✅ [P0 Security Fix] ទប់ស្កាត់ Parameter Injection លើ agentId
-        // បើជា AGENT/RESPONDER ត្រូវបង្ខំឱ្យប្រើ req.user.agentId ពី JWT
+        // បើជា AGENT ត្រូវបង្ខំឱ្យប្រើ req.user.agentId ពី JWT
         const isPrivileged = req.user?.role === "ADMIN" || req.user?.role === "OPERATOR";
         const agentId = isPrivileged ? (req.query.agentId || req.user?.agentId) : req.user?.agentId;
 
